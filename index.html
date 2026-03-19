@@ -1001,122 +1001,80 @@
 <script>
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  SHAREPOINT CONFIG — edite apenas estas linhas se necessário    ║
+// ║  FIREBASE CONFIG                                                ║
 // ╚══════════════════════════════════════════════════════════════════╝
-// Auto-detect: if opened from SharePoint, use current origin
-const SP_SITE    = (location.hostname.includes('sharepoint.com') || location.hostname.includes('safiratelecom'))
-  ? 'https://safiratelecom.sharepoint.com/sites/gs'
-  : 'https://safiratelecom.sharepoint.com/sites/gs';
-const SP_LIST    = 'ROCA_Dashboard';
-const SP_API     = `${SP_SITE}/_api/web/lists/getbytitle('${SP_LIST}')/items`;
-const SP_HEADERS_READ  = { 'Accept': 'application/json;odata=nometadata' };
-const SP_HEADERS_WRITE = {
-  'Accept':       'application/json;odata=nometadata',
-  'Content-Type': 'application/json;odata=nometadata',
-  'X-RequestDigest': ''  // filled dynamically
-};
+const FB_URL = 'https://safira-roca-default-rtdb.firebaseio.com';
 
-// ── SP digest (required for POST/PATCH/DELETE) ────────────────────
-let _digestExpiry = 0, _digestValue = '';
-async function getDigest() {
-  if (Date.now() < _digestExpiry) return _digestValue;
-  const r = await fetch(`${SP_SITE}/_api/contextinfo`, {
-    method: 'POST',
-    headers: { 'Accept': 'application/json;odata=nometadata' }
+// Firebase REST API — no SDK needed, pure fetch
+async function fbGet(path) {
+  const r = await fetch(`${FB_URL}/${path}.json`);
+  if (!r.ok) throw new Error(`Firebase GET error ${r.status}`);
+  return r.json(); // returns null if empty
+}
+
+async function fbSet(path, data) {
+  const r = await fetch(`${FB_URL}/${path}.json`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
   });
-  const d = await r.json();
-  _digestValue  = d.FormDigestValue;
-  _digestExpiry = Date.now() + (d.FormDigestTimeoutSeconds - 30) * 1000;
-  return _digestValue;
+  if (!r.ok) throw new Error(`Firebase SET error ${r.status}`);
+  return r.json();
 }
 
-// ── SP CRUD ────────────────────────────────────────────────────────
-// Each list item = one row per clientId per weekKey
-// Fields: Title(=weekKey_clientId), WeekKey, ClientId, DataJson
-
-async function spGetAll() {
-  // fetch up to 500 items; enough for our use
-  const url = `${SP_API}?$select=Id,Title,WeekKey,ClientId,DataJson&$top=500`;
-  const r = await fetch(url, { headers: SP_HEADERS_READ, credentials: 'include' });
-  if (!r.ok) throw new Error(`SP read error ${r.status}`);
-  const d = await r.json();
-  return d.value || [];
+async function fbDelete(path) {
+  await fetch(`${FB_URL}/${path}.json`, { method: 'DELETE' });
 }
 
-async function spUpsert(weekKey, clientId, dataJson) {
-  const title = `${weekKey}_${clientId}`;
-  // check if item exists
-  const findUrl = `${SP_API}?$filter=Title eq '${title}'&$select=Id&$top=1`;
-  const fr = await fetch(findUrl, { headers: SP_HEADERS_READ, credentials: 'include' });
-  const fd = await fr.json();
-  const digest = await getDigest();
-  const body = JSON.stringify({ Title: title, WeekKey: weekKey, ClientId: String(clientId), DataJson: dataJson });
-
-  if (fd.value && fd.value.length > 0) {
-    // UPDATE
-    const itemId = fd.value[0].Id;
-    await fetch(`${SP_API}(${itemId})`, {
-      method: 'POST',
-      headers: { ...SP_HEADERS_WRITE, 'X-RequestDigest': digest, 'X-HTTP-Method': 'MERGE', 'IF-MATCH': '*' },
-      body,
-      credentials: 'include'
-    });
-  } else {
-    // CREATE
-    await fetch(SP_API, {
-      method: 'POST',
-      headers: { ...SP_HEADERS_WRITE, 'X-RequestDigest': digest },
-      body,
-      credentials: 'include'
-    });
-  }
-}
-
-async function spDelete(weekKey, clientId) {
-  const title = `${weekKey}_${clientId}`;
-  const findUrl = `${SP_API}?$filter=Title eq '${title}'&$select=Id&$top=1`;
-  const fr = await fetch(findUrl, { headers: SP_HEADERS_READ, credentials: 'include' });
-  const fd = await fr.json();
-  if (!fd.value || !fd.value.length) return;
-  const digest = await getDigest();
-  await fetch(`${SP_API}(${fd.value[0].Id})`, {
-    method: 'POST',
-    headers: { ...SP_HEADERS_WRITE, 'X-RequestDigest': digest, 'X-HTTP-Method': 'DELETE', 'IF-MATCH': '*' },
-    credentials: 'include'
+async function fbPatch(path, data) {
+  const r = await fetch(`${FB_URL}/${path}.json`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
   });
+  if (!r.ok) throw new Error(`Firebase PATCH error ${r.status}`);
+  return r.json();
 }
 
-// ── LOAD all SP data into entries + weekHistory ────────────────────
+// ── LOAD all data from Firebase ────────────────────────────────────
 async function spLoadAll() {
   try {
     showSyncStatus('syncing');
-    const items = await spGetAll();
-    const currentWk = getWeekKey();
-    // reset
-    entries = {};
-    // keep weekHistory keys that aren't the current week (older = history)
-    const freshHistory = {};
-    items.forEach(item => {
-      let data;
-      try { data = JSON.parse(item.DataJson); } catch { return; }
-      const wk = item.WeekKey;
-      const cid = parseInt(item.ClientId, 10);
-      if (wk === currentWk) {
-        entries[cid] = data;
-      } else {
-        if (!freshHistory[wk]) freshHistory[wk] = {};
-        freshHistory[wk][cid] = data;
-      }
-    });
-    weekHistory = freshHistory;
+    const data = await fbGet('roca');
+    if (data) {
+      entries     = data.entries     || {};
+      weekHistory = data.history     || {};
+      // convert string keys to int for entries
+      const fixedEntries = {};
+      Object.keys(entries).forEach(k => { fixedEntries[parseInt(k)] = entries[k]; });
+      entries = fixedEntries;
+    } else {
+      entries = {};
+      weekHistory = {};
+    }
     showSyncStatus('ok');
     return true;
   } catch(e) {
-    console.error('SP load failed:', e.message || e);
+    console.error('Firebase load failed:', e);
     showSyncStatus('offline');
-    // Still render with hardcoded clients — entries just stay empty
     return false;
   }
+}
+
+// ── SAVE one entry to Firebase ─────────────────────────────────────
+async function spUpsert(weekKey, clientId, dataJson) {
+  const data = JSON.parse(dataJson);
+  await fbPatch(`roca/entries`, { [clientId]: data });
+}
+
+// ── DELETE one entry from Firebase ────────────────────────────────
+async function spDelete(weekKey, clientId) {
+  await fbDelete(`roca/entries/${clientId}`);
+}
+
+// ── ARCHIVE week to Firebase history ──────────────────────────────
+async function fbArchiveWeek(weekKey, entriesSnapshot) {
+  await fbPatch(`roca/history`, { [weekKey]: entriesSnapshot });
 }
 
 // ── STATUS INDICATOR ───────────────────────────────────────────────
@@ -1124,17 +1082,20 @@ function showSyncStatus(state) {
   const el = document.getElementById('syncStatus');
   if (!el) return;
   const map = {
-    syncing: { text: '⟳ Sincronizando…',         color: 'rgba(255,255,255,.5)' },
-    ok:      { text: '✓ SharePoint sincronizado', color: '#6ee7b7' },
-    offline: { text: '⚠ Modo local — abra via SharePoint para sincronizar', color: '#fcd34d' },
-    saving:  { text: '↑ Salvando no SharePoint…', color: 'rgba(255,255,255,.5)' },
-    saved:   { text: '✓ Salvo no SharePoint',      color: '#6ee7b7' },
-    error:   { text: '✕ Erro — veja o console (F12)', color: '#fca5a5' },
+    syncing: { text: '⟳ Sincronizando…',    color: 'rgba(255,255,255,.5)' },
+    ok:      { text: '✓ Sincronizado',       color: '#6ee7b7' },
+    offline: { text: '⚠ Sem conexão (local)',color: '#fcd34d' },
+    saving:  { text: '↑ Salvando…',          color: 'rgba(255,255,255,.5)' },
+    saved:   { text: '✓ Salvo',              color: '#6ee7b7' },
+    error:   { text: '✕ Erro ao salvar',     color: '#fca5a5' },
   };
   const s = map[state] || map.ok;
   el.textContent = s.text;
   el.style.color = s.color;
 }
+
+// ── DUMMY digest vars (not used with Firebase) ─────────────────────
+let _digestExpiry = 0, _digestValue = '', msalReady = false;
 
 // ── DATA ──────────────────────────────────────────────────────────────────
 let clients = [
@@ -1288,8 +1249,11 @@ function getPrevEntry(clientId) {
 
 function archiveCurrentWeek() {
   const key = getWeekKey();
-  weekHistory[key] = JSON.parse(JSON.stringify(entries));
+  const snapshot = JSON.parse(JSON.stringify(entries));
+  weekHistory[key] = snapshot;
   localStorage.setItem('roca_history', JSON.stringify(weekHistory));
+  // also persist to Firebase
+  fbArchiveWeek(key, snapshot).catch(e => console.warn('Archive to Firebase failed:', e));
 }
 
 function statusOrder(s) { return {V:0,A:1,G:2,pending:3}[s] ?? 3; }
@@ -2036,12 +2000,17 @@ function confirmImport(data) {
 async function advanceWeek() {
   if (!confirm('Arquivar semana atual e iniciar nova semana em branco?\nOs dados ficam salvos no histórico.')) return;
   archiveCurrentWeek();
-  entries = {};
-  localStorage.setItem('roca_entries', JSON.stringify(entries));
-  // SP: data stays in SP (next week has new weekKey, old stays as history)
-  // just reload from SP to confirm sync
-  showSyncStatus('syncing');
-  await spLoadAll();
+  // clear entries in Firebase
+  showSyncStatus('saving');
+  try {
+    await fbSet('roca/entries', {});
+    entries = {};
+    localStorage.setItem('roca_entries', JSON.stringify(entries));
+    showSyncStatus('saved');
+  } catch(e) {
+    console.error('advanceWeek Firebase error:', e);
+    showSyncStatus('error');
+  }
   render();
 }
 
