@@ -1692,12 +1692,15 @@ function confirmContractImport(){
 }
 
 function deleteAllClients(){
-  if(!confirm('Apagar TODOS os clientes?\n\nEsta ação também apagará todos os faróis e entradas da semana atual.\nO histórico de semanas anteriores é mantido.\n\nDigite OK para confirmar.'))return;
-  clients=[];entries={};
+  if(!confirm('Apagar TUDO?\n\nSerão removidos:\n— Todos os clientes\n— Todos os CS\n— Todos os contratos\n— Todos os faróis da semana atual\n\nO histórico de semanas anteriores é mantido.\n\nConfirme para continuar.'))return;
+  clients=[];entries={};gsList=[];contracts=[];
   localStorage.setItem('roca_clients',JSON.stringify(clients));
   localStorage.setItem('roca_entries',JSON.stringify(entries));
+  localStorage.setItem('roca_gs',JSON.stringify(gsList));
+  localStorage.setItem('roca_contracts',JSON.stringify(contracts));
   fbSet('roca/entries',{}).catch(e=>console.warn('Firebase clear failed:',e));
-  buildSidebar();render();renderAdminList();
+  fbPatch('roca',{contracts:[]}).catch(e=>console.warn('Firebase contracts clear failed:',e));
+  buildSidebar();render();renderAdminList();renderGSList();renderContractAdminList();
   showSyncStatus('saved');
 }
 function saveAdmin(){
@@ -1726,20 +1729,33 @@ function importFile(input){
       const wb=XLSX.read(ev.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];
       const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
       let start=0;if(data[0]&&typeof data[0][0]==='string'&&isNaN(data[0][0]))start=1;
-      const imported=[];const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);let newId=maxId+1;
+      const imported=[];
+      // Build lookup of existing clients by normalised name → preserve ID for history continuity
+      const existingById={};
+      clients.forEach(c=>{existingById[c.name.toLowerCase().trim()]=c.id;});
+      // Also check all weekHistory for IDs (in case clients were cleared before reimport)
+      const allHistoryIds={};
+      Object.values(weekHistory).forEach(snap=>{
+        Object.keys(snap).forEach(id=>{
+          const e=snap[id];if(e&&e._name)allHistoryIds[e._name.toLowerCase().trim()]=parseInt(id);
+        });
+      });
+      let maxId=Math.max(0,...clients.map(c=>c.id),...Object.values(existingById),...Object.values(allHistoryIds),0);
       for(let i=start;i<data.length;i++){
         const r=data[i];const name=String(r[0]||'').trim();if(!name)continue;
+        const norm=name.toLowerCase().trim();
+        // Reuse existing ID if name matches (case-insensitive) — preserves history link
+        const existingId=existingById[norm]||allHistoryIds[norm]||null;
+        const id=existingId||++maxId;
         imported.push({
-          id:newId++,name,
+          id,name,
           gs:String(r[1]||'').trim()||gsList[0],
           book:String(r[2]||'').trim().toUpperCase()==='S',
           tier:(['A','B','C'].includes(String(r[3]||'').trim().toUpperCase())?String(r[3]).trim().toUpperCase():'C'),
-          // no contractEnd — contracts managed separately
         });
-        // NPS and pipeline go into entries separately — skipping here, only client metadata in import
       }
       const prev=document.getElementById('import-preview');
-      prev.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">Tier ${c.tier}${c.vip?' ⭐':''} · ${c.gs}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="confirmImport()">✓ Confirmar importação</button>`;
+      prev.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">Tier ${c.tier} · ${c.gs}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="confirmImport()">✓ Confirmar importação</button>`;
       window._importedClients=imported;
     }catch(err){document.getElementById('import-preview').innerHTML=`<div style="color:var(--red);padding:10px;">Erro: ${err.message}</div>`;}
   };
