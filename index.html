@@ -334,22 +334,25 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     <div id="gs-sidebar-list"></div>
     <div class="sidebar-label">Filtros Rápidos</div>
     <button class="gs-btn" onclick="filterStatus('V',this)" id="quick-red">
-      <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">🔴</div>Vermelhos<span class="gs-count" id="count-red">0</span>
+      <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">🔴</div>Problema Real<span class="gs-count" id="count-red">0</span>
     </button>
     <button class="gs-btn" onclick="filterStatus('G',this)" id="quick-green">
-      <div class="gs-avatar" style="background:var(--green-bg);color:var(--green);">🟢</div>Verdes<span class="gs-count" id="count-green">0</span>
+      <div class="gs-avatar" style="background:var(--green-bg);color:var(--green);">🟢</div>Acompanhar<span class="gs-count" id="count-green">0</span>
     </button>
     <button class="gs-btn" onclick="filterStatus('A',this)" id="quick-yellow">
-      <div class="gs-avatar" style="background:var(--yellow-bg);color:var(--yellow);">🟡</div>Amarelos<span class="gs-count" id="count-yellow">0</span>
+      <div class="gs-avatar" style="background:var(--yellow-bg);color:var(--yellow);">🟡</div>Tomar Ação<span class="gs-count" id="count-yellow">0</span>
     </button>
     <button class="gs-btn" onclick="filterChurn(this)" id="quick-churn">
       <div class="gs-avatar" style="background:var(--churn-bg);color:var(--churn);">⚠</div>Risco de Churn<span class="gs-count" id="count-churn">0</span>
     </button>
     <button class="gs-btn" onclick="filterVIP(this)" id="quick-vip">
-      <div class="gs-avatar" style="background:var(--vip-bg);color:var(--vip);">⭐</div>VIP / Tier A<span class="gs-count" id="count-vip">0</span>
+      <div class="gs-avatar" style="background:var(--vip-bg);color:var(--vip);">⭐</div>Tier A<span class="gs-count" id="count-vip">0</span>
     </button>
     <button class="gs-btn" onclick="filterStatus('pending',this)" id="quick-pending">
       <div class="gs-avatar" style="background:var(--surface2);color:var(--muted);">⏳</div>Pendentes<span class="gs-count" id="count-pending">0</span>
+    </button>
+    <button class="gs-btn" onclick="filterStatus('partial',this)" id="quick-partial">
+      <div class="gs-avatar" style="background:var(--surface2);color:var(--muted);">◑</div>Parciais<span class="gs-count" id="count-partial">0</span>
     </button>
     <button class="gs-btn" onclick="filterBookPending(this)" id="quick-book">
       <div class="gs-avatar" style="background:var(--accent-bg);color:var(--accent2);">📋</div>Book Pendente<span class="gs-count" id="count-book">0</span>
@@ -378,14 +381,14 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     </div>
 
     <!-- SUMMARY -->
-    <div class="summary-strip">
+    <div class="summary-strip" style="grid-template-columns:repeat(5,1fr);">
       <div class="summary-card" id="sc-all" onclick="filterByCard('all')">
         <div class="summary-icon" style="background:var(--accent-bg);">📊</div>
         <div><div class="summary-num" id="s-total" style="color:var(--accent)">0</div><div class="summary-lbl">TOTAL</div></div>
       </div>
       <div class="summary-card" id="sc-red" onclick="filterByCard('V')">
         <div class="summary-icon" style="background:var(--red-bg);">🔴</div>
-        <div><div class="summary-num" id="s-red" style="color:var(--red)">0</div><div class="summary-lbl">VERMELHOS</div></div>
+        <div><div class="summary-num" id="s-red" style="color:var(--red)">0</div><div class="summary-lbl">PROBLEMA REAL</div></div>
       </div>
       <div class="summary-card" id="sc-churn" onclick="filterByCard('churn')">
         <div class="summary-icon" style="background:var(--churn-bg);">⚠️</div>
@@ -393,12 +396,20 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
       </div>
       <div class="summary-card" id="sc-yellow" onclick="filterByCard('A')">
         <div class="summary-icon" style="background:var(--yellow-bg);">🟡</div>
-        <div><div class="summary-num" id="s-yellow" style="color:var(--yellow)">0</div><div class="summary-lbl">AMARELOS</div></div>
+        <div><div class="summary-num" id="s-yellow" style="color:var(--yellow)">0</div><div class="summary-lbl">TOMAR AÇÃO</div></div>
       </div>
       <div class="summary-card" id="sc-green" onclick="filterByCard('G')">
         <div class="summary-icon" style="background:var(--green-bg);">🟢</div>
-        <div><div class="summary-num" id="s-green" style="color:var(--green)">0</div><div class="summary-lbl">VERDES</div></div>
+        <div><div class="summary-num" id="s-green" style="color:var(--green)">0</div><div class="summary-lbl">ACOMPANHAR</div></div>
       </div>
+    </div>
+    <!-- PENDENTES STRIP -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;margin-top:-6px;">
+      <div class="summary-card" id="sc-pending" onclick="filterByCard('pending')" style="flex:1;max-width:220px;">
+        <div class="summary-icon" style="background:var(--surface2);">⏳</div>
+        <div><div class="summary-num" id="s-pending" style="color:var(--muted)">0</div><div class="summary-lbl">PENDENTES (incompletos)</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;">conta não preenchida ou preenchida parcialmente</div>
     </div>
 
     <!-- CONTRACT EXPIRY -->
@@ -888,9 +899,31 @@ function getWeekKey(off=0){const n=new Date();n.setDate(n.getDate()+off*7);const
 function getPrevEntry(id){const p=weekHistory[getWeekKey(-1)];return p?(p[id]||null):null;}
 function archiveCurrentWeek(){const k=getWeekKey();const s=JSON.parse(JSON.stringify(entries));weekHistory[k]=s;localStorage.setItem('roca_history',JSON.stringify(weekHistory));fbArchiveWeek(k,s).catch(e=>console.warn('Archive failed:',e));}
 function statusOrder(s){return{V:0,A:1,G:2,pending:3}[s]??3;}
-function getEntryStatus(id){const e=entries[id];if(!e||!e.R)return'pending';if([e.R,e.O,e.C,e.A].includes('V'))return'V';if([e.R,e.O,e.C,e.A].includes('A'))return'A';return'G';}
+function getEntryStatus(id){
+  const e=entries[id];
+  if(!e||!e.R||!e.O||!e.C||!e.A)return'pending'; // pending if any dimension missing
+  if([e.R,e.O,e.C,e.A].includes('V'))return'V';
+  if([e.R,e.O,e.C,e.A].includes('A'))return'A';
+  return'G';
+}
 function getEntryStatus_from(e){if(!e||!e.R)return'pending';if([e.R,e.O,e.C,e.A].includes('V'))return'V';if([e.R,e.O,e.C,e.A].includes('A'))return'A';return'G';}
-function hasChurnRisk(id){const e=entries[id];if(!e||!e.churnRisk)return false;const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];return r.some(x=>x!=='none'&&x!=='');}
+function isPartial(id){
+  const e=entries[id];if(!e)return false;
+  const filled=[e.R,e.O,e.C,e.A].filter(x=>!!x).length;
+  return filled>0&&filled<4; // has some but not all
+}
+function isPending(id){
+  const e=entries[id];
+  return !e||![e.R,e.O,e.C,e.A].every(x=>!!x);
+}
+function hasChurnRisk(id){
+  const e=entries[id];if(!e)return false;
+  // Auto: R or C red = churn risk regardless of CS manual flag
+  if(e.R==='V'||e.C==='V')return true;
+  if(!e.churnRisk)return false;
+  const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];
+  return r.some(x=>x!=='none'&&x!=='');
+}
 
 // ── CONTRACT HELPERS ─────────────────────────────────────────────────────────
 // Returns all contracts for a client (normalised name match)
@@ -944,8 +977,12 @@ function calcHealthScore(id){
   if((tier==='A'||isVIP)&&cv>=1)penalty+=15; // extra para tier A
   if((tier==='A'||isVIP)&&hasChurnRisk(id))penalty+=10;
 
-  // Churn
-  if(e.churnRisk){const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];const ar=r.filter(x=>x!=='none'&&x!=='');if(ar.length>=2)penalty+=25;else if(ar.length===1)penalty+=15;}
+  // Churn — auto if R or C red, or manually flagged by CS
+  const autoChurn=e.R==='V'||e.C==='V';
+  const manualChurn=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
+  if(autoChurn&&manualChurn)penalty+=30; // both signals = max risk
+  else if(autoChurn)penalty+=20;
+  else if(manualChurn){const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];const ar=r.filter(x=>x!=='none'&&x!=='');if(ar.length>=2)penalty+=25;else penalty+=15;}
 
   // Faturamento
   if(e.billing==='down')penalty+=10;
@@ -1016,11 +1053,15 @@ function calcHSDetail(id){
 
   if((tier==='A'||isVIP)&&cv>=1){penalty+=15;factors.push({type:'negative',icon:'⭐',label:'Tier A/VIP com dimensão em risco',val:'-15'});}
 
-  if(hasChurnRisk(id)){
-    const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];const ar=r.filter(x=>x!=='none'&&x!=='');
-    const p=ar.length>=2?25:15;penalty+=p;
-    factors.push({type:'negative',icon:'⚠️',label:`Churn sinalizado (${ar.map(x=>x==='billing'?'faturamento':'cancelamento').join(', ')})`,val:`-${p}`});
-  }else{checklist.push({done:true,text:'Sem risco de churn sinalizado'});}
+  const autoChurnD=e.R==='V'||e.C==='V';
+  const manualChurnD=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
+  if(autoChurnD||manualChurnD){
+    let cp=0;
+    if(autoChurnD&&manualChurnD){cp=30;factors.push({type:'negative',icon:'⚠️',label:'R ou C vermelho + churn sinalizado pelo CS',val:'-30'});}
+    else if(autoChurnD){cp=20;const dims=[];if(e.R==='V')dims.push('R');if(e.C==='V')dims.push('C');factors.push({type:'negative',icon:'⚠️',label:`Risco de churn automático (${dims.join(' e ')} vermelhos)`,val:'-20'});checklist.push({done:false,text:`Recuperar dimensão ${dims.join('/')} — risco real de perda`});}
+    else{const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];const ar=r.filter(x=>x!=='none'&&x!=='');cp=ar.length>=2?25:15;factors.push({type:'negative',icon:'⚠️',label:`Churn sinalizado pelo CS (${ar.map(x=>x==='billing'?'faturamento':'cancelamento').join(', ')})`,val:`-${cp}`});}
+    penalty+=cp;
+  }else{checklist.push({done:true,text:'Sem risco de churn'});}
 
   if(e.billing==='down'){penalty+=10;factors.push({type:'negative',icon:'📉',label:'Faturamento em queda',val:'-10'});}
   else if(e.billing==='up'){factors.push({type:'positive',icon:'📈',label:'Faturamento subindo',val:'✓'});}
@@ -1236,6 +1277,8 @@ function filteredClients(){
     if(currentFilter.search&&!c.name.toLowerCase().includes(currentFilter.search.toLowerCase()))return false;
     if(currentFilter.churn)return hasChurnRisk(c.id);
     if(currentFilter.vip)return c.vip||c.tier==='A';
+    if(currentFilter.status==='partial')return isPartial(c.id);
+    if(currentFilter.status==='pending')return isPending(c.id);
     if(currentFilter.status)return getEntryStatus(c.id)===currentFilter.status;
     if(currentFilter.bookPending){if(!c.book)return false;const e=entries[c.id];return!e||!e.bookSent;}
     if(currentFilter.worsened){const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}
@@ -1256,14 +1299,17 @@ function updateSummary(fc){
   document.getElementById('s-yellow').textContent=gf.filter(c=>getEntryStatus(c.id)==='A').length;
   document.getElementById('s-green').textContent=gf.filter(c=>getEntryStatus(c.id)==='G').length;
   document.getElementById('s-churn').textContent=gf.filter(c=>hasChurnRisk(c.id)).length;
+  document.getElementById('s-pending').textContent=gf.filter(c=>isPending(c.id)).length;
   document.getElementById('count-all').textContent=clients.length;
   document.getElementById('count-red').textContent=clients.filter(c=>getEntryStatus(c.id)==='V').length;
   document.getElementById('count-green').textContent=clients.filter(c=>getEntryStatus(c.id)==='G').length;
   document.getElementById('count-yellow').textContent=clients.filter(c=>getEntryStatus(c.id)==='A').length;
   document.getElementById('count-churn').textContent=clients.filter(c=>hasChurnRisk(c.id)).length;
   document.getElementById('count-vip').textContent=clients.filter(c=>c.vip||c.tier==='A').length;
-  document.getElementById('count-pending').textContent=clients.filter(c=>getEntryStatus(c.id)==='pending').length;
+  document.getElementById('count-pending').textContent=clients.filter(c=>isPending(c.id)).length;
   document.getElementById('count-book').textContent=clients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length;
+  const partialEl=document.getElementById('count-partial');
+  if(partialEl)partialEl.textContent=clients.filter(c=>isPartial(c.id)).length;
   document.getElementById('count-worsened').textContent=clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length;
   document.getElementById('count-improved').textContent=clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length;
   document.querySelectorAll('.gs-btn-person').forEach(b=>{const gs=b.dataset.gsName;const cnt=b.querySelector('.gs-count');if(cnt&&gs)cnt.textContent=clients.filter(c=>c.gs===gs).length;});
@@ -1314,7 +1360,8 @@ function renderList(fc){
     row.onclick=()=>openFillModal(c.id);
 
     const bar=document.createElement('div');
-    bar.style.cssText=`width:4px;border-radius:4px;align-self:stretch;min-height:44px;flex-shrink:0;background:${st==='V'?'var(--red)':st==='A'?'#f59e0b':st==='G'?'var(--green)':'var(--border2)'};`;
+    const barColor=isPartial(c.id)?'var(--border2)':st==='V'?'var(--red)':st==='A'?'#f59e0b':st==='G'?'var(--green)':'var(--border2)';
+    bar.style.cssText=`width:4px;border-radius:4px;align-self:stretch;min-height:44px;flex-shrink:0;background:${barColor};`;
 
     const info=document.createElement('div');info.style.cssText='flex:1;min-width:160px;';
     info.innerHTML=`
@@ -1338,8 +1385,12 @@ function renderList(fc){
 
     const trendEl=document.createElement('div');trendEl.style.cssText='flex-shrink:0;';trendEl.innerHTML=trendHtml;
     const statusEl=document.createElement('div');statusEl.style.cssText='flex-shrink:0;';
-    const sc2={V:'🔴',A:'🟡',G:'🟢',pending:'⏳'};
-    statusEl.innerHTML=`<span class="status-pill ${st}">${sc2[st]||'⏳'}</span>`;
+    const sc2={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar',pending:'⏳ Pendente'};
+    // partial pending — some filled but not all
+    const stDisplay=isPartial(c.id)?'partial':st;
+    const stClass=isPartial(c.id)?'pending':st;
+    const stLabel=isPartial(c.id)?'◑ Parcial':sc2[st]||'⏳';
+    statusEl.innerHTML=`<span class="status-pill ${stClass}">${stLabel}</span>`;
     const actionEl=document.createElement('div');actionEl.style.cssText='font-size:11px;color:var(--muted);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0;';
     if(e.actionTaken)actionEl.textContent='✅ '+e.actionTaken.slice(0,55)+(e.actionTaken.length>55?'…':'');
     else if(st==='pending'){actionEl.style.color='var(--accent3)';actionEl.textContent='▶ clique para preencher';}
@@ -1358,7 +1409,7 @@ function renderTable(fc){
   fc.forEach(c=>{
     const e=entries[c.id]||{};const st=getEntryStatus(c.id);const col=gsColors[c.gs]||{bg:'#eee',color:'#444'};
     const hs=calcHealthScore(c.id);const hsc=hsColor(hs);
-    const stHtml={V:'<span class="status-pill V">🔴</span>',A:'<span class="status-pill A">🟡</span>',G:'<span class="status-pill G">🟢</span>',pending:'<span class="status-pill pending">⏳</span>'}[st];
+    const stHtml=isPartial(c.id)?'<span class="status-pill pending">◑ Parcial</span>':{V:'<span class="status-pill V">🔴 Prob. Real</span>',A:'<span class="status-pill A">🟡 Tomar Ação</span>',G:'<span class="status-pill G">🟢 Acompanhar</span>',pending:'<span class="status-pill pending">⏳ Pendente</span>'}[st];
     const cr=e.churnRisk?(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!==''):[];
     const cd=getContractDaysLeft(c.id);const cts2=getContractsSorted(c.id);const nps=e.npsScore?parseInt(e.npsScore):null;
     const tr=document.createElement('tr');
@@ -1500,7 +1551,7 @@ function filterStatus(st,btn){
   const tog=currentFilter.status===st;
   currentFilter={...currentFilter,status:tog?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false};
   resetAllQuickBtns();
-  if(currentFilter.status){btn.classList.add('active');const l={V:'Vermelhos',G:'Verdes',A:'Amarelos',pending:'Pendentes'};setTitle(l[st]||st,clients.filter(c=>getEntryStatus(c.id)===st).length);}
+  if(currentFilter.status){btn.classList.add('active');const l={V:'Problema Real',G:'Acompanhar e Manter',A:'Tomar Ação',pending:'Pendentes',partial:'Parciais'};const count=st==='pending'?clients.filter(c=>isPending(c.id)).length:st==='partial'?clients.filter(c=>isPartial(c.id)).length:clients.filter(c=>getEntryStatus(c.id)===st).length;setTitle(l[st]||st,count);}
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
   render();
 }
@@ -1514,7 +1565,7 @@ function filterChurn(btn){
 function filterVIP(btn){
   currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:'all',bookPending:false,worsened:false,improved:false,churn:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
-  if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ VIP / Tier A',clients.filter(c=>c.vip||c.tier==='A').length);}
+  if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ Tier A',clients.filter(c=>c.vip||c.tier==='A').length);}
   else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
   render();
 }
@@ -1530,11 +1581,11 @@ function filterByCard(st){
   const tog=currentFilter.status===st&&st!=='all';
   currentFilter={...currentFilter,status:(st==='all'||tog)?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false,search:''};
   document.querySelector('.search-input').value='';resetAllQuickBtns();document.getElementById('gs-all').classList.add('active');
-  const l={V:'🔴 Vermelhos',A:'🟡 Amarelos',G:'🟢 Verdes',pending:'⏳ Pendentes'};
+  const l={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar e Manter',pending:'⏳ Pendentes',churn:'⚠ Risco de Churn'};
   const as=currentFilter.status;const count=as?clients.filter(c=>getEntryStatus(c.id)===as).length:clients.length;
   setTitle(l[as]||'Todas as Contas',count);
   document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
-  const cm={null:'sc-all',V:'sc-red',A:'sc-yellow',G:'sc-green',pending:'sc-all'};
+  const cm={null:'sc-all',V:'sc-red',A:'sc-yellow',G:'sc-green',pending:'sc-pending',churn:'sc-churn'};
   (document.getElementById(cm[as])||document.getElementById('sc-all')).classList.add('active');render();
 }
 function filterWorsened(btn){
