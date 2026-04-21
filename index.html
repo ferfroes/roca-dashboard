@@ -274,6 +274,17 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 .empty-icon{font-size:36px;margin-bottom:10px;opacity:.35;}
 .empty-title{font-weight:600;font-size:14px;color:var(--ink2);margin-bottom:5px;}
 
+
+/* ── CONTRACT ADMIN ── */
+.contract-admin-list{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;max-height:360px;overflow-y:auto;}
+.contract-admin-client{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 12px;font-weight:600;font-size:12px;color:var(--ink2);display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.03em;}
+.contract-admin-client:last-child{border-bottom:none;}
+.contract-admin-row{background:var(--card);border-bottom:1px solid var(--border);padding:6px 12px 6px 24px;display:grid;grid-template-columns:1fr 130px 28px;gap:8px;align-items:center;}
+.contract-admin-row:last-child{border-bottom:none;}
+.contract-admin-row input{border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px 7px;font-size:11.5px;font-family:'Plus Jakarta Sans',sans-serif;background:var(--card);color:var(--ink);width:100%;}
+.contract-admin-row input:focus{outline:none;border-color:var(--accent3);}
+.contract-sub-label{font-size:9.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;}
+
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   .sidebar{display:none;}
@@ -306,8 +317,8 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 <!-- MAIN TABS -->
 <div style="background:var(--accent);border-bottom:1px solid rgba(255,255,255,.1);">
   <div class="main-tabs">
-    <button class="main-tab active" onclick="switchMainTab('gerencial',this)">📊 Gerencial</button>
-    <button class="main-tab" onclick="switchMainTab('administrativa',this)">⚙️ Administrativa</button>
+    <button class="main-tab active" onclick="switchMainTab('gerencial',this)">📊 Gestão</button>
+    <button class="main-tab" onclick="switchMainTab('administrativa',this)">⚙️ Administração</button>
   </div>
 </div>
 
@@ -448,13 +459,18 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 <div class="tab-content" id="tab-administrativa">
   <div class="admin-full">
     <div class="view-header">
-      <div class="view-title">Administrativa <span>Cadastro de clientes e CS</span></div>
+      <div class="view-title">Administração <span>Cadastro de clientes e CS</span></div>
       <div class="view-actions">
         <div class="upload-zone" style="padding:8px 14px;border-style:dashed;border-width:1px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--accent2);font-weight:500;" onclick="document.getElementById('xlsxInput').click()">
           <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" onchange="importFile(this)" style="display:none;">
           📥 Importar Excel
         </div>
+        <button class="btn" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteAllClients()">🗑 Apagar Todos</button>
         <button class="btn btn-primary" onclick="addClientRow()">+ Novo Cliente</button>
+        <div style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);font-size:12.5px;font-weight:500;cursor:pointer;color:var(--ink2);transition:all .12s;" onclick="document.getElementById('contractXlsxInput').click()" onmouseover="this.style.borderColor='var(--accent3)';this.style.color='var(--accent2)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink2)'">
+          <input type="file" id="contractXlsxInput" accept=".xlsx,.xls,.csv" onchange="importContracts(this)" style="display:none;">
+          📄 Upload de Contratos
+        </div>
         <button class="btn btn-primary" onclick="saveAdmin()">💾 Salvar Alterações</button>
       </div>
     </div>
@@ -477,25 +493,39 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
         <button class="add-row-btn" onclick="addGSRow()">+ Adicionar CS</button>
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
-        <div style="font-weight:700;font-size:13px;color:var(--ink);margin-bottom:6px;">📋 Importação Excel — Estrutura esperada</div>
-        <div style="font-size:11.5px;color:var(--muted);line-height:1.8;font-family:'JetBrains Mono',monospace;">
-          Col A: Nome do cliente<br>
-          Col B: CS responsável<br>
-          Col C: Book (S / N)<br>
-          Col D: Tier (A / B / C)<br>
-          
-          
-          Col E: Vencimento contrato (dd/mm/aaaa)<br>
-          Col F: NPS (1–10)<br>
-          Col G: Data NPS (dd/mm/aaaa)<br>
-          Col H: Pipeline descrição<br>
-          Col I: Pipeline valor (ex: 8000)<br>
-          Col J: Pipeline estágio (Identificado / Em negociação / Proposta enviada / Fechado)<br>
-          <br>
-          <span style="color:var(--accent2);">Linha 1 = cabeçalho (ignorada automaticamente)</span>
+        <div style="font-weight:700;font-size:13px;color:var(--ink);margin-bottom:6px;">📋 Estrutura dos arquivos Excel</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent2);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;">📥 Arquivo 1 — Clientes</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.9;font-family:'JetBrains Mono',monospace;">
+              Col A: Nome do Cliente<br>
+              Col B: CS Responsável<br>
+              Col C: Book (S / N)<br>
+              Col D: Tier (A / B / C)<br>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent2);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;">📄 Arquivo 2 — Contratos</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.9;font-family:'JetBrains Mono',monospace;">
+              Col A: Nome do Cliente<br>
+              Col B: Nome do Contrato<br>
+              Col C: Data de Vencimento<br>
+            </div>
+          </div>
         </div>
-        <div id="import-preview" style="margin-top:12px;"></div>
+        <div style="margin-top:8px;font-size:10.5px;color:var(--accent2);font-family:'JetBrains Mono',monospace;">Linha 1 = cabeçalho (ignorada automaticamente)</div>
+        <div id="import-preview" style="margin-top:10px;"></div>
+        <div id="contract-import-preview" style="margin-top:10px;"></div>
       </div>
+    </div>
+
+    <!-- CONTRACTS ADMIN -->
+    <div style="margin-top:20px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-weight:700;font-size:13px;color:var(--ink);">📄 Contratos Cadastrados</div>
+        <button class="btn" onclick="addContractManual()" style="font-size:12px;">+ Adicionar Contrato</button>
+      </div>
+      <div class="contract-admin-list" id="contractAdminList"></div>
     </div>
   </div>
 </div>
@@ -719,7 +749,8 @@ async function spLoadAll(){
       const re=data.entries||{};const fixed={};Object.keys(re).forEach(k=>{fixed[parseInt(k)]=re[k];});entries=fixed;
       const rh=data.history||{};weekHistory={};
       Object.keys(rh).forEach(wk=>{const ws={};Object.keys(rh[wk]).forEach(c=>{ws[parseInt(c)]=rh[wk][c];});weekHistory[wk]=ws;});
-    }else{entries={};weekHistory={};}
+      contracts=data.contracts||[];
+    }else{entries={};weekHistory={};contracts=[];}
     showSyncStatus('ok');return true;
   }catch(e){console.error('Firebase load failed:',e);showSyncStatus('offline');return false;}
 }
@@ -735,117 +766,117 @@ function showSyncStatus(state){
 // ── DATA ──────────────────────────────────────────────────────────────────────
 
 let clients=[
-  {id:1,name:"MYRALIS",gs:"Daiane Queiroz",book:false,tier:"B",vip:false,contractEnd:""},
-  {id:2,name:"JM TEIXEIRA CONSULTORIA",gs:"Alinne Carmo",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:3,name:"DOCILE",gs:"Alinne Carmo",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:4,name:"CATUPIRY",gs:"Alinne Carmo",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:5,name:"AGENCIA CINCO",gs:"Alinne Carmo",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:6,name:"QUATA (VENDAS E TRADE)",gs:"Alinne Carmo",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:7,name:"LELLO CONDOMINIOS LTDA",gs:"Alinne Carmo",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:8,name:"METLIFE",gs:"Fróes",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:9,name:"SERVICE NOW",gs:"Alinne Carmo",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:10,name:"MARCO MKT",gs:"Alinne Carmo",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:11,name:"IFOOD",gs:"Daiane Queiroz",book:false,tier:"A",vip:true,contractEnd:""},
-  {id:12,name:"TVU",gs:"Alinne Carmo",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:13,name:"TOP SHELF PROMOCOES DE VENDAS LTDA",gs:"Alinne Carmo",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:14,name:"AGÊNCIA JE",gs:"Alinne Carmo",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:15,name:"TOP PEOPLE",gs:"Daiane Queiroz",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:16,name:"DM PROMOTER",gs:"Daiane Queiroz",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:17,name:"VOTORANTIM CIMENTOS S.A.",gs:"Daiane Queiroz",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:18,name:"MESSER GASES",gs:"Daiane Queiroz",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:19,name:"SPAR BRASIL SERVIÇOS LTDA",gs:"Daiane Queiroz",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:20,name:"GTEX BRASIL",gs:"Douglas Romão",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:21,name:"AGCO",gs:"Douglas Romão",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:22,name:"COMPRA AGORA SERVICOS DIGITAIS LTDA",gs:"Douglas Romão",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:23,name:"PERNOD RICARD BRASIL",gs:"Douglas Romão",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:24,name:"AXS Energia S/A",gs:"Douglas Romão",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:25,name:"OCQ",gs:"Douglas Romão",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:26,name:"LOGCOMEX",gs:"Douglas Romão",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:27,name:"ATACADÃO",gs:"Telma",book:false,tier:"A",vip:true,contractEnd:""},
-  {id:28,name:"GSI",gs:"Douglas Romão",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:29,name:"LIBBS FARMACÊUTICA",gs:"Lucineia Guizardi",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:30,name:"AEGEA",gs:"Michelle Stefenson",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:31,name:"CERVEJARIA PETRÓPOLIS",gs:"Michelle Stefenson",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:32,name:"PROTEGE",gs:"Michelle Stefenson",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:33,name:"ACHÉ",gs:"Michelle Stefenson",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:34,name:"BRASILSEG",gs:"Michelle Stefenson",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:35,name:"E-UB COMERCIO LTDA",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:36,name:"LWART SOLUÇÕES AMBIENTAIS S/A",gs:"Telma",book:false,tier:"B",vip:false,contractEnd:""},
-  {id:37,name:"GREEN4T SOLUCOES TI SA",gs:"Telma",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:38,name:"MANIKRAFT",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:39,name:"APELETTROLIGHT",gs:"Telma",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:40,name:"UNIMED SEGURADORA S/A",gs:"Telma",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:41,name:"OXITENO S/A INDUSTRIA E COMERCIO",gs:"Telma",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:42,name:"J&T",gs:"Telma",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:43,name:"EDGEFY - SISMETAL",gs:"Telma",book:true,tier:"C",vip:false,contractEnd:""},
-  {id:44,name:"SOROCABA REFRESCOS",gs:"Renata Gomes",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:45,name:"PPRO BRASIL LTDA",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:46,name:"ANHEMBI",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:47,name:"VIGOR",gs:"Renata Gomes",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:48,name:"M & S MONITORAMENTO",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:49,name:"PISCITELLE",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:50,name:"SANTA MARCELINA",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:51,name:"SO FILTROS GESTAO EMPRESARIAL EIRELI",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:52,name:"ODONTOCOMPANY FRANCHISING S.A.",gs:"Telma",book:false,tier:"B",vip:false,contractEnd:""},
-  {id:53,name:"INSTITUTO FÁBIO HADDAD",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:54,name:"CKS",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:55,name:"TROMINK INDUSTRIAL LTDA.",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:56,name:"SMP AUTOMOTIVE PROD. AUTOM. DO BRASIL LTDA.",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:57,name:"Maratá",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:58,name:"SILVA SOLAR",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:59,name:"GUSMÃO",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:60,name:"YES SERVIÇOS TERCEIRIZADOS LTDA",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:61,name:"Stefanini Comércio",gs:"Alinne Carmo",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:62,name:"RODOLIPE LOGISTICA LTDA",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:63,name:"CLASSY BRANDS IMP E COM DE COS",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:64,name:"SANTA MASSA",gs:"Alinne Carmo",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:65,name:"XCELL",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:66,name:"AGRICOLA XINGU S/A",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:67,name:"DOCWISE SOLUCOES",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:68,name:"SAGA",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:69,name:"RISEL COMBUSTIVEIS LTDA",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:70,name:"TRUZZI ADVOGADOS",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:71,name:"UNILEVER",gs:"Renata Gomes",book:true,tier:"A",vip:true,contractEnd:""},
-  {id:72,name:"VERTTECH",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:73,name:"SICOOB",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:74,name:"VOCALCOM",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:75,name:"SANIMAX",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:76,name:"FLORARTE",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:77,name:"PRO TRADE",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:78,name:"HARMMONYA",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:79,name:"IBAR",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:80,name:"LEO GERADORES",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:81,name:"DM ACTION",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:82,name:"ANCHIETA ALIMENTOS",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:83,name:"DOXOR",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:84,name:"A55 Consultoria",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:85,name:"SAFER",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:86,name:"ISAS - INSTITUTO DE SAUDE E ACAO SOCIAL",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:87,name:"GRUPO IGO",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:88,name:"GRUPO SECURITY",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:89,name:"RTI AUTOMAÇÃO",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:90,name:"ADMPESTANA",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:91,name:"TAGUI CERVEJARIA - RT166",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:92,name:"RANDSTAD",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:93,name:"ANA CLARA ANTUNES SARAIVA",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:94,name:"INTERMEIOS",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:95,name:"SKYCOMPANY",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:96,name:"RAUL SERGIO SUAREZ MIYAZAKI",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:97,name:"LONDOR",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:98,name:"WEDIGITEK",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:99,name:"BPOFFICER",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:100,name:"KNAPP",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:101,name:"CONSERSAS OLÉ",gs:"Douglas Romão",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:102,name:"GRUPO TB",gs:"Renata Gomes",book:true,tier:"B",vip:false,contractEnd:""},
-  {id:103,name:"IconIt",gs:"Telma",book:false,tier:"C",vip:false,contractEnd:""},
-  {id:104,name:"TOTVS",gs:"Renata Gomes",book:false,tier:"B",vip:false,contractEnd:""},
+  {id:1,name:"MYRALIS",gs:"Daiane Queiroz",book:false,tier:"B",vip:false},
+  {id:2,name:"JM TEIXEIRA CONSULTORIA",gs:"Alinne Carmo",book:false,tier:"C",vip:false},
+  {id:3,name:"DOCILE",gs:"Alinne Carmo",book:true,tier:"B",vip:false},
+  {id:4,name:"CATUPIRY",gs:"Alinne Carmo",book:true,tier:"B",vip:false},
+  {id:5,name:"AGENCIA CINCO",gs:"Alinne Carmo",book:false,tier:"C",vip:false},
+  {id:6,name:"QUATA (VENDAS E TRADE)",gs:"Alinne Carmo",book:true,tier:"B",vip:false},
+  {id:7,name:"LELLO CONDOMINIOS LTDA",gs:"Alinne Carmo",book:true,tier:"B",vip:false},
+  {id:8,name:"METLIFE",gs:"Fróes",book:true,tier:"A",vip:true},
+  {id:9,name:"SERVICE NOW",gs:"Alinne Carmo",book:true,tier:"B",vip:false},
+  {id:10,name:"MARCO MKT",gs:"Alinne Carmo",book:true,tier:"C",vip:false},
+  {id:11,name:"IFOOD",gs:"Daiane Queiroz",book:false,tier:"A",vip:true},
+  {id:12,name:"TVU",gs:"Alinne Carmo",book:true,tier:"C",vip:false},
+  {id:13,name:"TOP SHELF PROMOCOES DE VENDAS LTDA",gs:"Alinne Carmo",book:true,tier:"C",vip:false},
+  {id:14,name:"AGÊNCIA JE",gs:"Alinne Carmo",book:true,tier:"C",vip:false},
+  {id:15,name:"TOP PEOPLE",gs:"Daiane Queiroz",book:true,tier:"B",vip:false},
+  {id:16,name:"DM PROMOTER",gs:"Daiane Queiroz",book:true,tier:"C",vip:false},
+  {id:17,name:"VOTORANTIM CIMENTOS S.A.",gs:"Daiane Queiroz",book:true,tier:"A",vip:true},
+  {id:18,name:"MESSER GASES",gs:"Daiane Queiroz",book:true,tier:"B",vip:false},
+  {id:19,name:"SPAR BRASIL SERVIÇOS LTDA",gs:"Daiane Queiroz",book:true,tier:"B",vip:false},
+  {id:20,name:"GTEX BRASIL",gs:"Douglas Romão",book:true,tier:"B",vip:false},
+  {id:21,name:"AGCO",gs:"Douglas Romão",book:true,tier:"A",vip:true},
+  {id:22,name:"COMPRA AGORA SERVICOS DIGITAIS LTDA",gs:"Douglas Romão",book:true,tier:"C",vip:false},
+  {id:23,name:"PERNOD RICARD BRASIL",gs:"Douglas Romão",book:true,tier:"A",vip:true},
+  {id:24,name:"AXS Energia S/A",gs:"Douglas Romão",book:true,tier:"B",vip:false},
+  {id:25,name:"OCQ",gs:"Douglas Romão",book:true,tier:"C",vip:false},
+  {id:26,name:"LOGCOMEX",gs:"Douglas Romão",book:true,tier:"B",vip:false},
+  {id:27,name:"ATACADÃO",gs:"Telma",book:false,tier:"A",vip:true},
+  {id:28,name:"GSI",gs:"Douglas Romão",book:true,tier:"C",vip:false},
+  {id:29,name:"LIBBS FARMACÊUTICA",gs:"Lucineia Guizardi",book:true,tier:"A",vip:true},
+  {id:30,name:"AEGEA",gs:"Michelle Stefenson",book:true,tier:"A",vip:true},
+  {id:31,name:"CERVEJARIA PETRÓPOLIS",gs:"Michelle Stefenson",book:true,tier:"A",vip:true},
+  {id:32,name:"PROTEGE",gs:"Michelle Stefenson",book:true,tier:"A",vip:true},
+  {id:33,name:"ACHÉ",gs:"Michelle Stefenson",book:true,tier:"A",vip:true},
+  {id:34,name:"BRASILSEG",gs:"Michelle Stefenson",book:true,tier:"B",vip:false},
+  {id:35,name:"E-UB COMERCIO LTDA",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:36,name:"LWART SOLUÇÕES AMBIENTAIS S/A",gs:"Telma",book:false,tier:"B",vip:false},
+  {id:37,name:"GREEN4T SOLUCOES TI SA",gs:"Telma",book:true,tier:"B",vip:false},
+  {id:38,name:"MANIKRAFT",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:39,name:"APELETTROLIGHT",gs:"Telma",book:true,tier:"C",vip:false},
+  {id:40,name:"UNIMED SEGURADORA S/A",gs:"Telma",book:true,tier:"B",vip:false},
+  {id:41,name:"OXITENO S/A INDUSTRIA E COMERCIO",gs:"Telma",book:true,tier:"B",vip:false},
+  {id:42,name:"J&T",gs:"Telma",book:true,tier:"B",vip:false},
+  {id:43,name:"EDGEFY - SISMETAL",gs:"Telma",book:true,tier:"C",vip:false},
+  {id:44,name:"SOROCABA REFRESCOS",gs:"Renata Gomes",book:false,tier:"C",vip:false},
+  {id:45,name:"PPRO BRASIL LTDA",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:46,name:"ANHEMBI",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:47,name:"VIGOR",gs:"Renata Gomes",book:true,tier:"A",vip:true},
+  {id:48,name:"M & S MONITORAMENTO",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:49,name:"PISCITELLE",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:50,name:"SANTA MARCELINA",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:51,name:"SO FILTROS GESTAO EMPRESARIAL EIRELI",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:52,name:"ODONTOCOMPANY FRANCHISING S.A.",gs:"Telma",book:false,tier:"B",vip:false},
+  {id:53,name:"INSTITUTO FÁBIO HADDAD",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:54,name:"CKS",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:55,name:"TROMINK INDUSTRIAL LTDA.",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:56,name:"SMP AUTOMOTIVE PROD. AUTOM. DO BRASIL LTDA.",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:57,name:"Maratá",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:58,name:"SILVA SOLAR",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:59,name:"GUSMÃO",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:60,name:"YES SERVIÇOS TERCEIRIZADOS LTDA",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:61,name:"Stefanini Comércio",gs:"Alinne Carmo",book:false,tier:"C",vip:false},
+  {id:62,name:"RODOLIPE LOGISTICA LTDA",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:63,name:"CLASSY BRANDS IMP E COM DE COS",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:64,name:"SANTA MASSA",gs:"Alinne Carmo",book:false,tier:"C",vip:false},
+  {id:65,name:"XCELL",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:66,name:"AGRICOLA XINGU S/A",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:67,name:"DOCWISE SOLUCOES",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:68,name:"SAGA",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:69,name:"RISEL COMBUSTIVEIS LTDA",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:70,name:"TRUZZI ADVOGADOS",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:71,name:"UNILEVER",gs:"Renata Gomes",book:true,tier:"A",vip:true},
+  {id:72,name:"VERTTECH",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:73,name:"SICOOB",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:74,name:"VOCALCOM",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:75,name:"SANIMAX",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:76,name:"FLORARTE",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:77,name:"PRO TRADE",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:78,name:"HARMMONYA",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:79,name:"IBAR",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:80,name:"LEO GERADORES",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:81,name:"DM ACTION",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:82,name:"ANCHIETA ALIMENTOS",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:83,name:"DOXOR",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:84,name:"A55 Consultoria",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:85,name:"SAFER",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:86,name:"ISAS - INSTITUTO DE SAUDE E ACAO SOCIAL",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:87,name:"GRUPO IGO",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:88,name:"GRUPO SECURITY",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:89,name:"RTI AUTOMAÇÃO",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:90,name:"ADMPESTANA",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:91,name:"TAGUI CERVEJARIA - RT166",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:92,name:"RANDSTAD",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:93,name:"ANA CLARA ANTUNES SARAIVA",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:94,name:"INTERMEIOS",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:95,name:"SKYCOMPANY",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:96,name:"RAUL SERGIO SUAREZ MIYAZAKI",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:97,name:"LONDOR",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:98,name:"WEDIGITEK",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:99,name:"BPOFFICER",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:100,name:"KNAPP",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:101,name:"CONSERSAS OLÉ",gs:"Douglas Romão",book:false,tier:"C",vip:false},
+  {id:102,name:"GRUPO TB",gs:"Renata Gomes",book:true,tier:"B",vip:false},
+  {id:103,name:"IconIt",gs:"Telma",book:false,tier:"C",vip:false},
+  {id:104,name:"TOTVS",gs:"Renata Gomes",book:false,tier:"B",vip:false},
 ];
 clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
 
 let gsList=["Alinne Carmo","Daiane Queiroz","Douglas Romão","Fróes","Lucineia Guizardi","Michelle Stefenson","Renata Gomes","Telma"];
 const gsColors={"Alinne Carmo":{bg:"#FEF3C7",color:"#92400E"},"Daiane Queiroz":{bg:"#FCE7F3",color:"#9D174D"},"Douglas Romão":{bg:"#E0E7FF",color:"#3730A3"},"Fróes":{bg:"#0D2B4E",color:"#FFFFFF"},"Lucineia Guizardi":{bg:"#D1FAE5",color:"#065F46"},"Michelle Stefenson":{bg:"#FEE2E2",color:"#991B1B"},"Renata Gomes":{bg:"#ECFDF5",color:"#047857"},"Telma":{bg:"#F0FDF4",color:"#166534"}};
 
-let entries={},weekHistory={};
+let entries={},weekHistory={},contracts=[];
 let currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,contractDays:null};
 let currentView='list',editingClientId=null;
 let currentFarol={R:null,O:null,C:null,A:null},churnSelected=new Set(),currentBilling=null;
@@ -862,10 +893,25 @@ function getEntryStatus_from(e){if(!e||!e.R)return'pending';if([e.R,e.O,e.C,e.A]
 function hasChurnRisk(id){const e=entries[id];if(!e||!e.churnRisk)return false;const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];return r.some(x=>x!=='none'&&x!=='');}
 
 // ── CONTRACT HELPERS ─────────────────────────────────────────────────────────
+// Returns all contracts for a client (normalised name match)
+function getClientContracts(id){
+  const cl=clients.find(x=>x.id===id);if(!cl)return[];
+  const norm=s=>s.toLowerCase().trim();
+  return contracts.filter(ct=>norm(ct.clientName)===norm(cl.name));
+}
+// Returns days until most urgent contract (smallest positive days)
 function getContractDaysLeft(id){
-  const c=clients.find(x=>x.id===id);
-  if(!c||!c.contractEnd)return null;
-  return daysUntil(c.contractEnd);
+  const cts=getClientContracts(id);
+  if(!cts.length)return null;
+  const days=cts.map(ct=>daysUntil(ct.endDate)).filter(d=>d!==null);
+  if(!days.length)return null;
+  return Math.min(...days);
+}
+// Returns ALL contracts with their days, sorted ascending
+function getContractsSorted(id){
+  return getClientContracts(id)
+    .map(ct=>({...ct,days:daysUntil(ct.endDate)}))
+    .sort((a,b)=>(a.days??9999)-(b.days??9999));
 }
 function contractBucket(days){
   if(days===null)return null;
@@ -914,10 +960,21 @@ function calcHealthScore(id){
   const visitCritical=tier==='A'?60:90;
   if(vd===null)penalty+=5;else if(vd>visitCritical)penalty+=10;else if(vd>visitThreshold)penalty+=5;
 
-  // Contrato vencendo e não renovado
-  const cd=getContractDaysLeft(id);
-  if(cd!==null&&cd<=30)penalty+=20; // faz parte do cálculo de churn auto
-  else if(cd!==null&&cd<=60)penalty+=8;
+  // Contratos — penalidade por múltiplos contratos críticos (teto -30)
+  const cts=getContractsSorted(id);
+  if(cts.length>0){
+    let contractPenalty=0;
+    cts.forEach((ct,i)=>{
+      if(ct.days===null)return;
+      let p=0;
+      if(ct.days<=30)p=20;
+      else if(ct.days<=60)p=8;
+      // Contratos adicionais críticos acumulam com peso decrescente
+      if(i>0)p=Math.round(p*0.5);
+      contractPenalty+=p;
+    });
+    penalty+=Math.min(30,contractPenalty); // teto -30
+  }
 
   // NPS
   const nps=e.npsScore?parseInt(e.npsScore):null;
@@ -982,11 +1039,23 @@ function calcHSDetail(id){
   else if(vd>vThr){penalty+=5;factors.push({type:'warning',icon:'🤝',label:`Última visita há ${vd} dias`,val:'-5'});}
   else{factors.push({type:'positive',icon:'🤝',label:`Visita recente (${vd} dias atrás)`,val:'✓'});}
 
-  const cd=getContractDaysLeft(id);
-  if(cd!==null&&cd<=30){penalty+=20;factors.push({type:'negative',icon:'📄',label:`Contrato vence em ${cd} dias — renovação urgente`,val:'-20'});checklist.push({done:false,text:`Iniciar processo de renovação (${cd} dias restantes)`});}
-  else if(cd!==null&&cd<=60){penalty+=8;factors.push({type:'warning',icon:'📄',label:`Contrato vence em ${cd} dias`,val:'-8'});checklist.push({done:false,text:`Iniciar conversa de renovação (${cd} dias restantes)`});}
-  else if(cd===null){checklist.push({done:false,text:'Cadastrar data de vencimento do contrato'});}
-  else{factors.push({type:'positive',icon:'📄',label:`Contrato vence em ${cd} dias`,val:'✓'});}
+  const cts=getContractsSorted(id);
+  if(cts.length===0){
+    checklist.push({done:false,text:'Cadastrar contratos do cliente (aba Administração)'});
+  }else{
+    let contractPenalty=0;
+    cts.forEach((ct,i)=>{
+      if(ct.days===null)return;
+      let p=0;let ftype='positive';let fval='✓';
+      if(ct.days<=30){p=i===0?20:10;ftype='negative';fval=`-${p}`;checklist.push({done:false,text:`Renovar: ${ct.contractName} (${ct.days} dias)`});}
+      else if(ct.days<=60){p=i===0?8:4;ftype='warning';fval=`-${p}`;checklist.push({done:false,text:`Iniciar conversa de renovação: ${ct.contractName} (${ct.days} dias)`});}
+      contractPenalty+=p;
+      const label=`${ct.contractName} — ${ct.days!==null?ct.days+'d':'sem data'}`;
+      factors.push({type:ftype,icon:'📄',label,val:fval});
+    });
+    penalty+=Math.min(30,contractPenalty);
+    if(contractPenalty===0)factors.push({type:'positive',icon:'✅',label:`${cts.length} contrato${cts.length>1?'s':''} em dia`,val:'✓'});
+  }
 
   const nps=e.npsScore?parseInt(e.npsScore):null;const npsAge=e.npsDate?daysSince(e.npsDate):null;
   if(nps===null){penalty+=8;factors.push({type:'warning',icon:'⭐',label:'NPS não registrado (falta de engajamento)',val:'-8'});checklist.push({done:false,text:'Registrar NPS do trimestre'});}
@@ -1024,10 +1093,10 @@ async function init(){
   const fr=new Date(mn);fr.setDate(mn.getDate()+4);
   const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   document.getElementById('weekBadge').textContent=`Semana ${fmt(mn)} – ${fmt(fr)}`;
-  buildSidebar();renderAdminList();renderGSList();
+  buildSidebar();renderAdminList();renderGSList();renderContractAdminList();
   document.getElementById('sc-all').classList.add('active');
   const ok=await spLoadAll();
-  if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);}
+  if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');const sc2=localStorage.getItem('roca_contracts');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);if(sc2)contracts=JSON.parse(sc2);}
   render();
 }
 
@@ -1070,65 +1139,88 @@ function renderGSHealthStrip(){
 
 // ── CONTRACT PANEL ────────────────────────────────────────────────────────────
 function updateContractPanel(){
-  const now=new Date();
-  const buckets={30:[],60:[],90:[],999:[]};
-  clients.forEach(c=>{
-    if(!c.contractEnd)return;
-    const d=daysUntil(c.contractEnd);
-    if(d===null)return;
-    if(d<=30)buckets[30].push(c);
-    else if(d<=60)buckets[60].push(c);
-    else if(d<=90)buckets[90].push(c);
-    else buckets[999].push(c);
+  // Count individual contracts per bucket
+  const buckets={30:0,60:0,90:0,999:0};
+  contracts.forEach(ct=>{
+    const d=daysUntil(ct.endDate);if(d===null)return;
+    if(d<=30)buckets[30]++;
+    else if(d<=60)buckets[60]++;
+    else if(d<=90)buckets[90]++;
+    else buckets[999]++;
   });
-  document.getElementById('cc-count-30').textContent=buckets[30].length;
-  document.getElementById('cc-count-60').textContent=buckets[60].length;
-  document.getElementById('cc-count-90').textContent=buckets[90].length;
-  document.getElementById('cc-count-over').textContent=buckets[999].length;
+  document.getElementById('cc-count-30').textContent=buckets[30];
+  document.getElementById('cc-count-60').textContent=buckets[60];
+  document.getElementById('cc-count-90').textContent=buckets[90];
+  document.getElementById('cc-count-over').textContent=buckets[999];
 }
 
 function filterByContract(days){
-  // Toggle
   if(currentFilter.contractDays===days){currentFilter.contractDays=null;}
   else{currentFilter.contractDays=days;}
   document.querySelectorAll('.contract-card').forEach(c=>c.classList.remove('active'));
   if(currentFilter.contractDays!==null){
     document.getElementById(`cc-${days}`).classList.add('active');
-    // Show detail modal
-    const bucketClients=clients.filter(c=>{
-      const d=daysUntil(c.contractEnd);if(d===null)return false;
+    // Filter contracts in bucket
+    const bucketContracts=contracts.filter(ct=>{
+      const d=daysUntil(ct.endDate);if(d===null)return false;
       if(days===30)return d<=30;
       if(days===60)return d>30&&d<=60;
       if(days===90)return d>60&&d<=90;
       return d>90;
-    }).sort((a,b)=>{const da=daysUntil(a.contractEnd)||9999,db=daysUntil(b.contractEnd)||9999;return da-db;});
+    }).sort((a,b)=>(daysUntil(a.endDate)||9999)-(daysUntil(b.endDate)||9999));
+    // Group by client
+    const byClient={};
+    bucketContracts.forEach(ct=>{
+      const norm=ct.clientName.toLowerCase().trim();
+      if(!byClient[norm])byClient[norm]={name:ct.clientName,contracts:[]};
+      byClient[norm].contracts.push({...ct,days:daysUntil(ct.endDate)});
+    });
     const labels={30:'Vencendo em até 30 dias',60:'Vencendo em 31–60 dias',90:'Vencendo em 61–90 dias',999:'Vencendo em mais de 90 dias'};
     document.getElementById('contractModalTitle').textContent=labels[days]||'Contratos';
-    document.getElementById('contractModalSub').textContent=`${bucketClients.length} conta${bucketClients.length!==1?'s':''}`;
+    document.getElementById('contractModalSub').textContent=`${bucketContracts.length} contrato${bucketContracts.length!==1?'s':''} · ${Object.keys(byClient).length} cliente${Object.keys(byClient).length!==1?'s':''}`;
     const list=document.getElementById('contractDetailList');list.innerHTML='';
-    if(bucketClients.length===0){list.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-title">Nenhum contrato nesta faixa</div></div>';
+    if(!bucketContracts.length){
+      list.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-title">Nenhum contrato nesta faixa</div></div>';
     }else{
-      bucketClients.forEach(c=>{
-        const d=daysUntil(c.contractEnd);
-        const col=gsColors[c.gs]||{bg:'#eee',color:'#444'};
-        const urgColor=d<=30?'var(--red)':d<=60?'var(--yellow)':'var(--accent2)';
-        const row=document.createElement('div');row.className='contract-detail-row';
-        row.innerHTML=`
+      Object.values(byClient).forEach(grp=>{
+        const cl=clients.find(x=>x.name.toLowerCase().trim()===grp.name.toLowerCase().trim());
+        const col=cl?gsColors[cl.gs]||{bg:'#eee',color:'#444'}:{bg:'#eee',color:'#444'};
+        const tier=cl?cl.tier||'C':'C';const vip=cl?cl.vip:false;
+        // Client header row
+        const hdr=document.createElement('div');
+        hdr.className='contract-detail-row';
+        hdr.style.cssText='background:var(--surface);padding:10px 16px;cursor:pointer;';
+        hdr.innerHTML=`
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:600;font-size:13px;color:var(--ink);">${c.name}${c.vip?' ⭐':''}</div>
-            <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
-              <span class="badge" style="background:${col.bg};color:${col.color};">${c.gs.split(' ')[0]}</span>
-              <span class="badge badge-tier-${(c.tier||'c').toLowerCase()}">Tier ${c.tier||'C'}</span>
-              ${''}
+            <div style="font-weight:700;font-size:13px;color:var(--ink);">${grp.name}${vip?' ⭐':''}</div>
+            <div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;">
+              ${cl?`<span class="badge" style="background:${col.bg};color:${col.color};">${cl.gs.split(' ')[0]}</span>`:''}
+              <span class="badge badge-tier-${tier.toLowerCase()}">Tier ${tier}</span>
+              <span class="badge" style="background:var(--surface2);color:var(--muted);">${grp.contracts.length} contrato${grp.contracts.length>1?'s':''}</span>
             </div>
           </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:${urgColor};">${d} dias</div>
-            <div style="font-size:10.5px;color:var(--muted);">vence ${new Date(c.contractEnd).toLocaleDateString('pt-BR')}</div>
-          </div>
         `;
-        row.onclick=()=>{closeModal('contractModal');openFillModal(c.id);};
-        list.appendChild(row);
+        if(cl)hdr.onclick=()=>{closeModal('contractModal');openFillModal(cl.id);};
+        list.appendChild(hdr);
+        // Sub-rows per contract
+        grp.contracts.forEach(ct=>{
+          const urgColor=ct.days<=30?'var(--red)':ct.days<=60?'var(--yellow)':'var(--accent2)';
+          const urgBg=ct.days<=30?'var(--red-bg)':ct.days<=60?'var(--yellow-bg)':'var(--accent-bg)';
+          const sub=document.createElement('div');
+          sub.className='contract-detail-row';
+          sub.style.cssText='padding:7px 16px 7px 28px;border-left:3px solid var(--border2);cursor:default;';
+          sub.innerHTML=`
+            <div style="flex:1;font-size:12px;color:var(--ink2);">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-right:4px;">└</span>
+              ${ct.contractName}
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${urgColor};background:${urgBg};padding:2px 8px;border-radius:4px;">${ct.days}d</span>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">${new Date(ct.endDate+'T12:00:00').toLocaleDateString('pt-BR')}</div>
+            </div>
+          `;
+          list.appendChild(sub);
+        });
       });
     }
     document.getElementById('contractModal').classList.add('open');
@@ -1199,9 +1291,17 @@ function renderList(fc){
     if(md!==null){const c2=md>21?'var(--red)':md>14?'var(--yellow)':'var(--muted)';meetHtml=`<span class="badge" style="color:${c2};background:var(--surface);" title="Última reunião: ${e.lastMeeting}">📹 ${md}d</span>`;}
     if(vd!==null){const c2=vd>60?'var(--red)':vd>30?'var(--yellow)':'var(--muted)';visitHtml=`<span class="badge" style="color:${c2};background:var(--surface);" title="Última visita: ${e.lastVisit}">🤝 ${vd}d</span>`;}
 
-    // Contract expiry badge
-    const cd=getContractDaysLeft(c.id);let contractHtml='';
-    if(cd!==null&&cd<=60){const cc=cd<=30?'var(--red)':'var(--yellow)';contractHtml=`<span class="badge" style="color:${cc};background:${cd<=30?'var(--red-bg)':'var(--yellow-bg)'};" title="Contrato vence em ${cd} dias">📄 ${cd}d</span>`;}
+    // Contract expiry badge (most urgent + count if multiple critical)
+    const cts2=getContractsSorted(c.id);let contractHtml='';
+    const critCts=cts2.filter(ct=>ct.days!==null&&ct.days<=60);
+    if(critCts.length>0){
+      const cd=critCts[0].days;
+      const cc=cd<=30?'var(--red)':'var(--yellow)';
+      const cb=cd<=30?'var(--red-bg)':'var(--yellow-bg)';
+      const extra=critCts.length>1?` · ${critCts.length}c`:'';
+      const titles=critCts.map(ct=>`${ct.contractName}: ${ct.days}d`).join(' | ');
+      contractHtml=`<span class="badge" style="color:${cc};background:${cb};" title="${titles}">📄 ${cd}d${extra}</span>`;
+    }
 
     // NPS badge
     const nps=e.npsScore?parseInt(e.npsScore):null;let npsHtml='';
@@ -1260,7 +1360,7 @@ function renderTable(fc){
     const hs=calcHealthScore(c.id);const hsc=hsColor(hs);
     const stHtml={V:'<span class="status-pill V">🔴</span>',A:'<span class="status-pill A">🟡</span>',G:'<span class="status-pill G">🟢</span>',pending:'<span class="status-pill pending">⏳</span>'}[st];
     const cr=e.churnRisk?(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!==''):[];
-    const cd=getContractDaysLeft(c.id);const nps=e.npsScore?parseInt(e.npsScore):null;
+    const cd=getContractDaysLeft(c.id);const cts2=getContractsSorted(c.id);const nps=e.npsScore?parseInt(e.npsScore):null;
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td style="font-weight:600;font-size:12px;">${c.name}${c.vip?' ⭐':''}</td>
@@ -1271,7 +1371,7 @@ function renderTable(fc){
       <td>${stHtml}</td>
       <td style="font-size:11px;color:var(--churn);">${cr.length?cr.map(x=>x==='billing'?'📉':'❌').join(' '):'–'}</td>
       <td style="font-size:11px;">${nps!==null?nps+'/10':'–'}</td>
-      <td style="font-size:11px;color:${cd!==null&&cd<=30?'var(--red)':cd!==null&&cd<=60?'var(--yellow)':'var(--muted)'};">${cd!==null?cd+'d':'–'}</td>
+      <td style="font-size:11px;">${cts2.length?cts2.slice(0,2).map(ct=>`<span style="color:${ct.days<=30?'var(--red)':ct.days<=60?'var(--yellow)':'var(--muted)'};">${ct.days}d</span>`).join(' ')+(cts2.length>2?'…':''):'–'}</td>
       <td style="font-size:11px;color:var(--muted);max-width:150px;">${e.actionTaken?(e.actionTaken.slice(0,45)+'…'):'–'}</td>
     `;
     tr.onclick=()=>openFillModal(c.id);tbody.appendChild(tr);
@@ -1472,7 +1572,7 @@ function renderAdminList(){
 }
 function updateCF(el){const idx=+el.dataset.idx,f=el.dataset.field;if(f==='book'||f==='vip')clients[idx][f]=el.value==='true';else clients[idx][f]=el.value;}
 function deleteClient(idx){if(!confirm(`Remover "${clients[idx].name}"?`))return;clients.splice(idx,1);renderAdminList();}
-function addClientRow(){const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);clients.push({id:maxId+1,name:'Novo Cliente',gs:gsList[0],book:false,tier:'C',vip:false,contractEnd:''});clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));renderAdminList();}
+function addClientRow(){const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);clients.push({id:maxId+1,name:'Novo Cliente',gs:gsList[0],book:false,tier:'C',vip:false});clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));renderAdminList();}
 
 function renderGSList(){
   const list=document.getElementById('editGSList');list.innerHTML='';
@@ -1480,10 +1580,131 @@ function renderGSList(){
 }
 function addGSRow(){gsList.push('Novo CS');gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));renderGSList();}
 function deleteGS(idx){if(!confirm(`Remover "${gsList[idx]}"?`))return;gsList.splice(idx,1);renderGSList();}
+function renderContractAdminList(){
+  const list=document.getElementById('contractAdminList');
+  if(!list)return;
+  list.innerHTML='';
+  if(!contracts.length){
+    list.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Nenhum contrato cadastrado. Use o botão "Upload de Contratos" ou "+ Adicionar Contrato".</div>';
+    return;
+  }
+  // Group by client
+  const byClient={};
+  contracts.forEach((ct,idx)=>{
+    const norm=ct.clientName.toLowerCase().trim();
+    if(!byClient[norm])byClient[norm]={name:ct.clientName,items:[]};
+    byClient[norm].items.push({...ct,_idx:idx});
+  });
+  Object.values(byClient).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).forEach(grp=>{
+    // Client header
+    const hdr=document.createElement('div');
+    hdr.className='contract-admin-client';
+    hdr.innerHTML=`<span>${grp.name}</span><span class="contract-sub-label">${grp.items.length} contrato${grp.items.length>1?'s':''}</span>`;
+    list.appendChild(hdr);
+    // Contract sub-rows
+    grp.items.forEach(ct=>{
+      const row=document.createElement('div');
+      row.className='contract-admin-row';
+      row.innerHTML=`
+        <input type="text" value="${ct.contractName}" placeholder="Nome do contrato" oninput="contracts[${ct._idx}].contractName=this.value">
+        <input type="date" value="${ct.endDate}" oninput="contracts[${ct._idx}].endDate=this.value" style="font-family:'JetBrains Mono',monospace;font-size:11px;">
+        <button class="del-btn" onclick="deleteContract(${ct._idx})">✕</button>
+      `;
+      list.appendChild(row);
+    });
+  });
+}
+
+function deleteContract(idx){
+  if(!confirm(`Remover contrato "${contracts[idx].contractName}"?`))return;
+  contracts.splice(idx,1);
+  saveContractsToStorage();
+  renderContractAdminList();
+  updateContractPanel();
+}
+
+function addContractManual(){
+  // Find first client to pre-fill, or empty
+  const defaultClient=clients.length?clients[0].name:'';
+  contracts.push({clientName:defaultClient,contractName:'Novo Contrato',endDate:''});
+  saveContractsToStorage();
+  renderContractAdminList();
+  // Scroll to bottom
+  const list=document.getElementById('contractAdminList');
+  if(list)list.scrollTop=list.scrollHeight;
+}
+
+function saveContractsToStorage(){
+  localStorage.setItem('roca_contracts',JSON.stringify(contracts));
+  fbPatch('roca',{contracts}).catch(e=>console.warn('Contract save failed:',e));
+}
+
+function importContracts(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      let start=0;if(data[0]&&typeof data[0][0]==='string'&&isNaN(data[0][0]))start=1;
+      const imported=[];
+      for(let i=start;i<data.length;i++){
+        const r=data[i];
+        const clientName=String(r[0]||'').trim();
+        const contractName=String(r[1]||'').trim();
+        const endDate=parseDate(r[2]);
+        if(!clientName||!contractName)continue;
+        imported.push({clientName,contractName,endDate});
+      }
+      const prev=document.getElementById('contract-import-preview');
+      if(!imported.length){if(prev)prev.innerHTML='<div style="color:var(--red);font-size:12px;padding:6px;">Nenhum contrato detectado. Verifique o formato.</div>';return;}
+      if(prev)prev.innerHTML=`
+        <div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:10px 12px;margin-bottom:8px;">
+          <strong style="color:var(--green);font-size:12px;">✓ ${imported.length} contrato${imported.length>1?'s':''} detectado${imported.length>1?'s':''}</strong>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Substituirá todos os contratos existentes.</div>
+        </div>
+        <div style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;">
+          ${imported.slice(0,15).map(ct=>`<div style="padding:5px 10px;border-bottom:1px solid var(--border);font-size:11.5px;display:flex;justify-content:space-between;"><span><strong>${ct.clientName}</strong> · ${ct.contractName}</span><span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10.5px;">${ct.endDate||'sem data'}</span></div>`).join('')}
+          ${imported.length>15?`<div style="padding:5px 10px;color:var(--muted);font-size:11px;">...e mais ${imported.length-15} contratos</div>`:''}
+        </div>
+        <button class="btn btn-primary" style="width:100%;font-size:12px;" onclick="confirmContractImport()">✓ Confirmar importação de contratos</button>
+      `;
+      window._importedContracts=imported;
+    }catch(err){
+      const prev=document.getElementById('contract-import-preview');
+      if(prev)prev.innerHTML=`<div style="color:var(--red);padding:8px;font-size:12px;">Erro: ${err.message}</div>`;
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function confirmContractImport(){
+  if(!window._importedContracts)return;
+  contracts=window._importedContracts;
+  saveContractsToStorage();
+  renderContractAdminList();
+  updateContractPanel();
+  render();
+  const prev=document.getElementById('contract-import-preview');
+  if(prev)prev.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:7px;padding:8px 12px;font-size:12px;color:var(--green);">✓ ${contracts.length} contrato${contracts.length>1?'s':''} importado${contracts.length>1?'s':''} com sucesso.</div>`;
+  window._importedContracts=null;
+}
+
+function deleteAllClients(){
+  if(!confirm('Apagar TODOS os clientes?\n\nEsta ação também apagará todos os faróis e entradas da semana atual.\nO histórico de semanas anteriores é mantido.\n\nDigite OK para confirmar.'))return;
+  clients=[];entries={};
+  localStorage.setItem('roca_clients',JSON.stringify(clients));
+  localStorage.setItem('roca_entries',JSON.stringify(entries));
+  fbSet('roca/entries',{}).catch(e=>console.warn('Firebase clear failed:',e));
+  buildSidebar();render();renderAdminList();
+  showSyncStatus('saved');
+}
 function saveAdmin(){
   clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));
   localStorage.setItem('roca_clients',JSON.stringify(clients));localStorage.setItem('roca_gs',JSON.stringify(gsList));
-  buildSidebar();render();renderAdminList();renderGSList();
+  saveContractsToStorage();
+  buildSidebar();render();renderAdminList();renderGSList();renderContractAdminList();
   alert('✓ Alterações salvas com sucesso.');
 }
 
@@ -1513,7 +1734,7 @@ function importFile(input){
           gs:String(r[1]||'').trim()||gsList[0],
           book:String(r[2]||'').trim().toUpperCase()==='S',
           tier:(['A','B','C'].includes(String(r[3]||'').trim().toUpperCase())?String(r[3]).trim().toUpperCase():'C'),
-          contractEnd:parseDate(r[4]),
+          // no contractEnd — contracts managed separately
         });
         // NPS and pipeline go into entries separately — skipping here, only client metadata in import
       }
@@ -1542,7 +1763,7 @@ function exportData(){
   clients.forEach(c=>{
     const e=entries[c.id]||{};const st=getEntryStatus(c.id);const hs=calcHealthScore(c.id);
     const cr=e.churnRisk?(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!==''):[];
-    rows.push([c.name,c.tier||'C',c.vip?'Sim':'Não',c.gs,c.contractEnd||'',hs!==null?hs+'%':'–',e.R||'',e.justR||'',e.O||'',e.justO||'',e.C||'',e.justC||'',e.A||'',e.justA||'',st==='V'?'VERMELHO':st==='A'?'AMARELO':st==='G'?'VERDE':'PENDENTE',cr.map(x=>x==='billing'?'Queda faturamento':'Risco cancelamento').join(', ')||'–',e.churnNotes||'',e.npsScore||'',e.npsDate||'',bll[e.billing]||'',e.billingObs||'',e.lastMeeting||'',e.lastVisit||'',e.pipelineDesc||'',e.pipelineValue||'',ps[e.pipelineStage]||'',e.actionTaken||'',e.needFrom||'',e.needFromDate||'',e.bookSent?'Sim':'',e.bookDate||'',e.timestamp?new Date(e.timestamp).toLocaleString('pt-BR'):''
+    rows.push([c.name,c.tier||'C',c.vip?'Sim':'Não',c.gs,hs!==null?hs+'%':'–',e.R||'',e.justR||'',e.O||'',e.justO||'',e.C||'',e.justC||'',e.A||'',e.justA||'',st==='V'?'VERMELHO':st==='A'?'AMARELO':st==='G'?'VERDE':'PENDENTE',cr.map(x=>x==='billing'?'Queda faturamento':'Risco cancelamento').join(', ')||'–',e.churnNotes||'',e.npsScore||'',e.npsDate||'',bll[e.billing]||'',e.billingObs||'',e.lastMeeting||'',e.lastVisit||'',e.pipelineDesc||'',e.pipelineValue||'',ps[e.pipelineStage]||'',e.actionTaken||'',e.needFrom||'',e.needFromDate||'',e.bookSent?'Sim':'',e.bookDate||'',e.timestamp?new Date(e.timestamp).toLocaleString('pt-BR'):''
     ]);
   });
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
