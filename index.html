@@ -4,714 +4,252 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SAFIRA · ROCA Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #0f1117;
-    --ink2: #1e2230;
-    --surface: #f7f8fc;
-    --card: #ffffff;
-    --border: #e2e5ef;
-    --muted: #8890a8;
-    --accent: #1B3A5C;
-    --accent2: #2E6DA4;
-    --green: #16a34a;
-    --green-bg: #f0fdf4;
-    --green-border: #bbf7d0;
-    --yellow: #b45309;
-    --yellow-bg: #fffbeb;
-    --yellow-border: #fde68a;
-    --red: #dc2626;
-    --red-bg: #fef2f2;
-    --red-border: #fecaca;
-    --shadow: 0 1px 3px rgba(15,17,23,.06), 0 4px 16px rgba(15,17,23,.08);
-    --shadow-lg: 0 8px 32px rgba(15,17,23,.12);
-    --radius: 12px;
-    --radius-sm: 8px;
+    --ink:       #0c1220;
+    --ink2:      #1a2540;
+    --ink3:      #3d4f6e;
+    --surface:   #f4f6fa;
+    --surface2:  #edf0f7;
+    --card:      #ffffff;
+    --border:    #e0e5f0;
+    --border2:   #ccd3e3;
+    --muted:     #7a8ba8;
+    --accent:    #0D2B4E;
+    --accent2:   #1557A0;
+    --accent3:   #2e7dd1;
+    --accent-bg: #EBF4FF;
+    --green:     #0f7b4a;
+    --green-bg:  #edfaf3;
+    --green-bd:  #a7e3c5;
+    --yellow:    #9a5e00;
+    --yellow-bg: #fff8ec;
+    --yellow-bd: #f5d48a;
+    --red:       #c62222;
+    --red-bg:    #fff0f0;
+    --red-bd:    #f5b0b0;
+    --churn:     #8B4513;
+    --churn-bg:  #fdf6f0;
+    --churn-bd:  #e8c4a0;
+    --radius:    10px;
+    --radius-sm: 7px;
+    --shadow:    0 1px 4px rgba(12,18,32,.06), 0 4px 16px rgba(12,18,32,.07);
+    --shadow-lg: 0 8px 40px rgba(12,18,32,.13);
   }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--surface); color: var(--ink); min-height: 100vh; font-size: 14px; -webkit-font-smoothing: antialiased; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── TOPBAR ── */
+  .topbar { background: var(--accent); height: 52px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .topbar-brand { display: flex; align-items: center; gap: 10px; }
+  .topbar-logo { font-weight: 800; font-size: 14px; letter-spacing: .12em; color: #fff; text-transform: uppercase; }
+  .topbar-sep { width: 1px; height: 16px; background: rgba(255,255,255,.18); }
+  .topbar-sub { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255,255,255,.48); letter-spacing: .1em; text-transform: uppercase; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  .week-badge { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: rgba(255,255,255,.65); background: rgba(255,255,255,.09); padding: 4px 10px; border-radius: 5px; border: 1px solid rgba(255,255,255,.1); }
+  #syncStatus { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255,255,255,.45); white-space: nowrap; }
+  .tbtn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .tbtn:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.25); }
+  .tbtn-primary { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.3); font-weight: 600; }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--surface);
-    color: var(--ink);
-    min-height: 100vh;
-  }
+  /* ── LAYOUT ── */
+  .layout { display: flex; min-height: calc(100vh - 52px); }
 
-  /* ── TOPBAR ─────────────────────────────────────── */
-  .topbar {
-    background: var(--accent);
-    padding: 0 32px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .topbar-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .topbar-logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 15px;
-    color: white;
-    letter-spacing: .04em;
-  }
-  .topbar-sep { width: 1px; height: 20px; background: rgba(255,255,255,.2); }
-  .topbar-sub {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: rgba(255,255,255,.6);
-    letter-spacing: .08em;
-  }
-  .topbar-right { display: flex; align-items: center; gap: 12px; }
-  .week-badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: rgba(255,255,255,.7);
-    background: rgba(255,255,255,.1);
-    padding: 4px 10px;
-    border-radius: 6px;
-  }
-
-  /* ── LAYOUT ─────────────────────────────────────── */
-  .layout { display: flex; min-height: calc(100vh - 56px); }
-
-  /* ── SIDEBAR ──────────────────────────────────────  */
-  .sidebar {
-    width: 240px;
-    min-width: 240px;
-    background: var(--card);
-    border-right: 1px solid var(--border);
-    padding: 24px 16px;
-    position: sticky;
-    top: 56px;
-    height: calc(100vh - 56px);
-    overflow-y: auto;
-  }
-  .sidebar-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    padding: 0 8px;
-    margin-bottom: 8px;
-    margin-top: 20px;
-  }
+  /* ── SIDEBAR ── */
+  .sidebar { width: 220px; min-width: 220px; background: var(--card); border-right: 1px solid var(--border); padding: 20px 12px; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; }
+  .sidebar-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; padding: 0 8px; margin-bottom: 5px; margin-top: 18px; }
   .sidebar-label:first-child { margin-top: 0; }
-  .gs-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: var(--radius-sm);
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    text-align: left;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: var(--ink2);
-    transition: background .15s;
-  }
+  .gs-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 9px; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; text-align: left; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12.5px; font-weight: 500; color: var(--ink3); transition: background .12s; }
   .gs-btn:hover { background: var(--surface); }
-  .gs-btn.active { background: #EBF5FB; color: var(--accent); }
-  .gs-avatar {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    flex-shrink: 0;
-    font-family: 'Syne', sans-serif;
-  }
-  .gs-count {
-    margin-left: auto;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    background: var(--surface);
-    padding: 1px 7px;
-    border-radius: 20px;
-  }
+  .gs-btn.active { background: var(--accent-bg); color: var(--accent2); font-weight: 600; }
+  .gs-avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .gs-count { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); background: var(--surface); padding: 1px 6px; border-radius: 20px; }
 
-  /* ── MAIN ─────────────────────────────────────────  */
-  .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
-
-  /* ── VIEW TOGGLE ──────────────────────────────────  */
-  .view-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .view-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 22px;
-    color: var(--ink);
-  }
-  .view-title span {
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--muted);
-    font-family: 'DM Sans', sans-serif;
-    margin-left: 8px;
-  }
-  .view-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--card);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    color: var(--ink2);
-    transition: all .15s;
-  }
-  .btn:hover { border-color: var(--accent2); color: var(--accent); }
-  .btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-  }
+  /* ── MAIN ── */
+  .main { flex: 1; padding: 24px 28px; overflow-y: auto; min-width: 0; }
+  .view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .view-title { font-weight: 700; font-size: 19px; color: var(--ink); }
+  .view-title span { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+  .view-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--card); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; color: var(--ink2); transition: all .12s; }
+  .btn:hover { border-color: var(--accent3); color: var(--accent2); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
   .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); color: white; }
-  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .search-input { border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12.5px; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--ink2); outline: none; width: 200px; background: var(--card); transition: border-color .15s; }
+  .search-input:focus { border-color: var(--accent3); }
 
-  /* ── SUMMARY STRIP ────────────────────────────────  */
-  .summary-strip {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .summary-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    transition: all .15s;
+  /* ── SUMMARY STRIP ── */
+  .summary-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+  .summary-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all .15s; user-select: none; }
+  .summary-card:hover { border-color: var(--accent3); box-shadow: var(--shadow); }
+  .summary-card.active { border-color: var(--accent2); box-shadow: 0 0 0 2px var(--accent2); }
+  .summary-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .summary-num { font-weight: 800; font-size: 24px; line-height: 1; }
+  .summary-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; letter-spacing: .04em; }
+
+  /* ── GS HEALTH SCORE STRIP ── */
+  .gs-health-strip { margin-bottom: 20px; }
+  .gs-health-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+  .gs-health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .gs-health-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; cursor: pointer; transition: all .15s; }
+  .gs-health-card:hover { border-color: var(--accent3); box-shadow: var(--shadow); }
+  .gs-health-card.active { border-color: var(--accent2); }
+  .gs-health-name { font-size: 11.5px; font-weight: 600; color: var(--ink2); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hs-bar-track { height: 6px; background: var(--surface2); border-radius: 20px; overflow: hidden; margin-bottom: 5px; }
+  .hs-bar-fill { height: 100%; border-radius: 20px; transition: width .4s ease; }
+  .hs-score-row { display: flex; align-items: center; justify-content: space-between; }
+  .hs-score-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+  .hs-score-accounts { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted); }
+
+  /* ── CLIENT LIST ── */
+  .client-list { display: flex; flex-direction: column; gap: 6px; }
+
+  /* ── PILLS / BADGES ── */
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .badge-churn { background: var(--churn-bg); color: var(--churn); border: 1px solid var(--churn-bd); }
+  .badge-need { background: #fff8ec; color: #9a5e00; }
+  .badge-book { background: var(--accent-bg); color: var(--accent2); }
+
+  .dim-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-family: 'JetBrains Mono', monospace; font-weight: 600; padding: 2px 8px; border-radius: 20px; border: 1px solid transparent; white-space: nowrap; cursor: default; }
+  .dim-pill.G { background: var(--green-bg); color: var(--green); }
+  .dim-pill.A { background: var(--yellow-bg); color: var(--yellow); }
+  .dim-pill.V { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); }
+  .dim-pill\.– { background: var(--surface); color: var(--muted); }
+  .dim-pill.worse { border-color: var(--red); }
+  .dim-pill.better { border-color: var(--green); }
+
+  .status-pill { font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .status-pill.G { background: var(--green-bg); color: var(--green); }
+  .status-pill.A { background: var(--yellow-bg); color: var(--yellow); }
+  .status-pill.V { background: var(--red-bg); color: var(--red); }
+  .status-pill.pending { background: var(--surface2); color: var(--muted); }
+
+  .trend-pill { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .trend-pill.worse  { background: var(--red-bg); color: var(--red); }
+  .trend-pill.better { background: var(--green-bg); color: var(--green); }
+  .trend-pill.same   { background: var(--surface); color: var(--muted); }
+
+  /* ── HS MINI ── */
+  .hs-mini { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+  .hs-mini-track { width: 44px; height: 5px; background: var(--surface2); border-radius: 20px; overflow: hidden; }
+  .hs-mini-fill { height: 100%; border-radius: 20px; }
+  .hs-mini-val { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; min-width: 26px; }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+  tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface); cursor: pointer; }
+
+  /* ── MODAL ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,16,30,.45); backdrop-filter: blur(5px); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border-radius: 14px; box-shadow: var(--shadow-lg); width: 100%; max-width: 700px; max-height: 92vh; overflow-y: auto; animation: slideUp .2s ease; border: 1px solid var(--border); }
+  @keyframes slideUp { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-header { padding: 22px 26px 16px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); }
+  .modal-title { font-weight: 700; font-size: 17px; color: var(--ink); }
+  .modal-sub { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+  .modal-close { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 5px; transition: all .12s; }
+  .modal-close:hover { background: var(--surface); color: var(--ink); }
+  .modal-body { padding: 20px 26px; }
+  .modal-footer { padding: 14px 26px 20px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border); }
+
+  /* ── FORM ── */
+  .section-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; margin-top: 20px; display: flex; align-items: center; gap: 8px; }
+  .section-title:first-child { margin-top: 0; }
+  .section-divider { flex: 1; height: 1px; background: var(--border); }
+
+  .farol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .farol-block { border: 1px solid var(--border); border-radius: var(--radius); padding: 13px; background: var(--surface); transition: border-color .15s; }
+  .farol-block:focus-within { border-color: var(--accent3); }
+  .farol-block-title { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; color: var(--ink2); margin-bottom: 9px; display: flex; align-items: center; gap: 5px; }
+  .farol-opts { display: flex; gap: 5px; margin-bottom: 9px; }
+  .farol-opt { flex: 1; padding: 6px 4px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--card); cursor: pointer; text-align: center; font-size: 13px; transition: all .12s; color: var(--muted); }
+  .farol-opt:hover { border-color: var(--border2); }
+  .farol-opt.selected-G { border-color: var(--green); background: var(--green-bg); }
+  .farol-opt.selected-A { border-color: #f59e0b; background: var(--yellow-bg); }
+  .farol-opt.selected-V { border-color: var(--red); background: var(--red-bg); }
+  .farol-block textarea { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; color: var(--ink2); resize: vertical; min-height: 54px; background: var(--card); line-height: 1.5; transition: border-color .12s; }
+  .farol-block textarea:focus { outline: none; border-color: var(--accent3); }
+  .farol-block textarea::placeholder { color: #bcc3d4; }
+
+  .field-grid { display: grid; gap: 10px; margin-bottom: 10px; }
+  .field-grid-2 { grid-template-columns: 1fr 1fr; }
+  .field-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  .field-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink3); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
+  .field-label .req { color: var(--red); }
+  .field-group input, .field-group textarea, .field-group select { border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12.5px; color: var(--ink2); background: var(--surface); transition: all .12s; width: 100%; }
+  .field-group textarea { min-height: 66px; resize: vertical; }
+  .field-group input:focus, .field-group textarea:focus, .field-group select:focus { outline: none; border-color: var(--accent3); background: var(--card); }
+
+  /* ── CHURN — neutral warm amber, NOT purple ── */
+  .churn-block { border: 1px solid var(--churn-bd); background: var(--churn-bg); border-radius: var(--radius); padding: 14px; margin-bottom: 4px; }
+  .churn-block-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--churn); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: .06em; }
+  .churn-opts { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .churn-opt {
+    padding: 5px 12px; border-radius: 20px;
+    border: 1.5px solid var(--border); background: var(--card);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+    cursor: pointer; color: var(--muted); transition: all .12s;
     user-select: none;
   }
-  .summary-card:hover { border-color: var(--accent2); box-shadow: var(--shadow); }
-  .summary-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-  .summary-icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-  .summary-data { display: flex; flex-direction: column; }
-  .summary-num {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 26px;
-    line-height: 1;
-  }
-  .summary-lbl {
-    font-size: 11.5px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
+  .churn-opt:hover { border-color: var(--border2); color: var(--ink3); }
+  /* multi-select: selected state uses amber/churn color */
+  .churn-opt.selected { border-color: var(--churn); background: var(--churn-bg); color: var(--churn); }
+  /* "Sem risco" gets green when active */
+  .churn-opt.sel-none { border-color: var(--green); background: var(--green-bg); color: var(--green); }
 
-  /* ── FAROL COLUMNS ────────────────────────────────  */
-  .columns-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .col-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    margin-bottom: 10px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: .02em;
-  }
-  .col-header.red { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
-  .col-header.yellow { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
-  .col-header.green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
-  .col-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .col-dot.red { background: var(--red); }
-  .col-dot.yellow { background: #f59e0b; }
-  .col-dot.green { background: var(--green); }
+  /* ── BILLING ── */
+  .billing-opts { display: flex; gap: 6px; }
+  .billing-opt { flex: 1; padding: 7px 4px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--card); cursor: pointer; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; transition: all .12s; color: var(--muted); }
+  .billing-opt:hover { border-color: var(--border2); }
+  .billing-opt.sel-up { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+  .billing-opt.sel-down { border-color: var(--red); background: var(--red-bg); color: var(--red); }
+  .billing-opt.sel-stable { border-color: var(--muted); background: var(--surface); color: var(--ink3); }
 
-  /* ── CLIENT CARD ──────────────────────────────────  */
-  .client-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all .18s;
-    position: relative;
-  }
-  .client-card:hover { box-shadow: var(--shadow); border-color: #c8d0e0; transform: translateY(-1px); }
-  .client-card.pending { border-left: 3px solid #f59e0b; }
-  .client-card.done { border-left: 3px solid var(--green); }
-  .client-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink);
-    margin-bottom: 6px;
-  }
-  .client-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .client-gs-tag {
-    font-size: 11px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-  .book-badge {
-    font-size: 10px;
-    font-weight: 600;
-    background: #EBF5FB;
-    color: var(--accent);
-    padding: 2px 7px;
-    border-radius: 20px;
-    font-family: 'DM Mono', monospace;
-    letter-spacing: .04em;
-  }
-  .roca-mini {
-    display: flex;
-    gap: 4px;
-    margin-top: 8px;
-  }
-  .roca-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #e2e5ef;
-  }
-  .roca-dot.G { background: var(--green); }
-  .roca-dot.A { background: #f59e0b; }
-  .roca-dot.V { background: var(--red); }
-  .roca-label {
-    font-size: 9px;
-    font-family: 'DM Mono', monospace;
-    color: var(--muted);
-    margin-left: 2px;
-  }
-  .roca-mini-item { display: flex; align-items: center; gap: 3px; }
+  /* ── BOOK ── */
+  .book-block { border: 1px solid #bdd8ef; background: var(--accent-bg); border-radius: var(--radius); padding: 13px; margin-bottom: 10px; display: none; }
+  .book-block-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--accent2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .06em; }
 
-  /* ── TABLE VIEW ───────────────────────────────────  */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    text-align: left;
-    padding: 10px 14px;
-    border-bottom: 2px solid var(--border);
-    white-space: nowrap;
-    background: var(--surface);
-  }
-  tbody td {
-    padding: 11px 14px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-    vertical-align: middle;
-  }
-  tbody tr:hover { background: #f9fafb; cursor: pointer; }
-  .farol-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 9px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    font-family: 'DM Mono', monospace;
-  }
-  .farol-pill.G { background: var(--green-bg); color: var(--green); }
-  .farol-pill.A { background: var(--yellow-bg); color: var(--yellow); }
-  .farol-pill.V { background: var(--red-bg); color: var(--red); }
-  .farol-pill.– { background: var(--surface); color: var(--muted); }
-  .pill-dot { width: 6px; height: 6px; border-radius: 50%; }
-  .pill-dot.G { background: var(--green); }
-  .pill-dot.A { background: #f59e0b; }
-  .pill-dot.V { background: var(--red); }
-
-  /* ── MODAL ────────────────────────────────────────  */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(15,17,23,.5);
-    backdrop-filter: blur(4px);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--card);
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-    width: 100%;
-    max-width: 680px;
-    max-height: 92vh;
-    overflow-y: auto;
-    animation: slideUp .2s ease;
-  }
-  @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to   { transform: translateY(0); opacity: 1; }
-  }
-  .modal-header {
-    padding: 24px 28px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-  .modal-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 20px;
-    color: var(--ink);
-  }
-  .modal-sub {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 3px;
-    font-family: 'DM Mono', monospace;
-  }
-  .modal-close {
-    background: none; border: none; cursor: pointer;
-    color: var(--muted); font-size: 22px; line-height: 1;
-    padding: 2px 6px; border-radius: 6px;
-  }
-  .modal-close:hover { background: var(--surface); color: var(--ink); }
-  .modal-body { padding: 20px 28px 28px; }
-
-  /* ── FAROL SELECTOR ───────────────────────────────  */
-  .farol-section { margin-bottom: 20px; }
-  .farol-section-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--ink2);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .farol-section-title .dim-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    color: var(--muted);
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: 0;
-  }
-  .farol-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-  .farol-block {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    background: var(--surface);
-  }
-  .farol-block-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--ink2);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .farol-block-title .dim-icon {
-    font-size: 14px;
-  }
-  .farol-options {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 10px;
-  }
-  .farol-opt {
-    flex: 1;
-    padding: 6px 4px;
-    border-radius: 8px;
-    border: 2px solid var(--border);
-    background: var(--card);
-    cursor: pointer;
-    text-align: center;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    font-weight: 600;
-    transition: all .15s;
-    color: var(--muted);
-  }
-  .farol-opt:hover { border-color: #aab; }
-  .farol-opt.selected-G { border-color: var(--green); background: var(--green-bg); color: var(--green); }
-  .farol-opt.selected-A { border-color: #f59e0b; background: var(--yellow-bg); color: var(--yellow); }
-  .farol-opt.selected-V { border-color: var(--red); background: var(--red-bg); color: var(--red); }
-  .farol-block textarea {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12.5px;
-    color: var(--ink2);
-    resize: vertical;
-    min-height: 60px;
-    background: var(--card);
-    line-height: 1.5;
-  }
-  .farol-block textarea:focus {
-    outline: none;
-    border-color: var(--accent2);
-  }
-  .farol-block textarea::placeholder { color: #bbc; }
-
-  .action-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 4px;
-  }
-  .field-group { display: flex; flex-direction: column; gap: 6px; }
-  .field-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--ink2);
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .field-label .required { color: var(--red); }
-  .field-group textarea, .field-group input {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    color: var(--ink2);
-    background: var(--surface);
-    resize: vertical;
-  }
-  .field-group textarea:focus, .field-group input:focus {
-    outline: none;
-    border-color: var(--accent2);
-    background: var(--card);
-  }
-  .field-group textarea { min-height: 72px; }
-
-  .modal-footer {
-    padding: 16px 28px 24px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    border-top: 1px solid var(--border);
-    margin-top: 20px;
-  }
-
-  /* ── ADMIN MODAL ──────────────────────────────────  */
-  .admin-tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 20px;
-    background: var(--surface);
-    padding: 4px;
-    border-radius: 10px;
-  }
-  .admin-tab {
-    flex: 1;
-    padding: 8px;
-    border: none;
-    background: transparent;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--muted);
-    transition: all .15s;
-  }
-  .admin-tab.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  /* ── ADMIN ── */
+  .admin-tabs { display: flex; gap: 3px; margin-bottom: 18px; background: var(--surface); padding: 4px; border-radius: 9px; }
+  .admin-tab { flex: 1; padding: 7px; border: none; background: transparent; border-radius: 7px; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); transition: all .12s; }
+  .admin-tab.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.07); }
   .admin-panel { display: none; }
   .admin-panel.active { display: block; }
-  .client-list-edit {
-    max-height: 360px;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 12px;
-  }
-  .client-edit-row {
-    display: grid;
-    grid-template-columns: 1fr 160px 70px 36px;
-    gap: 8px;
-    align-items: center;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    background: var(--card);
-  }
+  .client-list-edit { max-height: 340px; overflow-y: auto; border: 1px solid var(--border); border-radius: 9px; margin-bottom: 10px; }
+  .client-edit-row { display: grid; grid-template-columns: 1fr 150px 65px 32px; gap: 6px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--card); }
   .client-edit-row:last-child { border-bottom: none; }
   .client-edit-row:nth-child(even) { background: var(--surface); }
-  .client-edit-row input, .client-edit-row select {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 5px 8px;
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    background: var(--card);
-    color: var(--ink);
-    width: 100%;
-  }
-  .client-edit-row input:focus, .client-edit-row select:focus {
-    outline: none;
-    border-color: var(--accent2);
-  }
-  .del-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px; height: 32px;
-  }
+  .client-edit-row input, .client-edit-row select { border: 1px solid var(--border); border-radius: 5px; padding: 4px 7px; font-size: 11.5px; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--card); color: var(--ink); width: 100%; }
+  .client-edit-row input:focus, .client-edit-row select:focus { outline: none; border-color: var(--accent3); }
+  .del-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px; border-radius: 5px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; transition: all .12s; }
   .del-btn:hover { background: var(--red-bg); color: var(--red); }
-  .add-row-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--accent2);
-    background: none;
-    border: 1px dashed var(--accent2);
-    border-radius: 8px;
-    padding: 8px 14px;
-    cursor: pointer;
-    width: 100%;
-    justify-content: center;
-    transition: all .15s;
-  }
-  .add-row-btn:hover { background: #EBF5FB; }
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    padding: 32px;
-    text-align: center;
-    cursor: pointer;
-    transition: all .2s;
-    background: var(--surface);
-  }
-  .upload-zone:hover { border-color: var(--accent2); background: #EBF5FB; }
+  .add-row-btn { display: flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 500; color: var(--accent2); background: none; border: 1px dashed var(--accent3); border-radius: 7px; padding: 7px 14px; cursor: pointer; width: 100%; justify-content: center; transition: all .12s; }
+  .add-row-btn:hover { background: var(--accent-bg); }
+  .upload-zone { border: 2px dashed var(--border2); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; transition: all .15s; background: var(--surface); }
+  .upload-zone:hover { border-color: var(--accent3); background: var(--accent-bg); }
   .upload-zone input { display: none; }
-  .upload-icon { font-size: 36px; margin-bottom: 10px; }
-  .upload-title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; color: var(--ink2); }
-  .upload-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-title { font-weight: 600; font-size: 14px; color: var(--ink2); }
+  .upload-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-  /* ── FILTERS ──────────────────────────────────────  */
-  .filter-bar {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 18px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .filter-pill {
-    padding: 5px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: var(--card);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    color: var(--muted);
-    transition: all .15s;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .filter-pill:hover { border-color: #aab; color: var(--ink2); }
-  .filter-pill.active { background: var(--accent); border-color: var(--accent); color: white; }
-  .search-input {
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 5px 14px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--ink2);
-    outline: none;
-    width: 200px;
-  }
-  .search-input:focus { border-color: var(--accent2); }
+  /* ── EMPTY ── */
+  .empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: .35; }
+  .empty-title { font-weight: 600; font-size: 14px; color: var(--ink2); margin-bottom: 5px; }
 
-  /* ── EXPORT AREA ──────────────────────────────────  */
-  .export-bar {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  .export-info { font-size: 13px; color: var(--muted); }
-  .export-info strong { color: var(--ink2); }
-
-  /* ── EMPTY STATE ──────────────────────────────────  */
-  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
-  .empty-title { font-family: 'Syne', sans-serif; font-size: 16px; color: var(--ink2); margin-bottom: 6px; }
-
-  /* ── RESPONSIVE ───────────────────────────────────  */
+  /* ── RESPONSIVE ── */
   @media (max-width: 900px) {
     .sidebar { display: none; }
     .summary-strip { grid-template-columns: 1fr 1fr; }
-    .columns-grid { grid-template-columns: 1fr; }
-    .farol-row { grid-template-columns: 1fr; }
-    .action-row { grid-template-columns: 1fr; }
+    .farol-grid { grid-template-columns: 1fr; }
+    .field-grid-2, .field-grid-3 { grid-template-columns: 1fr; }
+    .gs-health-grid { grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
@@ -722,15 +260,15 @@
   <div class="topbar-brand">
     <div class="topbar-logo">SAFIRA</div>
     <div class="topbar-sep"></div>
-    <div class="topbar-sub">ROCA DASHBOARD · CS</div>
+    <div class="topbar-sub">ROCA · CS</div>
   </div>
   <div class="topbar-right">
     <div class="week-badge" id="weekBadge"></div>
-    <span id="syncStatus" style="font-family:DM Mono,monospace;font-size:11px;color:rgba(255,255,255,.5);"></span>
-    <button class="btn btn-sm" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white;" onclick="openAdmin()">⚙ Gerenciar Clientes</button>
-    <button class="btn btn-sm" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:white;" onclick="spLoadAll().then(()=>render())" title="Recarregar dados do SharePoint">⟳</button>
-    <button class="btn btn-sm" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:white;" onclick="advanceWeek()" title="Arquiva semana atual e abre nova semana em branco">↻ Nova Semana</button>
-    <button class="btn btn-sm btn-primary" onclick="exportData()">↓ Exportar Semana</button>
+    <span id="syncStatus"></span>
+    <button class="tbtn" onclick="openAdmin()">⚙ Gerenciar Clientes</button>
+    <button class="tbtn" onclick="spLoadAll().then(()=>render())" title="Recarregar">⟳</button>
+    <button class="tbtn" onclick="advanceWeek()" title="Arquivar e abrir nova semana">↻ Nova Semana</button>
+    <button class="tbtn tbtn-primary" onclick="exportData()">↓ Exportar</button>
   </div>
 </div>
 
@@ -739,7 +277,7 @@
   <div class="sidebar">
     <div class="sidebar-label">Gerentes de Sucesso</div>
     <button class="gs-btn active" id="gs-all" onclick="filterGS('all', this)">
-      <div class="gs-avatar" style="background:#1B3A5C;color:white;">A</div>
+      <div class="gs-avatar" style="background:var(--accent);color:white;">A</div>
       Todos os GS
       <span class="gs-count" id="count-all">0</span>
     </button>
@@ -747,43 +285,53 @@
 
     <div class="sidebar-label">Filtros Rápidos</div>
     <button class="gs-btn" onclick="filterStatus('V', this)" id="quick-red">
-      <div class="gs-avatar" style="background:#fef2f2;color:#dc2626;">🔴</div>
+      <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">🔴</div>
       Vermelhos
       <span class="gs-count" id="count-red">0</span>
     </button>
+    <button class="gs-btn" onclick="filterStatus('G', this)" id="quick-green">
+      <div class="gs-avatar" style="background:var(--green-bg);color:var(--green);">🟢</div>
+      Verdes
+      <span class="gs-count" id="count-green">0</span>
+    </button>
     <button class="gs-btn" onclick="filterStatus('A', this)" id="quick-yellow">
-      <div class="gs-avatar" style="background:#fffbeb;color:#b45309;">🟡</div>
+      <div class="gs-avatar" style="background:var(--yellow-bg);color:var(--yellow);">🟡</div>
       Amarelos
       <span class="gs-count" id="count-yellow">0</span>
     </button>
+    <button class="gs-btn" onclick="filterChurn(this)" id="quick-churn">
+      <div class="gs-avatar" style="background:var(--churn-bg);color:var(--churn);">⚠</div>
+      Risco de Churn
+      <span class="gs-count" id="count-churn">0</span>
+    </button>
     <button class="gs-btn" onclick="filterStatus('pending', this)" id="quick-pending">
-      <div class="gs-avatar" style="background:#f7f8fc;color:#888;">⏳</div>
+      <div class="gs-avatar" style="background:var(--surface2);color:var(--muted);">⏳</div>
       Pendentes
       <span class="gs-count" id="count-pending">0</span>
     </button>
     <button class="gs-btn" onclick="filterBookPending(this)" id="quick-book">
-      <div class="gs-avatar" style="background:#EBF5FB;color:#1B3A5C;">📋</div>
+      <div class="gs-avatar" style="background:var(--accent-bg);color:var(--accent2);">📋</div>
       Book Pendente
       <span class="gs-count" id="count-book">0</span>
     </button>
     <button class="gs-btn" onclick="filterWorsened(this)" id="quick-worsened">
-      <div class="gs-avatar" style="background:#fef2f2;color:#dc2626;">↓</div>
+      <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">↓</div>
       Pioraram
       <span class="gs-count" id="count-worsened">0</span>
     </button>
     <button class="gs-btn" onclick="filterImproved(this)" id="quick-improved">
-      <div class="gs-avatar" style="background:#f0fdf4;color:#16a34a;">↑</div>
+      <div class="gs-avatar" style="background:var(--green-bg);color:var(--green);">↑</div>
       Melhoraram
       <span class="gs-count" id="count-improved">0</span>
     </button>
 
     <div class="sidebar-label">Visualização</div>
-    <button class="gs-btn" id="view-kanban-btn" onclick="setView('kanban', this)">
-      <div class="gs-avatar" style="background:#f0f0f5;color:#444;">⊞</div>
-      Kanban
+    <button class="gs-btn active" id="view-list-btn" onclick="setView('list', this)">
+      <div class="gs-avatar" style="background:var(--surface2);color:var(--ink3);">≡</div>
+      Lista
     </button>
     <button class="gs-btn" id="view-table-btn" onclick="setView('table', this)">
-      <div class="gs-avatar" style="background:#f0f0f5;color:#444;">≡</div>
+      <div class="gs-avatar" style="background:var(--surface2);color:var(--ink3);">⊞</div>
       Tabela
     </button>
   </div>
@@ -791,69 +339,58 @@
   <!-- MAIN -->
   <div class="main">
     <div class="view-header">
-      <div>
-        <div class="view-title" id="mainTitle">Todas as Contas <span id="mainSubtitle"></span></div>
-      </div>
+      <div class="view-title" id="mainTitle">Todas as Contas <span id="mainSubtitle"></span></div>
       <div class="view-actions">
-        <input class="search-input" type="text" placeholder="🔍  Buscar cliente..." oninput="searchClients(this.value)" />
-        <button class="btn" onclick="openAdmin()">+ Adicionar Cliente</button>
+        <input class="search-input" type="text" placeholder="🔍 Buscar cliente..." oninput="searchClients(this.value)" />
+        <button class="btn" onclick="openAdmin()">+ Cliente</button>
       </div>
     </div>
 
-    <!-- SUMMARY -->
+    <!-- SUMMARY CARDS -->
     <div class="summary-strip">
-      <div class="summary-card" id="sc-all" onclick="filterByCard('all')" style="cursor:pointer;" title="Todas as contas">
-        <div class="summary-icon" style="background:#EBF5FB;">📊</div>
-        <div class="summary-data">
-          <div class="summary-num" id="s-total" style="color:var(--accent)">0</div>
-        </div>
+      <div class="summary-card" id="sc-all" onclick="filterByCard('all')">
+        <div class="summary-icon" style="background:var(--accent-bg);">📊</div>
+        <div><div class="summary-num" id="s-total" style="color:var(--accent)">0</div><div class="summary-lbl">TOTAL</div></div>
       </div>
-      <div class="summary-card" id="sc-red" onclick="filterByCard('V')" style="cursor:pointer;" title="Vermelhos">
+      <div class="summary-card" id="sc-red" onclick="filterByCard('V')">
         <div class="summary-icon" style="background:var(--red-bg);">🔴</div>
-        <div class="summary-data">
-          <div class="summary-num" id="s-red" style="color:var(--red)">0</div>
-        </div>
+        <div><div class="summary-num" id="s-red" style="color:var(--red)">0</div><div class="summary-lbl">VERMELHOS</div></div>
       </div>
-      <div class="summary-card" id="sc-yellow" onclick="filterByCard('A')" style="cursor:pointer;" title="Amarelos">
+      <div class="summary-card" id="sc-churn" onclick="filterByCard('churn')">
+        <div class="summary-icon" style="background:var(--churn-bg);">⚠️</div>
+        <div><div class="summary-num" id="s-churn" style="color:var(--churn)">0</div><div class="summary-lbl">RISCO DE CHURN</div></div>
+      </div>
+      <div class="summary-card" id="sc-yellow" onclick="filterByCard('A')">
         <div class="summary-icon" style="background:var(--yellow-bg);">🟡</div>
-        <div class="summary-data">
-          <div class="summary-num" id="s-yellow" style="color:var(--yellow)">0</div>
-        </div>
+        <div><div class="summary-num" id="s-yellow" style="color:var(--yellow)">0</div><div class="summary-lbl">AMARELOS</div></div>
       </div>
-      <div class="summary-card" id="sc-green" onclick="filterByCard('G')" style="cursor:pointer;" title="Verdes">
+      <div class="summary-card" id="sc-green" onclick="filterByCard('G')">
         <div class="summary-icon" style="background:var(--green-bg);">🟢</div>
-        <div class="summary-data">
-          <div class="summary-num" id="s-green" style="color:var(--green)">0</div>
-        </div>
-      </div>
-      <div class="summary-card" id="sc-pending" onclick="filterByCard('pending')" style="cursor:pointer;" title="Pendentes">
-        <div class="summary-icon" style="background:var(--surface);">⏳</div>
-        <div class="summary-data">
-          <div class="summary-num" id="s-pending" style="color:var(--muted)">0</div>
-        </div>
+        <div><div class="summary-num" id="s-green" style="color:var(--green)">0</div><div class="summary-lbl">VERDES</div></div>
       </div>
     </div>
 
-    <!-- KANBAN VIEW -->
-    <div id="kanban-view">
-      <div id="kanban-list"></div>
+    <!-- GS HEALTH SCORE STRIP -->
+    <div class="gs-health-strip">
+      <div class="gs-health-title">Health Score médio por Gerente de Sucesso</div>
+      <div class="gs-health-grid" id="gsHealthGrid"></div>
     </div>
 
-        <!-- TABLE VIEW -->
+    <!-- LIST VIEW -->
+    <div id="list-view">
+      <div class="client-list" id="client-list"></div>
+    </div>
+
+    <!-- TABLE VIEW -->
     <div id="table-view" style="display:none;">
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Cliente</th>
-              <th>GS</th>
-              <th>Book</th>
-              <th>R — Relacionamento</th>
-              <th>O — Operação</th>
-              <th>C — Contrato</th>
-              <th>A — Avanço</th>
-              <th>Status Geral</th>
-              <th>Ação Tomada</th>
+              <th>Cliente</th><th>GS</th><th>HS</th>
+              <th>R</th><th>O</th><th>C</th><th>A</th>
+              <th>Status</th><th>Churn</th><th>Fat.</th>
+              <th>Últ. Reunião</th><th>Últ. Visita</th><th>Ação</th>
             </tr>
           </thead>
           <tbody id="table-body"></tbody>
@@ -874,82 +411,125 @@
       <button class="modal-close" onclick="closeModal('fillModal')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="farol-row">
+
+      <div class="section-title">ROCA — Faróis<div class="section-divider"></div></div>
+      <div class="farol-grid">
         <div class="farol-block" id="block-R">
-          <div class="farol-block-title"><span class="dim-icon">🤝</span> R — RELACIONAMENTO</div>
-          <div class="farol-options">
+          <div class="farol-block-title">🤝 R — RELACIONAMENTO</div>
+          <div class="farol-opts">
             <div class="farol-opt" onclick="selectFarol('R','G',this)">🟢</div>
             <div class="farol-opt" onclick="selectFarol('R','A',this)">🟡</div>
             <div class="farol-opt" onclick="selectFarol('R','V',this)">🔴</div>
           </div>
-          <textarea id="justR" placeholder="Última interação com decisor? Tom da conversa?" rows="3"></textarea>
+          <textarea id="justR" placeholder="Tom da última conversa com decisor? Conhecemos os desafios do cliente? O que temos entregado de valor para ele?" rows="3"></textarea>
         </div>
         <div class="farol-block" id="block-O">
-          <div class="farol-block-title"><span class="dim-icon">⚙️</span> O — OPERAÇÃO</div>
-          <div class="farol-options">
+          <div class="farol-block-title">⚙️ O — OPERAÇÃO</div>
+          <div class="farol-opts">
             <div class="farol-opt" onclick="selectFarol('O','G',this)">🟢</div>
             <div class="farol-opt" onclick="selectFarol('O','A',this)">🟡</div>
             <div class="farol-opt" onclick="selectFarol('O','V',this)">🔴</div>
           </div>
-          <textarea id="justO" placeholder="Cliente reclamou de entrega? Ticket crônico aberto?" rows="3"></textarea>
+          <textarea id="justO" placeholder="Ticket crônico? Reclamação de entrega? O cliente percebe qualidade na operação?" rows="3"></textarea>
         </div>
-      </div>
-      <div class="farol-row">
         <div class="farol-block" id="block-C">
-          <div class="farol-block-title"><span class="dim-icon">📄</span> C — CONTRATO</div>
-          <div class="farol-options">
+          <div class="farol-block-title">📄 C — CONTRATO</div>
+          <div class="farol-opts">
             <div class="farol-opt" onclick="selectFarol('C','G',this)">🟢</div>
             <div class="farol-opt" onclick="selectFarol('C','A',this)">🟡</div>
             <div class="farol-opt" onclick="selectFarol('C','V',this)">🔴</div>
           </div>
-          <textarea id="justC" placeholder="Renovação próxima? Inadimplência? Questionamento de valor?" rows="3"></textarea>
+          <textarea id="justC" placeholder="Renovação próxima? Inadimplência? O cliente questiona valor ou escopo?" rows="3"></textarea>
         </div>
         <div class="farol-block" id="block-A">
-          <div class="farol-block-title"><span class="dim-icon">🚀</span> A — AVANÇO</div>
-          <div class="farol-options">
+          <div class="farol-block-title">🚀 A — AVANÇO</div>
+          <div class="farol-opts">
             <div class="farol-opt" onclick="selectFarol('A','G',this)">🟢</div>
             <div class="farol-opt" onclick="selectFarol('A','A',this)">🟡</div>
             <div class="farol-opt" onclick="selectFarol('A','V',this)">🔴</div>
           </div>
-          <textarea id="justA" placeholder="Algo novo em discussão? Upsell, expansão? Conta parada?" rows="3"></textarea>
+          <textarea id="justA" placeholder="Upsell em discussão? Expansão? O que temos proposto de novo para este cliente?" rows="3"></textarea>
         </div>
       </div>
 
-      <div id="book-section" style="display:none;margin-bottom:16px;">
-        <div class="farol-block" style="background:#EBF5FB;border-color:#bdd8ef;">
-          <div class="farol-block-title" style="color:var(--accent);">📋 BOOK — Esta conta exige book nesta semana</div>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;">
-              <input type="checkbox" id="bookSent" style="width:16px;height:16px;accent-color:var(--accent2);">
-              Book enviado ao cliente
-            </label>
-            <input type="date" id="bookDate" style="border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:13px;font-family:'DM Sans',sans-serif;">
+      <!-- CHURN — multi-select, sem "Ambos" -->
+      <div class="section-title" style="margin-top:18px;">Risco de Churn<div class="section-divider"></div></div>
+      <div class="churn-block">
+        <div class="churn-block-title">⚠ Sinalizar risco real de perda desta conta</div>
+        <div class="churn-opts">
+          <div class="churn-opt" id="churn-none" onclick="toggleChurn('none',this)">✓ Sem risco</div>
+          <div class="churn-opt" id="churn-billing" onclick="toggleChurn('billing',this)">📉 Queda de faturamento</div>
+          <div class="churn-opt" id="churn-cancel" onclick="toggleChurn('cancel',this)">❌ Risco de cancelamento</div>
+        </div>
+        <div class="field-group" id="churnNotesGroup" style="display:none;">
+          <textarea id="churnNotes" placeholder="Descreva o risco: o que está acontecendo, qual o gatilho, qual o prazo de ação?" rows="2" style="background:white;border-color:var(--churn-bd);"></textarea>
+        </div>
+      </div>
+
+      <!-- ENGAJAMENTO -->
+      <div class="section-title">Engajamento<div class="section-divider"></div></div>
+      <div class="field-grid field-grid-3">
+        <div class="field-group">
+          <div class="field-label">📹 Última reunião online</div>
+          <input type="date" id="lastMeeting">
+        </div>
+        <div class="field-group">
+          <div class="field-label">🤝 Última visita presencial</div>
+          <input type="date" id="lastVisit">
+        </div>
+        <div class="field-group">
+          <div class="field-label">📊 Faturamento mês a mês</div>
+          <div class="billing-opts">
+            <div class="billing-opt" onclick="selectBilling('up',this)" id="bill-up" title="Subiu">▲</div>
+            <div class="billing-opt" onclick="selectBilling('stable',this)" id="bill-stable" title="Estável">→</div>
+            <div class="billing-opt" onclick="selectBilling('down',this)" id="bill-down" title="Caiu">▼</div>
           </div>
         </div>
       </div>
-
-      <div class="action-row">
+      <div class="field-grid field-grid-2" id="billingDetailRow" style="display:none;">
         <div class="field-group">
-          <div class="field-label">✅ Ação que já tomei <span class="required">*</span></div>
-          <textarea id="actionTaken" placeholder="O que você já fez para resolver / avançar esta conta esta semana?" rows="3"></textarea>
+          <div class="field-label">💬 Observação sobre o faturamento</div>
+          <input type="text" id="billingObs" placeholder="Ex: queda de 12% vs mês anterior — cliente reduziu devices">
+        </div>
+      </div>
+
+      <!-- BOOK -->
+      <div class="book-block" id="bookBlock">
+        <div class="book-block-title">📋 Book — necessário esta semana</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12.5px;font-weight:500;">
+            <input type="checkbox" id="bookSent" style="width:15px;height:15px;accent-color:var(--accent2);">
+            Book enviado ao cliente
+          </label>
+          <input type="date" id="bookDate" style="border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:12.5px;font-family:'Plus Jakarta Sans',sans-serif;background:white;">
+        </div>
+      </div>
+
+      <!-- AÇÕES -->
+      <div class="section-title">Ações desta semana<div class="section-divider"></div></div>
+      <div class="field-grid field-grid-2">
+        <div class="field-group">
+          <div class="field-label">✅ Ação que já tomei <span class="req">*</span></div>
+          <textarea id="actionTaken" placeholder="O que você já fez para avançar / resolver esta conta?"></textarea>
         </div>
         <div class="field-group">
           <div class="field-label">🙋 Preciso de Fernando para...</div>
-          <textarea id="needFrom" placeholder="Seja específico: reunião, decisão, intervenção, aprovação..." rows="3"></textarea>
+          <textarea id="needFrom" placeholder="Seja específico: reunião, decisão, intervenção, aprovação..."></textarea>
         </div>
       </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('fillModal')">Cancelar</button>
-      <button class="btn" style="color:var(--red);border-color:var(--red-border);" onclick="clearEntry()">🗑 Limpar</button>
-      <button class="btn btn-primary" onclick="saveEntry()">💾 Salvar Farol</button>
+      <button class="btn" style="color:var(--red);border-color:var(--red-bd);" onclick="clearEntry()">🗑 Limpar</button>
+      <button class="btn btn-primary" onclick="saveEntry()">💾 Salvar</button>
     </div>
   </div>
 </div>
 
 <!-- ADMIN MODAL -->
 <div class="modal-overlay" id="adminModal">
-  <div class="modal" style="max-width:760px;">
+  <div class="modal" style="max-width:740px;">
     <div class="modal-header">
       <div>
         <div class="modal-title">Gerenciar Clientes & GS</div>
@@ -963,30 +543,27 @@
         <button class="admin-tab" onclick="switchAdminTab('import', this)">📥 Importar Excel</button>
         <button class="admin-tab" onclick="switchAdminTab('gs', this)">👥 Gerenciar GS</button>
       </div>
-
       <div class="admin-panel active" id="tab-edit">
-        <div style="display:grid;grid-template-columns:1fr 160px 70px 36px;gap:8px;padding:6px 12px;margin-bottom:4px;">
-          <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);">CLIENTE</span>
-          <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);">GS RESPONSÁVEL</span>
-          <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);">BOOK</span>
+        <div style="display:grid;grid-template-columns:1fr 150px 65px 32px;gap:6px;padding:5px 10px;margin-bottom:3px;">
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">CLIENTE</span>
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">GS RESPONSÁVEL</span>
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">BOOK</span>
           <span></span>
         </div>
         <div class="client-list-edit" id="editClientList"></div>
         <button class="add-row-btn" onclick="addClientRow()">+ Adicionar cliente</button>
       </div>
-
       <div class="admin-panel" id="tab-import">
         <div class="upload-zone" onclick="document.getElementById('xlsxInput').click()">
           <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" onchange="importFile(this)">
           <div class="upload-icon">📊</div>
           <div class="upload-title">Clique para importar planilha</div>
-          <div class="upload-sub">Formato esperado: Coluna A = Cliente · Coluna B = GS · Coluna C = BOOK (S para sim)</div>
+          <div class="upload-sub">Coluna A = Cliente · Coluna B = GS · Coluna C = BOOK (S para sim)</div>
         </div>
-        <div id="import-preview" style="margin-top:16px;"></div>
+        <div id="import-preview" style="margin-top:14px;"></div>
       </div>
-
       <div class="admin-panel" id="tab-gs">
-        <div class="client-list-edit" id="editGSList" style="max-height:280px;"></div>
+        <div class="client-list-edit" id="editGSList" style="max-height:260px;"></div>
         <button class="add-row-btn" onclick="addGSRow()">+ Adicionar GS</button>
       </div>
     </div>
@@ -999,105 +576,46 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  FIREBASE CONFIG                                                ║
-// ╚══════════════════════════════════════════════════════════════════╝
+// ── FIREBASE ──────────────────────────────────────────────────────────────
 const FB_URL = 'https://safira-roca-default-rtdb.firebaseio.com';
+async function fbGet(path){const r=await fetch(`${FB_URL}/${path}.json`);if(!r.ok)throw new Error(`Firebase GET ${r.status}`);return r.json();}
+async function fbSet(path,data){const r=await fetch(`${FB_URL}/${path}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});if(!r.ok)throw new Error(`Firebase SET ${r.status}`);return r.json();}
+async function fbDelete(path){await fetch(`${FB_URL}/${path}.json`,{method:'DELETE'});}
+async function fbPatch(path,data){const r=await fetch(`${FB_URL}/${path}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});if(!r.ok)throw new Error(`Firebase PATCH ${r.status}`);return r.json();}
 
-// Firebase REST API — no SDK needed, pure fetch
-async function fbGet(path) {
-  const r = await fetch(`${FB_URL}/${path}.json`);
-  if (!r.ok) throw new Error(`Firebase GET error ${r.status}`);
-  return r.json(); // returns null if empty
-}
-
-async function fbSet(path, data) {
-  const r = await fetch(`${FB_URL}/${path}.json`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  if (!r.ok) throw new Error(`Firebase SET error ${r.status}`);
-  return r.json();
-}
-
-async function fbDelete(path) {
-  await fetch(`${FB_URL}/${path}.json`, { method: 'DELETE' });
-}
-
-async function fbPatch(path, data) {
-  const r = await fetch(`${FB_URL}/${path}.json`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  if (!r.ok) throw new Error(`Firebase PATCH error ${r.status}`);
-  return r.json();
-}
-
-// ── LOAD all data from Firebase ────────────────────────────────────
-async function spLoadAll() {
-  try {
+async function spLoadAll(){
+  try{
     showSyncStatus('syncing');
-    const data = await fbGet('roca');
-    if (data) {
-      entries     = data.entries     || {};
-      weekHistory = data.history     || {};
-      // convert string keys to int for entries
-      const fixedEntries = {};
-      Object.keys(entries).forEach(k => { fixedEntries[parseInt(k)] = entries[k]; });
-      entries = fixedEntries;
-    } else {
-      entries = {};
-      weekHistory = {};
-    }
-    showSyncStatus('ok');
-    return true;
-  } catch(e) {
-    console.error('Firebase load failed:', e);
-    showSyncStatus('offline');
-    return false;
-  }
+    const data=await fbGet('roca');
+    if(data){
+      // normalize entries keys to int
+      const rawEntries=data.entries||{};
+      const fixed={};Object.keys(rawEntries).forEach(k=>{fixed[parseInt(k)]=rawEntries[k];});entries=fixed;
+      // normalize weekHistory: keys are weekKey strings (dates), values are {clientId: entry}
+      // clientId keys inside each week snapshot also need to be int-keyed for getPrevEntry to work
+      const rawHistory=data.history||{};
+      weekHistory={};
+      Object.keys(rawHistory).forEach(wk=>{
+        const weekSnap={};
+        Object.keys(rawHistory[wk]).forEach(cid=>{weekSnap[parseInt(cid)]=rawHistory[wk][cid];});
+        weekHistory[wk]=weekSnap;
+      });
+    }else{entries={};weekHistory={};}
+    showSyncStatus('ok');return true;
+  }catch(e){console.error('Firebase load failed:',e);showSyncStatus('offline');return false;}
 }
+async function spUpsert(wk,clientId,dataJson){await fbPatch(`roca/entries`,{[clientId]:JSON.parse(dataJson)});}
+async function spDelete(wk,clientId){await fbDelete(`roca/entries/${clientId}`);}
+async function fbArchiveWeek(wk,snap){await fbPatch(`roca/history`,{[wk]:snap});}
 
-// ── SAVE one entry to Firebase ─────────────────────────────────────
-async function spUpsert(weekKey, clientId, dataJson) {
-  const data = JSON.parse(dataJson);
-  await fbPatch(`roca/entries`, { [clientId]: data });
+function showSyncStatus(state){
+  const el=document.getElementById('syncStatus');if(!el)return;
+  const map={syncing:{text:'⟳ Sincronizando…',color:'rgba(255,255,255,.45)'},ok:{text:'✓ Sincronizado',color:'#6ee7b7'},offline:{text:'⚠ Sem conexão (local)',color:'#fcd34d'},saving:{text:'↑ Salvando…',color:'rgba(255,255,255,.45)'},saved:{text:'✓ Salvo',color:'#6ee7b7'},error:{text:'✕ Erro',color:'#fca5a5'}};
+  const s=map[state]||map.ok;el.textContent=s.text;el.style.color=s.color;
 }
-
-// ── DELETE one entry from Firebase ────────────────────────────────
-async function spDelete(weekKey, clientId) {
-  await fbDelete(`roca/entries/${clientId}`);
-}
-
-// ── ARCHIVE week to Firebase history ──────────────────────────────
-async function fbArchiveWeek(weekKey, entriesSnapshot) {
-  await fbPatch(`roca/history`, { [weekKey]: entriesSnapshot });
-}
-
-// ── STATUS INDICATOR ───────────────────────────────────────────────
-function showSyncStatus(state) {
-  const el = document.getElementById('syncStatus');
-  if (!el) return;
-  const map = {
-    syncing: { text: '⟳ Sincronizando…',    color: 'rgba(255,255,255,.5)' },
-    ok:      { text: '✓ Sincronizado',       color: '#6ee7b7' },
-    offline: { text: '⚠ Sem conexão (local)',color: '#fcd34d' },
-    saving:  { text: '↑ Salvando…',          color: 'rgba(255,255,255,.5)' },
-    saved:   { text: '✓ Salvo',              color: '#6ee7b7' },
-    error:   { text: '✕ Erro ao salvar',     color: '#fca5a5' },
-  };
-  const s = map[state] || map.ok;
-  el.textContent = s.text;
-  el.style.color = s.color;
-}
-
-// ── DUMMY digest vars (not used with Firebase) ─────────────────────
-let _digestExpiry = 0, _digestValue = '', msalReady = false;
 
 // ── DATA ──────────────────────────────────────────────────────────────────
+// SGS removed, "não assinou ainda" removed
 let clients = [
   {id:1,name:"MYRALIS",gs:"Daiane Queiroz",book:false},
   {id:2,name:"JM TEIXEIRA CONSULTORIA",gs:"Alinne Carmo",book:false},
@@ -1125,7 +643,7 @@ let clients = [
   {id:24,name:"AXS Energia S/A",gs:"Douglas Romão",book:true},
   {id:25,name:"OCQ",gs:"Douglas Romão",book:true},
   {id:26,name:"LOGCOMEX",gs:"Douglas Romão",book:true},
-  {id:27,name:"ATACADÃO",gs:"Rafael Manso",book:false},
+  {id:27,name:"ATACADÃO",gs:"Telma",book:false},
   {id:28,name:"GSI",gs:"Douglas Romão",book:true},
   {id:29,name:"LIBBS FARMACÊUTICA",gs:"Lucineia Guizardi",book:true},
   {id:30,name:"AEGEA",gs:"Michelle Stefenson",book:true},
@@ -1134,14 +652,14 @@ let clients = [
   {id:33,name:"ACHÉ",gs:"Michelle Stefenson",book:true},
   {id:34,name:"BRASILSEG",gs:"Michelle Stefenson",book:true},
   {id:35,name:"E-UB COMERCIO LTDA",gs:"Douglas Romão",book:false},
-  {id:36,name:"LWART SOLUÇÕES AMBIENTAISS/A",gs:"Rafael Manso",book:false},
-  {id:37,name:"GREEN4T SOLUCOES TI SA",gs:"Rafael Manso",book:true},
+  {id:36,name:"LWART SOLUÇÕES AMBIENTAIS S/A",gs:"Telma",book:false},
+  {id:37,name:"GREEN4T SOLUCOES TI SA",gs:"Telma",book:true},
   {id:38,name:"MANIKRAFT",gs:"Douglas Romão",book:false},
-  {id:39,name:"APELETTROLIGHT",gs:"Rafael Manso",book:true},
-  {id:40,name:"UNIMED SEGURADORA S/A",gs:"Rafael Manso",book:true},
-  {id:41,name:"OXITENO S/A INDUSTRIA E COMERCIO",gs:"Rafael Manso",book:true},
-  {id:42,name:"J&T",gs:"Rafael Manso",book:true},
-  {id:43,name:"EDGEFY - SISMETAL",gs:"Rafael Manso",book:true},
+  {id:39,name:"APELETTROLIGHT",gs:"Telma",book:true},
+  {id:40,name:"UNIMED SEGURADORA S/A",gs:"Telma",book:true},
+  {id:41,name:"OXITENO S/A INDUSTRIA E COMERCIO",gs:"Telma",book:true},
+  {id:42,name:"J&T",gs:"Telma",book:true},
+  {id:43,name:"EDGEFY - SISMETAL",gs:"Telma",book:true},
   {id:44,name:"SOROCABA REFRESCOS",gs:"Renata Gomes",book:false},
   {id:45,name:"PPRO BRASIL LTDA",gs:"Douglas Romão",book:false},
   {id:46,name:"ANHEMBI",gs:"Douglas Romão",book:false},
@@ -1149,32 +667,32 @@ let clients = [
   {id:48,name:"M & S MONITORAMENTO",gs:"Douglas Romão",book:false},
   {id:49,name:"PISCITELLE",gs:"Douglas Romão",book:false},
   {id:50,name:"SANTA MARCELINA",gs:"Douglas Romão",book:false},
-  {id:51,name:"SO FILTROS GESTAO EMPRESARIAL EIRELI",gs:"Rafael Manso",book:false},
-  {id:52,name:"ODONTOCOMPANY FRANCHISING S.A.",gs:"Rafael Manso",book:false},
-  {id:53,name:"INSTITUTO FÁBIO HADDAD",gs:"Rafael Manso",book:false},
+  {id:51,name:"SO FILTROS GESTAO EMPRESARIAL EIRELI",gs:"Telma",book:false},
+  {id:52,name:"ODONTOCOMPANY FRANCHISING S.A.",gs:"Telma",book:false},
+  {id:53,name:"INSTITUTO FÁBIO HADDAD",gs:"Telma",book:false},
   {id:54,name:"CKS",gs:"Douglas Romão",book:false},
-  {id:55,name:"TROMINK INDUSTRIAL LTDA.",gs:"Rafael Manso",book:false},
-  {id:56,name:"SMP AUTOMOTIVE PROD. AUTOM. DO BRASIL LTDA.",gs:"Rafael Manso",book:false},
-  {id:57,name:"Maratá",gs:"Rafael Manso",book:false},
+  {id:55,name:"TROMINK INDUSTRIAL LTDA.",gs:"Telma",book:false},
+  {id:56,name:"SMP AUTOMOTIVE PROD. AUTOM. DO BRASIL LTDA.",gs:"Telma",book:false},
+  {id:57,name:"Maratá",gs:"Telma",book:false},
   {id:58,name:"SILVA SOLAR",gs:"Douglas Romão",book:false},
   {id:59,name:"GUSMÃO",gs:"Douglas Romão",book:false},
   {id:60,name:"YES SERVIÇOS TERCEIRIZADOS LTDA",gs:"Douglas Romão",book:false},
   {id:61,name:"Stefanini Comércio",gs:"Alinne Carmo",book:false},
-  {id:62,name:"RODOLIPE LOGISTICA LTDA",gs:"Rafael Manso",book:false},
+  {id:62,name:"RODOLIPE LOGISTICA LTDA",gs:"Telma",book:false},
   {id:63,name:"CLASSY BRANDS IMP E COM DE COS",gs:"Douglas Romão",book:false},
   {id:64,name:"SANTA MASSA",gs:"Alinne Carmo",book:false},
   {id:65,name:"XCELL",gs:"Douglas Romão",book:false},
   {id:66,name:"AGRICOLA XINGU S/A",gs:"Douglas Romão",book:false},
   {id:67,name:"DOCWISE SOLUCOES",gs:"Douglas Romão",book:false},
   {id:68,name:"SAGA",gs:"Douglas Romão",book:false},
-  {id:69,name:"RISEL COMBUSTIVEIS LTDA",gs:"Rafael Manso",book:false},
+  {id:69,name:"RISEL COMBUSTIVEIS LTDA",gs:"Telma",book:false},
   {id:70,name:"TRUZZI ADVOGADOS",gs:"Douglas Romão",book:false},
   {id:71,name:"UNILEVER",gs:"Renata Gomes",book:true},
   {id:72,name:"VERTTECH",gs:"Douglas Romão",book:false},
   {id:73,name:"SICOOB",gs:"Douglas Romão",book:false},
   {id:74,name:"VOCALCOM",gs:"Douglas Romão",book:false},
-  {id:75,name:"SANIMAX",gs:"Rafael Manso",book:false},
-  {id:76,name:"FLORARTE",gs:"Rafael Manso",book:false},
+  {id:75,name:"SANIMAX",gs:"Telma",book:false},
+  {id:76,name:"FLORARTE",gs:"Telma",book:false},
   {id:77,name:"PRO TRADE",gs:"Douglas Romão",book:false},
   {id:78,name:"HARMMONYA",gs:"Douglas Romão",book:false},
   {id:79,name:"IBAR",gs:"Douglas Romão",book:false},
@@ -1201,854 +719,662 @@ let clients = [
   {id:100,name:"KNAPP",gs:"Douglas Romão",book:false},
   {id:101,name:"CONSERSAS OLÉ",gs:"Douglas Romão",book:false},
   {id:102,name:"GRUPO TB",gs:"Renata Gomes",book:true},
-  {id:103,name:"IconIt",gs:"Rafael Manso",book:false},
+  {id:103,name:"IconIt",gs:"Telma",book:false},
   {id:104,name:"TOTVS",gs:"Renata Gomes",book:false},
-  {id:105,name:"SGS",gs:"(não assinou ainda)",book:false},
 ];
 
-let gsList = ["Alinne Carmo","Daiane Queiroz","Douglas Romão","Fróes","Lucineia Guizardi","Michelle Stefenson","Rafael Manso","Renata Gomes"];
+let gsList = ["Alinne Carmo","Daiane Queiroz","Douglas Romão","Fróes","Lucineia Guizardi","Michelle Stefenson","Telma","Renata Gomes"];
 
 const gsColors = {
-  "Alinne Carmo":      {bg:"#FEF3C7",color:"#92400E"},
-  "Daiane Queiroz":    {bg:"#FCE7F3",color:"#9D174D"},
-  "Douglas Romão":     {bg:"#E0E7FF",color:"#3730A3"},
-  "Fróes":             {bg:"#1B3A5C",color:"#FFFFFF"},
-  "Lucineia Guizardi": {bg:"#D1FAE5",color:"#065F46"},
-  "Michelle Stefenson":{bg:"#FEE2E2",color:"#991B1B"},
-  "Rafael Manso":      {bg:"#F3E8FF",color:"#6B21A8"},
-  "Renata Gomes":      {bg:"#ECFDF5",color:"#047857"},
-  "(não assinou ainda)":{bg:"#F3F4F6",color:"#6B7280"},
+  "Alinne Carmo":       {bg:"#FEF3C7",color:"#92400E"},
+  "Daiane Queiroz":     {bg:"#FCE7F3",color:"#9D174D"},
+  "Douglas Romão":      {bg:"#E0E7FF",color:"#3730A3"},
+  "Fróes":              {bg:"#0D2B4E",color:"#FFFFFF"},
+  "Lucineia Guizardi":  {bg:"#D1FAE5",color:"#065F46"},
+  "Michelle Stefenson": {bg:"#FEE2E2",color:"#991B1B"},
+  "Telma":              {bg:"#F0FDF4",color:"#166534"},
+  "Renata Gomes":       {bg:"#ECFDF5",color:"#047857"},
 };
 
-// entries: { clientId: { R, O, C, A, justR, justO, justC, justA, actionTaken, needFrom, bookSent, bookDate, timestamp } }
 let entries = {};
-let weekHistory = {}; // { weekKey: { clientId: {R,O,C,A,...} } }
-
-let currentFilter = { gs: 'all', status: null, search: '', bookPending: false, worsened: false, improved: false };
-let currentView = 'kanban';
+let weekHistory = {};
+let currentFilter = {gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false};
+let currentView = 'list';
 let editingClientId = null;
+let currentFarol = {R:null,O:null,C:null,A:null};
+// Multi-select churn: set of active risks
+let churnSelected = new Set();
+let currentBilling = null;
 
-// ── WEEK HELPERS ─────────────────────────────────────────────────────────
-function getWeekKey(offsetWeeks = 0) {
-  const now = new Date();
-  now.setDate(now.getDate() + offsetWeeks * 7);
-  const day = now.getDay();
-  const diffToMon = (day === 0 ? -6 : 1 - day);
-  const mon = new Date(now);
-  mon.setDate(now.getDate() + diffToMon);
-  mon.setHours(0,0,0,0);
-  return mon.toISOString().slice(0,10); // e.g. "2026-03-16"
-}
+// ── HEALTH SCORE ENGINE ─────────────────────────────────────────────────────
+// Fórmula: base ponderada ROCA + penalidades de engajamento + riscos
+// Escala conservadora: conta verde com boa cadência chega no máximo ~85
+// Conta com any V ou risco real cai abaixo de 60 facilmente
+// Teto deliberadamente baixo para forçar visibilidade de problemas
 
-function getPrevWeekKey() { return getWeekKey(-1); }
+function calcHealthScore(id) {
+  const e = entries[id];
+  if (!e || !e.R) return null;
 
-function getPrevEntry(clientId) {
-  const prev = weekHistory[getPrevWeekKey()];
-  return prev ? (prev[clientId] || null) : null;
-}
+  // ── Base ROCA: pesos assimétricos (R e C têm maior peso estratégico) ──
+  const dimVal = v => v==='G'?100:v==='A'?40:v==='V'?0:40;
+  // R=30%, O=20%, C=30%, A=20%
+  const base = dimVal(e.R)*0.30 + dimVal(e.O)*0.20 + dimVal(e.C)*0.30 + dimVal(e.A)*0.20;
+  // base range: 0–100
 
-function archiveCurrentWeek() {
-  const key = getWeekKey();
-  const snapshot = JSON.parse(JSON.stringify(entries));
-  weekHistory[key] = snapshot;
-  localStorage.setItem('roca_history', JSON.stringify(weekHistory));
-  // also persist to Firebase
-  fbArchiveWeek(key, snapshot).catch(e => console.warn('Archive to Firebase failed:', e));
-}
+  let penalty = 0;
 
-function statusOrder(s) { return {V:0,A:1,G:2,pending:3}[s] ?? 3; }
+  // ── Penalidade: qualquer dimensão V é crítico ──
+  const dims = [e.R, e.O, e.C, e.A];
+  const countV = dims.filter(d=>d==='V').length;
+  const countA = dims.filter(d=>d==='A').length;
+  if (countV >= 2) penalty += 20; // múltiplos V = situação grave
+  else if (countV === 1) penalty += 10;
+  if (countA >= 3) penalty += 8;
 
-function trendIcon(curr, prev) {
-  if (!prev || !prev.R) return '';
-  const co = statusOrder(curr), po = statusOrder(prev ? getEntryStatus_from(prev) : null);
-  if (co < po) return '↓'; // worsened (V=0 is worst)
-  if (co > po) return '↑'; // improved
-  return '→';
-}
-
-function getEntryStatus_from(e) {
-  if (!e || !e.R) return 'pending';
-  const vals = [e.R, e.O, e.C, e.A];
-  if (vals.includes('V')) return 'V';
-  if (vals.includes('A')) return 'A';
-  return 'G';
-}
-
-// ── INIT ──────────────────────────────────────────────────────────────────
-async function init() {
-  // ── clients & GS list: always from localStorage (you manage these) ──
-  const savedClients = localStorage.getItem('roca_clients');
-  const savedGS      = localStorage.getItem('roca_gs');
-  if (savedClients) clients = JSON.parse(savedClients);
-  if (savedGS)      gsList  = JSON.parse(savedGS);
-
-  // ── Week badge ──────────────────────────────────────────────────────
-  const now = new Date();
-  const day = now.getDay();
-  const diffToMon = (day === 0 ? -6 : 1 - day);
-  const mon = new Date(now); mon.setDate(now.getDate() + diffToMon);
-  const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
-  const fmt = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-  document.getElementById('weekBadge').textContent = `Semana ${fmt(mon)} – ${fmt(fri)}`;
-
-  buildSidebar();
-  document.getElementById('view-kanban-btn').classList.add('active');
-  document.getElementById('sc-all').classList.add('active');
-
-  // ── entries & history: try SharePoint, fallback to localStorage ────
-  const spOk = await spLoadAll();
-  if (!spOk) {
-    const savedEntries = localStorage.getItem('roca_entries');
-    const savedHistory = localStorage.getItem('roca_history');
-    if (savedEntries) entries     = JSON.parse(savedEntries);
-    if (savedHistory) weekHistory = JSON.parse(savedHistory);
+  // ── Penalidade: churn risk ──
+  if (e.churnRisk) {
+    const risks = Array.isArray(e.churnRisk) ? e.churnRisk : [e.churnRisk];
+    const activeRisks = risks.filter(r=>r!=='none'&&r!=='');
+    if (activeRisks.length >= 2) penalty += 25; // billing + cancel = crítico
+    else if (activeRisks.length === 1) penalty += 15;
   }
 
+  // ── Penalidade: faturamento ──
+  if (e.billing==='down') penalty += 10;
+
+  // ── Penalidade: cadência de reunião online ──
+  const daysSince = d => d ? Math.floor((new Date()-new Date(d))/86400000) : null;
+  const md = daysSince(e.lastMeeting);
+  if (md === null)       penalty += 15; // nunca registrou = sem evidência de contato
+  else if (md > 30)      penalty += 20; // +30 dias sem reunião = crítico
+  else if (md > 21)      penalty += 12;
+  else if (md > 14)      penalty +=  6;
+  else if (md > 7)       penalty +=  2;
+
+  // ── Penalidade: visita presencial ──
+  const vd = daysSince(e.lastVisit);
+  if (vd === null)       penalty +=  5; // sem registro
+  else if (vd > 90)      penalty += 10;
+  else if (vd > 60)      penalty +=  6;
+  else if (vd > 30)      penalty +=  2;
+
+  // ── Penalidade: need from Fróes sem action taken ──
+  if (e.needFrom && !e.actionTaken) penalty += 5;
+
+  const score = Math.max(0, Math.min(100, Math.round(base - penalty)));
+  return score;
+}
+
+function hsColor(score) {
+  if (score === null) return {fg:'var(--muted)',bg:'var(--surface2)',bar:'#ccd3e3'};
+  if (score >= 70) return {fg:'var(--green)',bg:'var(--green-bg)',bar:'var(--green)'};
+  if (score >= 45) return {fg:'var(--yellow)',bg:'var(--yellow-bg)',bar:'#f59e0b'};
+  return {fg:'var(--red)',bg:'var(--red-bg)',bar:'var(--red)'};
+}
+
+function calcGSHealthAvg(gs) {
+  const gsClients = clients.filter(c=>c.gs===gs);
+  const scores = gsClients.map(c=>calcHealthScore(c.id)).filter(s=>s!==null);
+  if (scores.length===0) return null;
+  return Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+}
+
+// ── WEEK HELPERS ───────────────────────────────────────────────────────────
+function getWeekKey(offset=0){const now=new Date();now.setDate(now.getDate()+offset*7);const day=now.getDay();const diff=(day===0?-6:1-day);const mon=new Date(now);mon.setDate(now.getDate()+diff);mon.setHours(0,0,0,0);return mon.toISOString().slice(0,10);}
+function getPrevEntry(id){const prev=weekHistory[getWeekKey(-1)];return prev?(prev[id]||null):null;}
+function archiveCurrentWeek(){
+  const key=getWeekKey();
+  const snap=JSON.parse(JSON.stringify(entries));
+  weekHistory[key]=snap;
+  localStorage.setItem('roca_history',JSON.stringify(weekHistory));
+  fbArchiveWeek(key,snap).catch(e=>console.warn('Archive failed:',e));
+}
+function statusOrder(s){return {V:0,A:1,G:2,pending:3}[s]??3;}
+function getEntryStatus_from(e){if(!e||!e.R)return'pending';if([e.R,e.O,e.C,e.A].includes('V'))return'V';if([e.R,e.O,e.C,e.A].includes('A'))return'A';return'G';}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+async function init(){
+  const sc=localStorage.getItem('roca_clients');
+  const sg=localStorage.getItem('roca_gs');
+  if(sc)clients=JSON.parse(sc);
+  if(sg)gsList=JSON.parse(sg);
+  const now=new Date();const day=now.getDay();const diff=(day===0?-6:1-day);
+  const mon=new Date(now);mon.setDate(now.getDate()+diff);
+  const fri=new Date(mon);fri.setDate(mon.getDate()+4);
+  const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  document.getElementById('weekBadge').textContent=`Semana ${fmt(mon)} – ${fmt(fri)}`;
+  buildSidebar();
+  document.getElementById('sc-all').classList.add('active');
+  const spOk=await spLoadAll();
+  if(!spOk){
+    const se=localStorage.getItem('roca_entries');
+    const sh=localStorage.getItem('roca_history');
+    if(se)entries=JSON.parse(se);
+    if(sh)weekHistory=JSON.parse(sh);
+  }
   render();
 }
 
-// ── SIDEBAR ───────────────────────────────────────────────────────────────
-function buildSidebar() {
-  const list = document.getElementById('gs-sidebar-list');
-  list.innerHTML = '';
-  const uniqueGS = [...new Set(clients.map(c => c.gs))].sort();
-  uniqueGS.forEach(gs => {
-    const count = clients.filter(c => c.gs === gs).length;
-    const col = gsColors[gs] || {bg:'#f0f0f5',color:'#444'};
-    const initials = gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const btn = document.createElement('button');
-    btn.className = 'gs-btn gs-btn-person';
-    btn.dataset.gsName = gs;
-    btn.innerHTML = `<div class="gs-avatar" style="background:${col.bg};color:${col.color};">${initials}</div>${gs.split(' ')[0]}<span class="gs-count">${count}</span>`;
-    btn.onclick = () => filterGS(gs, btn);
+// ── SIDEBAR ────────────────────────────────────────────────────────────────
+function buildSidebar(){
+  const list=document.getElementById('gs-sidebar-list');list.innerHTML='';
+  const uniqueGS=[...new Set(clients.map(c=>c.gs))].sort();
+  uniqueGS.forEach(gs=>{
+    const count=clients.filter(c=>c.gs===gs).length;
+    const col=gsColors[gs]||{bg:'#f0f0f5',color:'#444'};
+    const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const btn=document.createElement('button');
+    btn.className='gs-btn gs-btn-person';btn.dataset.gsName=gs;
+    btn.innerHTML=`<div class="gs-avatar" style="background:${col.bg};color:${col.color};">${initials}</div>${gs.split(' ')[0]}<span class="gs-count">${count}</span>`;
+    btn.onclick=()=>filterGS(gs,btn);
     list.appendChild(btn);
   });
 }
 
-// ── RENDER ─────────────────────────────────────────────────────────────────
-function getEntryStatus(id) {
-  const e = entries[id];
-  if (!e || !e.R) return 'pending';
-  const vals = [e.R, e.O, e.C, e.A];
-  if (vals.includes('V')) return 'V';
-  if (vals.includes('A')) return 'A';
-  return 'G';
+// ── GS HEALTH SCORE STRIP ──────────────────────────────────────────────────
+function renderGSHealthStrip(){
+  const grid=document.getElementById('gsHealthGrid');grid.innerHTML='';
+  const activeGS=[...new Set(clients.map(c=>c.gs))].sort();
+  activeGS.forEach(gs=>{
+    const avg=calcGSHealthAvg(gs);
+    const col=hsColor(avg);
+    const gsCount=clients.filter(c=>c.gs===gs).length;
+    const filledCount=clients.filter(c=>c.gs===gs&&entries[c.id]&&entries[c.id].R).length;
+    const card=document.createElement('div');
+    card.className='gs-health-card';
+    const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const gsCol=gsColors[gs]||{bg:'#eee',color:'#444'};
+    card.innerHTML=`
+      <div class="gs-health-name" style="display:flex;align-items:center;gap:6px;">
+        <span style="width:20px;height:20px;border-radius:50%;background:${gsCol.bg};color:${gsCol.color};font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</span>
+        ${gs.split(' ')[0]}
+      </div>
+      <div class="hs-bar-track"><div class="hs-bar-fill" style="width:${avg!==null?avg:0}%;background:${col.bar};"></div></div>
+      <div class="hs-score-row">
+        <span class="hs-score-val" style="color:${col.fg};">${avg!==null?avg+'%':'–'}</span>
+        <span class="hs-score-accounts">${filledCount}/${gsCount} contas</span>
+      </div>
+    `;
+    card.onclick=()=>filterGS(gs,null);
+    grid.appendChild(card);
+  });
 }
 
-function getOverallColor(status) {
-  if (status === 'V') return 'V';
-  if (status === 'A') return 'A';
-  if (status === 'G') return 'G';
-  return null;
+// ── RENDER ──────────────────────────────────────────────────────────────────
+function getEntryStatus(id){const e=entries[id];if(!e||!e.R)return'pending';if([e.R,e.O,e.C,e.A].includes('V'))return'V';if([e.R,e.O,e.C,e.A].includes('A'))return'A';return'G';}
+
+function hasChurnRisk(id){
+  const e=entries[id];if(!e)return false;
+  if(!e.churnRisk)return false;
+  const risks=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];
+  return risks.some(r=>r!=='none'&&r!=='');
 }
 
-function filteredClients() {
-  return clients.filter(c => {
-    if (currentFilter.gs !== 'all' && c.gs !== currentFilter.gs) return false;
-    if (currentFilter.search && !c.name.toLowerCase().includes(currentFilter.search.toLowerCase())) return false;
-    if (currentFilter.status) {
-      return getEntryStatus(c.id) === currentFilter.status;
-    }
-    if (currentFilter.bookPending) {
-      if (!c.book) return false;
-      const e = entries[c.id];
-      if (!e) return true;
-      return !e.bookSent;
-    }
-    if (currentFilter.worsened) {
-      const prev = getPrevEntry(c.id);
-      if (!prev) return false;
-      const co = statusOrder(getEntryStatus(c.id));
-      const po = statusOrder(getEntryStatus_from(prev));
-      return co < po; // lower order = worse
-    }
-    if (currentFilter.improved) {
-      const prev = getPrevEntry(c.id);
-      if (!prev) return false;
-      const co = statusOrder(getEntryStatus(c.id));
-      const po = statusOrder(getEntryStatus_from(prev));
-      return co > po; // higher order = better
-    }
+function filteredClients(){
+  return clients.filter(c=>{
+    if(currentFilter.gs!=='all'&&c.gs!==currentFilter.gs)return false;
+    if(currentFilter.search&&!c.name.toLowerCase().includes(currentFilter.search.toLowerCase()))return false;
+    if(currentFilter.churn)return hasChurnRisk(c.id);
+    if(currentFilter.status)return getEntryStatus(c.id)===currentFilter.status;
+    if(currentFilter.bookPending){if(!c.book)return false;const e=entries[c.id];return!e||!e.bookSent;}
+    if(currentFilter.worsened){const prev=getPrevEntry(c.id);if(!prev)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(prev));}
+    if(currentFilter.improved){const prev=getPrevEntry(c.id);if(!prev)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(prev));}
     return true;
   });
 }
 
-function render() {
-  const fc = filteredClients();
+function render(){
+  const fc=filteredClients();
   updateSummary(fc);
-  if (currentView === 'kanban') renderKanban(fc);
+  renderGSHealthStrip();
+  if(currentView==='list')renderList(fc);
   else renderTable(fc);
 }
 
-function updateSummary(fc) {
-  // s-total always shows the GS-filtered total (ignores status/card filter)
-  const gsFiltered = clients.filter(c =>
-    (currentFilter.gs === 'all' || c.gs === currentFilter.gs) &&
-    (!currentFilter.search || c.name.toLowerCase().includes(currentFilter.search.toLowerCase()))
-  );
-  document.getElementById('s-total').textContent   = gsFiltered.length;
-  document.getElementById('s-red').textContent     = fc.filter(c => getEntryStatus(c.id) === 'V').length;
-  document.getElementById('s-yellow').textContent  = fc.filter(c => getEntryStatus(c.id) === 'A').length;
-  document.getElementById('s-green').textContent   = fc.filter(c => getEntryStatus(c.id) === 'G').length;
-  document.getElementById('s-pending').textContent = fc.filter(c => getEntryStatus(c.id) === 'pending').length;
-
-  // sidebar badge counts always show global totals
-  document.getElementById('count-all').textContent     = clients.length;
-  document.getElementById('count-red').textContent     = clients.filter(c => getEntryStatus(c.id) === 'V').length;
-  document.getElementById('count-yellow').textContent  = clients.filter(c => getEntryStatus(c.id) === 'A').length;
-  document.getElementById('count-pending').textContent = clients.filter(c => getEntryStatus(c.id) === 'pending').length;
-  document.getElementById('count-book').textContent      = clients.filter(c => c.book && (!entries[c.id] || !entries[c.id].bookSent)).length;
-  document.getElementById('count-worsened').textContent  = clients.filter(c => { const prev = getPrevEntry(c.id); if (!prev) return false; return statusOrder(getEntryStatus(c.id)) < statusOrder(getEntryStatus_from(prev)); }).length;
-  document.getElementById('count-improved').textContent  = clients.filter(c => { const prev = getPrevEntry(c.id); if (!prev) return false; return statusOrder(getEntryStatus(c.id)) > statusOrder(getEntryStatus_from(prev)); }).length;
-
-  document.querySelectorAll('.gs-btn-person').forEach(btn => {
-    const gs  = btn.dataset.gsName;
-    const cnt = btn.querySelector('.gs-count');
-    if (cnt && gs) cnt.textContent = clients.filter(c => c.gs === gs).length;
-  });
+function updateSummary(fc){
+  const gsF=clients.filter(c=>(currentFilter.gs==='all'||c.gs===currentFilter.gs)&&(!currentFilter.search||c.name.toLowerCase().includes(currentFilter.search.toLowerCase())));
+  document.getElementById('s-total').textContent=gsF.length;
+  document.getElementById('s-red').textContent=gsF.filter(c=>getEntryStatus(c.id)==='V').length;
+  document.getElementById('s-yellow').textContent=gsF.filter(c=>getEntryStatus(c.id)==='A').length;
+  document.getElementById('s-green').textContent=gsF.filter(c=>getEntryStatus(c.id)==='G').length;
+  document.getElementById('s-churn').textContent=gsF.filter(c=>hasChurnRisk(c.id)).length;
+  document.getElementById('count-all').textContent=clients.length;
+  document.getElementById('count-red').textContent=clients.filter(c=>getEntryStatus(c.id)==='V').length;
+  document.getElementById('count-green').textContent=clients.filter(c=>getEntryStatus(c.id)==='G').length;
+  document.getElementById('count-yellow').textContent=clients.filter(c=>getEntryStatus(c.id)==='A').length;
+  document.getElementById('count-churn').textContent=clients.filter(c=>hasChurnRisk(c.id)).length;
+  document.getElementById('count-pending').textContent=clients.filter(c=>getEntryStatus(c.id)==='pending').length;
+  document.getElementById('count-book').textContent=clients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length;
+  document.getElementById('count-worsened').textContent=clients.filter(c=>{const prev=getPrevEntry(c.id);if(!prev)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(prev));}).length;
+  document.getElementById('count-improved').textContent=clients.filter(c=>{const prev=getPrevEntry(c.id);if(!prev)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(prev));}).length;
+  document.querySelectorAll('.gs-btn-person').forEach(btn=>{const gs=btn.dataset.gsName;const cnt=btn.querySelector('.gs-count');if(cnt&&gs)cnt.textContent=clients.filter(c=>c.gs===gs).length;});
 }
 
-function makeCard(c) {
-  const e = entries[c.id] || {};
-  const st = getEntryStatus(c.id);
-  const col = gsColors[c.gs] || {bg:'#eee',color:'#444'};
-  const dims = ['R','O','C','A'];
-  const miniDots = dims.map(d => {
-    const v = e[d] || '';
-    return `<div class="roca-mini-item"><div class="roca-dot ${v}"></div><span class="roca-label">${d}</span></div>`;
-  }).join('');
+function renderList(fc){
+  const container=document.getElementById('client-list');container.innerHTML='';
+  if(fc.length===0){container.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Nenhuma conta encontrada</div><div style="font-size:12px;">Tente outro filtro ou busca.</div></div>`;return;}
+  const dimOrder=v=>({V:0,A:1,G:2}[v]??3);
+  fc.forEach(c=>{
+    const e=entries[c.id]||{};
+    const st=getEntryStatus(c.id);
+    const col=gsColors[c.gs]||{bg:'#eee',color:'#444'};
+    const prev=getPrevEntry(c.id);const hasPrev=prev&&prev.R;
+    const hs=calcHealthScore(c.id);
+    const hsc=hsColor(hs);
 
-  const card = document.createElement('div');
-  card.className = `client-card ${st === 'pending' ? 'pending' : 'done'}`;
-  card.innerHTML = `
-    <div class="client-name">${c.name}</div>
-    <div class="client-meta">
-      <span class="client-gs-tag">${c.gs.split(' ')[0]}</span>
-      ${c.book ? '<span class="book-badge">BOOK</span>' : ''}
-      ${e.needFrom ? '<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:10px;font-family:DM Mono,monospace;">⚠ Precisa de Fróes</span>' : ''}
-    </div>
-    <div class="roca-mini">${miniDots}</div>
-    ${e.actionTaken ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4;">✅ ${e.actionTaken.slice(0,80)}${e.actionTaken.length>80?'…':''}</div>` : ''}
-  `;
-  card.onclick = () => openFillModal(c.id);
-  return card;
-}
-
-function renderKanban(fc) {
-  const container = document.getElementById('kanban-list');
-  container.innerHTML = '';
-
-  if (fc.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:13px;">Nenhuma conta encontrada para este filtro.</div>';
-    return;
-  }
-
-  fc.forEach(c => {
-    const e = entries[c.id] || {};
-    const st = getEntryStatus(c.id);
-    const col = gsColors[c.gs] || {bg:'#eee', color:'#444'};
-
-    const stColors = {
-      V: {bg:'var(--red-bg)',   color:'var(--red)',    label:'🔴'},
-      A: {bg:'var(--yellow-bg)',color:'var(--yellow)', label:'🟡'},
-      G: {bg:'var(--green-bg)', color:'var(--green)',  label:'🟢'},
-      pending: {bg:'var(--surface)', color:'var(--muted)', label:'⏳ Pendente'},
-    };
-    const stc = stColors[st] || stColors.pending;
-
-    const farolPill = (dim, val) => {
-      if (!val) return `<span style="font-size:11px;font-family:DM Mono,monospace;color:var(--muted);background:var(--surface);padding:2px 8px;border-radius:12px;">${dim} –</span>`;
-      const fc2 = {G:{bg:'var(--green-bg)',c:'var(--green)'}, A:{bg:'var(--yellow-bg)',c:'var(--yellow)'}, V:{bg:'var(--red-bg)',c:'var(--red)'}};
-      const label = {G:'Verde',A:'Amarelo',V:'Vermelho'};
-      return `<span style="font-size:11px;font-family:DM Mono,monospace;color:${fc2[val].c};background:${fc2[val].bg};padding:2px 8px;border-radius:12px;font-weight:600;">${dim} ${label[val]}</span>`;
+    // dim pills
+    const dimDelta=(dim)=>{if(!hasPrev)return null;const co=dimOrder(e[dim]),po=dimOrder(prev[dim]);if(co<po)return'worse';if(co>po)return'better';return'same';};
+    const pillHtml=(dim)=>{
+      const val=e[dim];const delta=dimDelta(dim);
+      const cls=val||'–';const deltaClass=delta==='worse'?' worse':delta==='better'?' better':'';
+      const arrowMap={worse:'▼',better:'▲',same:'·'};
+      const arrow=delta?`<span style="font-size:8px;margin-left:1px;opacity:.7;">${arrowMap[delta]}</span>`:'';
+      const label={G:'🟢',A:'🟡',V:'🔴'}[val]||'–';
+      return `<span class="dim-pill ${cls}${deltaClass}" title="${dim}: ${val||'–'}${hasPrev?' (ant: '+(prev[dim]||'–')+')':''}">${dim} ${val?`<span style="font-size:9px;">${label}</span>`:'<span style="opacity:.4;font-size:9px;">–</span>'}${arrow}</span>`;
     };
 
-    const row = document.createElement('div');
-    row.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:8px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:16px;flex-wrap:wrap;';
-    row.onmouseenter = () => { row.style.boxShadow = 'var(--shadow)'; row.style.borderColor = '#c8d0e0'; };
-    row.onmouseleave = () => { row.style.boxShadow = ''; row.style.borderColor = 'var(--border)'; };
-    row.onclick = () => openFillModal(c.id);
+    // trend
+    let trendHtml='';
+    if(hasPrev){const co=statusOrder(st),po=statusOrder(getEntryStatus_from(prev));const tc=co<po?'worse':co>po?'better':'same';const tl={worse:'↓ Piorou',better:'↑ Melhorou',same:'→ Estável'}[tc];trendHtml=`<span class="trend-pill ${tc}">${tl}</span>`;}
 
-    // Left: status indicator bar
-    const bar = document.createElement('div');
-    bar.style.cssText = `width:4px;min-height:44px;border-radius:4px;background:${stc.color};flex-shrink:0;`;
+    // billing badge
+    let billingHtml='';
+    if(e.billing){const bm={up:{icon:'▲',fg:'var(--green)',bg:'var(--green-bg)'},down:{icon:'▼',fg:'var(--red)',bg:'var(--red-bg)'},stable:{icon:'→',fg:'var(--muted)',bg:'var(--surface)'}};const b=bm[e.billing];if(b)billingHtml=`<span class="badge" style="background:${b.bg};color:${b.fg};">Fat. ${b.icon}</span>`;}
 
-    // Client name + GS
-    const info = document.createElement('div');
-    info.style.cssText = 'flex:1;min-width:180px;';
-    info.innerHTML = `
-      <div style="font-family:Syne,sans-serif;font-weight:600;font-size:13.5px;color:var(--ink);">${c.name}</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-        <span style="font-size:11.5px;background:${col.bg};color:${col.color};padding:2px 8px;border-radius:12px;font-weight:600;">${c.gs.split(' ')[0]}</span>
-        ${c.book ? '<span style="font-size:10px;font-weight:600;background:#EBF5FB;color:var(--accent);padding:2px 7px;border-radius:12px;font-family:DM Mono,monospace;">BOOK</span>' : ''}
+    // staleness indicators
+    const daysSince=d=>{if(!d)return null;return Math.floor((new Date()-new Date(d))/86400000);};
+    const md=daysSince(e.lastMeeting);const vd=daysSince(e.lastVisit);
+    let meetHtml='',visitHtml='';
+    if(md!==null){const c2=md>21?'var(--red)':md>14?'var(--yellow)':'var(--muted)';meetHtml=`<span class="badge" style="color:${c2};background:var(--surface);" title="Última reunião online: ${e.lastMeeting}">📹 ${md}d</span>`;}
+    if(vd!==null){const c2=vd>60?'var(--red)':vd>30?'var(--yellow)':'var(--muted)';visitHtml=`<span class="badge" style="color:${c2};background:var(--surface);" title="Última visita presencial: ${e.lastVisit}">🤝 ${vd}d</span>`;}
+
+    const row=document.createElement('div');
+    row.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 16px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px;flex-wrap:wrap;';
+    row.onmouseenter=()=>{row.style.boxShadow='var(--shadow)';row.style.borderColor='var(--border2)';};
+    row.onmouseleave=()=>{row.style.boxShadow='';row.style.borderColor='var(--border)';};
+    row.onclick=()=>openFillModal(c.id);
+
+    const bar=document.createElement('div');
+    bar.style.cssText=`width:4px;border-radius:4px;align-self:stretch;min-height:44px;flex-shrink:0;background:${st==='V'?'var(--red)':st==='A'?'#f59e0b':st==='G'?'var(--green)':'var(--border2)'};`;
+
+    const info=document.createElement('div');
+    info.style.cssText='flex:1;min-width:160px;';
+    info.innerHTML=`
+      <div style="font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</div>
+      <div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;">
+        <span class="badge" style="background:${col.bg};color:${col.color};">${c.gs.split(' ')[0]}</span>
+        ${c.book?'<span class="badge badge-book">BOOK</span>':''}
+        ${hasChurnRisk(c.id)?'<span class="badge badge-churn">⚠ CHURN</span>':''}
+        ${e.needFrom?'<span class="badge badge-need">⚠ Fróes</span>':''}
+        ${billingHtml}${meetHtml}${visitHtml}
       </div>
     `;
 
-    // ── ROCA PILLS with per-dimension comparison ─────────────────────────
-    const prev = getPrevEntry(c.id);
-    const hasPrev = prev && prev.R;
+    const pills=document.createElement('div');
+    pills.style.cssText='display:flex;gap:4px;flex-wrap:wrap;align-items:center;flex-shrink:0;';
+    pills.innerHTML=pillHtml('R')+pillHtml('O')+pillHtml('C')+pillHtml('A');
 
-    // per-dimension delta: V=0 A=1 G=2 pending=3 (lower = worse)
-    const dimOrder = v => ({V:0,A:1,G:2}[v] ?? 3);
-    const dimDelta = (dim) => {
-      if (!hasPrev) return null;
-      const co = dimOrder(e[dim]), po = dimOrder(prev[dim]);
-      if (co < po) return 'worse';
-      if (co > po) return 'better';
-      return 'same';
-    };
+    // Health Score mini
+    const hsMini=document.createElement('div');
+    hsMini.className='hs-mini';
+    hsMini.title=`Health Score: ${hs!==null?hs+'%':'Não preenchido'}`;
+    hsMini.innerHTML=`
+      <div class="hs-mini-track"><div class="hs-mini-fill" style="width:${hs!==null?hs:0}%;background:${hsc.bar};"></div></div>
+      <span class="hs-mini-val" style="color:${hsc.fg};">${hs!==null?hs+'%':'–'}</span>
+    `;
 
-    // builds one pill: current color + tiny arrow if changed
-    const pillWithDelta = (dim) => {
-      const val = e[dim];
-      const delta = dimDelta(dim);
-      const dimColors = {
-        G: { bg:'var(--green-bg)', c:'var(--green)' },
-        A: { bg:'var(--yellow-bg)', c:'var(--yellow)' },
-        V: { bg:'var(--red-bg)', c:'var(--red)' },
-      };
-      const dc = val ? dimColors[val] : { bg:'var(--surface)', c:'var(--muted)' };
+    const trendEl=document.createElement('div');trendEl.style.cssText='flex-shrink:0;';trendEl.innerHTML=trendHtml;
 
-      // arrow style
-      const arrowMap = {
-        worse:  { sym:'▼', color:'var(--red)' },
-        better: { sym:'▲', color:'var(--green)' },
-        same:   { sym:'●', color:'var(--muted)' },
-      };
-      const arrow = delta ? arrowMap[delta] : null;
+    const stColors={V:{lbl:'🔴',cls:'V'},A:{lbl:'🟡',cls:'A'},G:{lbl:'🟢',cls:'G'},pending:{lbl:'⏳',cls:'pending'}};
+    const sc=stColors[st]||stColors.pending;
+    const statusEl=document.createElement('div');statusEl.style.cssText='flex-shrink:0;';
+    statusEl.innerHTML=`<span class="status-pill ${sc.cls}">${sc.lbl}</span>`;
 
-      // prev pill value for tooltip
-      const prevVal = hasPrev ? (prev[dim] || '–') : null;
-      const tooltip = prevVal ? `${dim}: ${val||'–'} (anterior: ${prevVal})` : dim;
+    const actionEl=document.createElement('div');
+    actionEl.style.cssText='font-size:11px;color:var(--muted);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0;';
+    if(e.actionTaken)actionEl.textContent='✅ '+e.actionTaken.slice(0,55)+(e.actionTaken.length>55?'…':'');
+    else if(st==='pending'){actionEl.style.color='var(--accent3)';actionEl.textContent='▶ clique para preencher';}
 
-      return `<span title="${tooltip}" style="
-        display:inline-flex;align-items:center;gap:3px;
-        font-size:11.5px;font-family:'DM Mono',monospace;font-weight:600;
-        color:${dc.c};background:${dc.bg};
-        padding:3px 9px 3px 8px;border-radius:20px;
-        border:1px solid transparent;
-        ${delta==='worse' ? 'border-color:var(--red);' : delta==='better' ? 'border-color:var(--green);' : ''}
-        white-space:nowrap;cursor:default;
-      ">
-        ${dim}
-        ${val ? `<span style="font-size:9px;opacity:.7;">${val==='G'?'🟢':val==='A'?'🟡':'🔴'}</span>` : '<span style="font-size:9px;opacity:.4;">–</span>'}
-        ${arrow ? `<span style="font-size:8px;color:${arrow.color};margin-left:1px;font-weight:900;">${arrow.sym}</span>` : ''}
-      </span>`;
-    };
-
-    const pills = document.createElement('div');
-    pills.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;align-items:center;';
-    pills.innerHTML = pillWithDelta('R') + pillWithDelta('O') + pillWithDelta('C') + pillWithDelta('A');
-
-    // overall trend badge (only shown when prev data exists)
-    const prevBlock = document.createElement('div');
-    prevBlock.style.cssText = 'display:flex;align-items:center;flex-shrink:0;';
-    if (hasPrev) {
-      const co = statusOrder(st), po = statusOrder(getEntryStatus_from(prev));
-      const overall = co < po
-        ? { icon:'↓', label:'Piorou',   color:'var(--red)',   bg:'var(--red-bg)' }
-        : co > po
-          ? { icon:'↑', label:'Melhorou', color:'var(--green)', bg:'var(--green-bg)' }
-          : { icon:'→', label:'Estável',  color:'var(--muted)', bg:'var(--surface)' };
-      const trendTag = document.createElement('span');
-      trendTag.title = `Tendência geral vs semana anterior: ${overall.label}`;
-      trendTag.style.cssText = `font-size:11px;font-weight:700;color:${overall.color};background:${overall.bg};padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace;white-space:nowrap;`;
-      trendTag.textContent = `${overall.icon} ${overall.label}`;
-      prevBlock.appendChild(trendTag);
-    }
-
-    // Status badge
-    const badge = document.createElement('div');
-    badge.style.cssText = `font-size:12px;font-weight:600;color:${stc.color};background:${stc.bg};padding:4px 12px;border-radius:20px;white-space:nowrap;font-family:DM Mono,monospace;`;
-    badge.textContent = stc.label;
-
-    // Action snippet
-    const action = document.createElement('div');
-    action.style.cssText = 'font-size:11.5px;color:var(--muted);max-width:220px;line-height:1.4;';
-    if (e.actionTaken) {
-      action.textContent = '✅ ' + e.actionTaken.slice(0, 70) + (e.actionTaken.length > 70 ? '…' : '');
-    } else if (st === 'pending') {
-      action.style.color = 'var(--accent2)';
-      action.textContent = '▶ clique para preencher';
-    }
-
-    // Need from Fróes
-    const need = document.createElement('div');
-    if (e.needFrom) {
-      need.style.cssText = 'font-size:10.5px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:10px;font-family:DM Mono,monospace;white-space:nowrap;';
-      need.textContent = '⚠ Precisa de Fróes';
-    }
-
-    row.appendChild(bar);
-    row.appendChild(info);
-    row.appendChild(pills);
-    if (prevBlock.children.length) row.appendChild(prevBlock);
-    row.appendChild(badge);
-    row.appendChild(action);
-    if (e.needFrom) row.appendChild(need);
+    row.appendChild(bar);row.appendChild(info);row.appendChild(pills);
+    row.appendChild(hsMini);
+    if(trendHtml)row.appendChild(trendEl);
+    row.appendChild(statusEl);row.appendChild(actionEl);
     container.appendChild(row);
   });
 }
 
-function renderTable(fc) {
-  const tbody = document.getElementById('table-body');
-  tbody.innerHTML = '';
-  if (fc.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted);">Nenhuma conta encontrada</td></tr>';
-    return;
-  }
-  fc.forEach(c => {
-    const e = entries[c.id] || {};
-    const st = getEntryStatus(c.id);
-    const pill = v => v ? `<span class="farol-pill ${v}"><div class="pill-dot ${v}"></div>${v==='G'?'🟢':v==='A'?'🟡':'🔴'}</span>` : '<span class="farol-pill –">–</span>';
-    const stLabel = st === 'V' ? '<span class="farol-pill V">🔴</span>' : st === 'A' ? '<span class="farol-pill A">🟡</span>' : st === 'G' ? '<span class="farol-pill G">🟢</span>' : '<span class="farol-pill –">⏳ Pendente</span>';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="font-weight:600;font-size:12.5px;">${c.name}</td>
-      <td><span style="font-size:12px;background:${(gsColors[c.gs]||{bg:'#eee'}).bg};color:${(gsColors[c.gs]||{color:'#444'}).color};padding:3px 8px;border-radius:20px;font-weight:600;">${c.gs.split(' ')[0]}</span></td>
-      <td>${c.book ? '<span class="book-badge">BOOK</span>' : '–'}</td>
-      <td>${pill(e.R)}</td>
-      <td>${pill(e.O)}</td>
-      <td>${pill(e.C)}</td>
-      <td>${pill(e.A)}</td>
-      <td>${stLabel}</td>
-      <td style="font-size:11.5px;color:var(--muted);max-width:200px;">${e.actionTaken ? e.actionTaken.slice(0,60)+'…' : '–'}</td>
+function renderTable(fc){
+  const tbody=document.getElementById('table-body');tbody.innerHTML='';
+  if(fc.length===0){tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--muted);">Nenhuma conta encontrada</td></tr>';return;}
+  const pill=v=>v?`<span class="dim-pill ${v}">${v==='G'?'🟢':v==='A'?'🟡':'🔴'}</span>`:'<span class="dim-pill –" style="background:var(--surface);color:var(--muted);padding:2px 8px;border-radius:20px;font-size:10px;">–</span>';
+  const billingLabels={up:'▲',down:'▼',stable:'→'};
+  fc.forEach(c=>{
+    const e=entries[c.id]||{};const st=getEntryStatus(c.id);
+    const col=gsColors[c.gs]||{bg:'#eee',color:'#444'};
+    const hs=calcHealthScore(c.id);const hsc=hsColor(hs);
+    const stHtml={V:'<span class="status-pill V">🔴</span>',A:'<span class="status-pill A">🟡</span>',G:'<span class="status-pill G">🟢</span>',pending:'<span class="status-pill pending">⏳</span>'}[st];
+    const churnRisks=e.churnRisk?(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(r=>r!=='none'&&r!==''):[];
+    const churnHtml=churnRisks.length?`<span style="font-size:10px;color:var(--churn);">${churnRisks.map(r=>r==='billing'?'📉 Fat.':'❌ Cancel.').join(', ')}</span>`:'–';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-weight:600;font-size:12px;">${c.name}</td>
+      <td><span class="badge" style="background:${col.bg};color:${col.color};">${c.gs.split(' ')[0]}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div style="width:36px;height:4px;background:var(--surface2);border-radius:4px;overflow:hidden;"><div style="width:${hs!==null?hs:0}%;height:100%;background:${hsc.bar};border-radius:4px;"></div></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:${hsc.fg};">${hs!==null?hs+'%':'–'}</span>
+        </div>
+      </td>
+      <td>${pill(e.R)}</td><td>${pill(e.O)}</td><td>${pill(e.C)}</td><td>${pill(e.A)}</td>
+      <td>${stHtml}</td>
+      <td>${churnHtml}</td>
+      <td style="font-size:11.5px;">${e.billing?billingLabels[e.billing]||'–':'–'}</td>
+      <td style="font-size:11px;color:var(--muted);">${e.lastMeeting||'–'}</td>
+      <td style="font-size:11px;color:var(--muted);">${e.lastVisit||'–'}</td>
+      <td style="font-size:11px;color:var(--muted);max-width:150px;">${e.actionTaken?(e.actionTaken.slice(0,45)+'…'):'–'}</td>
     `;
-    tr.onclick = () => openFillModal(c.id);
+    tr.onclick=()=>openFillModal(c.id);
     tbody.appendChild(tr);
   });
 }
 
-// ── FILL MODAL ─────────────────────────────────────────────────────────────
-let currentFarol = { R: null, O: null, C: null, A: null };
+// ── FILL MODAL ──────────────────────────────────────────────────────────────
+function openFillModal(id){
+  editingClientId=id;
+  const c=clients.find(x=>x.id===id);const e=entries[id]||{};
+  currentFarol={R:e.R||null,O:e.O||null,C:e.C||null,A:e.A||null};
+  currentBilling=e.billing||null;
 
-function openFillModal(id) {
-  editingClientId = id;
-  const c = clients.find(x => x.id === id);
-  const e = entries[id] || {};
-  currentFarol = { R: e.R || null, O: e.O || null, C: e.C || null, A: e.A || null };
+  // parse churn (support old string and new array)
+  churnSelected=new Set();
+  if(e.churnRisk){
+    const risks=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];
+    risks.forEach(r=>{if(r&&r!=='none')churnSelected.add(r);});
+  }
 
-  document.getElementById('modalClientName').textContent = c.name;
-  document.getElementById('modalClientMeta').textContent = `GS: ${c.gs}${c.book ? ' · ★ Book necessário' : ''}`;
+  document.getElementById('modalClientName').textContent=c.name;
+  document.getElementById('modalClientMeta').textContent=`GS: ${c.gs}${c.book?' · ★ Book necessário':''}`;
 
-  // Reset farol options
-  ['R','O','C','A'].forEach(dim => {
-    const block = document.getElementById(`block-${dim}`);
-    block.querySelectorAll('.farol-opt').forEach(opt => opt.className = 'farol-opt');
-    if (currentFarol[dim]) {
-      const opts = block.querySelectorAll('.farol-opt');
-      const idx = currentFarol[dim] === 'G' ? 0 : currentFarol[dim] === 'A' ? 1 : 2;
-      opts[idx].className = `farol-opt selected-${currentFarol[dim]}`;
-    }
+  ['R','O','C','A'].forEach(dim=>{
+    const block=document.getElementById(`block-${dim}`);
+    block.querySelectorAll('.farol-opt').forEach(o=>o.className='farol-opt');
+    if(currentFarol[dim]){const idx=currentFarol[dim]==='G'?0:currentFarol[dim]==='A'?1:2;block.querySelectorAll('.farol-opt')[idx].className=`farol-opt selected-${currentFarol[dim]}`;}
   });
 
-  document.getElementById('justR').value = e.justR || '';
-  document.getElementById('justO').value = e.justO || '';
-  document.getElementById('justC').value = e.justC || '';
-  document.getElementById('justA').value = e.justA || '';
-  document.getElementById('actionTaken').value = e.actionTaken || '';
-  document.getElementById('needFrom').value = e.needFrom || '';
+  document.getElementById('justR').value=e.justR||'';
+  document.getElementById('justO').value=e.justO||'';
+  document.getElementById('justC').value=e.justC||'';
+  document.getElementById('justA').value=e.justA||'';
+  document.getElementById('actionTaken').value=e.actionTaken||'';
+  document.getElementById('needFrom').value=e.needFrom||'';
+  document.getElementById('lastMeeting').value=e.lastMeeting||'';
+  document.getElementById('lastVisit').value=e.lastVisit||'';
+  document.getElementById('billingObs').value=e.billingObs||'';
+  document.getElementById('churnNotes').value=e.churnNotes||'';
 
-  const bookSec = document.getElementById('book-section');
-  bookSec.style.display = c.book ? 'block' : 'none';
-  if (c.book) {
-    document.getElementById('bookSent').checked = e.bookSent || false;
-    document.getElementById('bookDate').value = e.bookDate || '';
-  }
+  renderChurnOpts();
+
+  // billing
+  resetBillingOpts();
+  if(currentBilling){document.getElementById(`bill-${currentBilling}`).classList.add(`sel-${currentBilling}`);document.getElementById('billingDetailRow').style.display=currentBilling!=='stable'?'grid':'none';}
+  else{document.getElementById('billingDetailRow').style.display='none';}
+
+  // book
+  const bb=document.getElementById('bookBlock');
+  bb.style.display=c.book?'block':'none';
+  if(c.book){document.getElementById('bookSent').checked=e.bookSent||false;document.getElementById('bookDate').value=e.bookDate||'';}
 
   document.getElementById('fillModal').classList.add('open');
 }
 
-function selectFarol(dim, val, el) {
-  currentFarol[dim] = val;
-  const opts = el.parentElement.querySelectorAll('.farol-opt');
-  opts.forEach(o => o.className = 'farol-opt');
-  el.className = `farol-opt selected-${val}`;
+function renderChurnOpts(){
+  const noneEl=document.getElementById('churn-none');
+  const billingEl=document.getElementById('churn-billing');
+  const cancelEl=document.getElementById('churn-cancel');
+  noneEl.className='churn-opt';billingEl.className='churn-opt';cancelEl.className='churn-opt';
+  const hasAny=churnSelected.size>0;
+  if(!hasAny)noneEl.classList.add('sel-none');
+  if(churnSelected.has('billing'))billingEl.classList.add('selected');
+  if(churnSelected.has('cancel'))cancelEl.classList.add('selected');
+  document.getElementById('churnNotesGroup').style.display=hasAny?'block':'none';
 }
 
-function clearEntry() {
-  if (!editingClientId) return;
-  if (!confirm('Limpar todos os dados desta conta?')) return;
-  delete entries[editingClientId];
-  localStorage.setItem('roca_entries', JSON.stringify(entries));
-  closeModal('fillModal');
-  render();
-  showSyncStatus('saving');
-  spDelete(getWeekKey(), editingClientId)
-    .then(() => showSyncStatus('saved'))
-    .catch(() => showSyncStatus('error'));
-}
-
-function saveEntry() {
-  if (!editingClientId) return;
-  // archive snapshot of THIS week before overwriting
-  const wk = getWeekKey();
-  if (!weekHistory[wk]) weekHistory[wk] = {};
-  if (entries[editingClientId]) {
-    weekHistory[wk][editingClientId] = JSON.parse(JSON.stringify(entries[editingClientId]));
-    localStorage.setItem('roca_history', JSON.stringify(weekHistory));
+function toggleChurn(val,el){
+  if(val==='none'){churnSelected.clear();}
+  else{
+    if(churnSelected.has(val))churnSelected.delete(val);
+    else churnSelected.add(val);
   }
-  const e = {
-    R: currentFarol.R, O: currentFarol.O, C: currentFarol.C, A: currentFarol.A,
-    justR: document.getElementById('justR').value,
-    justO: document.getElementById('justO').value,
-    justC: document.getElementById('justC').value,
-    justA: document.getElementById('justA').value,
-    actionTaken: document.getElementById('actionTaken').value,
-    needFrom: document.getElementById('needFrom').value,
-    bookSent: document.getElementById('bookSent').checked,
-    bookDate: document.getElementById('bookDate').value,
-    timestamp: new Date().toISOString()
-  };
-  entries[editingClientId] = e;
-  // persist locally immediately (optimistic)
-  localStorage.setItem('roca_entries', JSON.stringify(entries));
-  closeModal('fillModal');
-  render();
-  // persist to SharePoint async
+  renderChurnOpts();
+}
+
+function selectFarol(dim,val,el){
+  currentFarol[dim]=val;
+  el.parentElement.querySelectorAll('.farol-opt').forEach(o=>o.className='farol-opt');
+  el.className=`farol-opt selected-${val}`;
+}
+
+function resetBillingOpts(){
+  ['up','stable','down'].forEach(v=>document.getElementById(`bill-${v}`).className='billing-opt');
+}
+
+function selectBilling(val,el){
+  currentBilling=val;resetBillingOpts();
+  el.classList.add(`sel-${val}`);
+  document.getElementById('billingDetailRow').style.display=val!=='stable'?'grid':'none';
+}
+
+function clearEntry(){
+  if(!editingClientId)return;
+  if(!confirm('Limpar todos os dados desta conta?'))return;
+  delete entries[editingClientId];
+  localStorage.setItem('roca_entries',JSON.stringify(entries));
+  closeModal('fillModal');render();
   showSyncStatus('saving');
-  spUpsert(getWeekKey(), editingClientId, JSON.stringify(e))
-    .then(() => showSyncStatus('saved'))
-    .catch(() => showSyncStatus('error'));
+  spDelete(getWeekKey(),editingClientId).then(()=>showSyncStatus('saved')).catch(()=>showSyncStatus('error'));
+}
+
+function saveEntry(){
+  if(!editingClientId)return;
+  const wk=getWeekKey();
+  if(!weekHistory[wk])weekHistory[wk]={};
+  if(entries[editingClientId]){weekHistory[wk][editingClientId]=JSON.parse(JSON.stringify(entries[editingClientId]));localStorage.setItem('roca_history',JSON.stringify(weekHistory));}
+  const churnArr=churnSelected.size>0?[...churnSelected]:['none'];
+  const e={
+    R:currentFarol.R,O:currentFarol.O,C:currentFarol.C,A:currentFarol.A,
+    justR:document.getElementById('justR').value,
+    justO:document.getElementById('justO').value,
+    justC:document.getElementById('justC').value,
+    justA:document.getElementById('justA').value,
+    actionTaken:document.getElementById('actionTaken').value,
+    needFrom:document.getElementById('needFrom').value,
+    churnRisk:churnArr,
+    churnNotes:document.getElementById('churnNotes').value,
+    lastMeeting:document.getElementById('lastMeeting').value,
+    lastVisit:document.getElementById('lastVisit').value,
+    billing:currentBilling,
+    billingObs:document.getElementById('billingObs').value,
+    bookSent:document.getElementById('bookSent').checked,
+    bookDate:document.getElementById('bookDate').value,
+    timestamp:new Date().toISOString()
+  };
+  entries[editingClientId]=e;
+  localStorage.setItem('roca_entries',JSON.stringify(entries));
+  closeModal('fillModal');render();
+  showSyncStatus('saving');
+  spUpsert(getWeekKey(),editingClientId,JSON.stringify(e)).then(()=>showSyncStatus('saved')).catch(()=>showSyncStatus('error'));
 }
 
 // ── FILTERS ────────────────────────────────────────────────────────────────
-function filterGS(gs, btn) {
-  currentFilter.gs = gs;
-  currentFilter.status = null;
-  currentFilter.bookPending = false;
-  // reset only person-GS and quick-filter btns, keep view btns intact
-  document.querySelectorAll('.gs-btn:not(#view-kanban-btn):not(#view-table-btn)').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  const label = gs === 'all' ? 'Todas as Contas' : gs;
-  const count = gs === 'all' ? clients.length : clients.filter(c => c.gs === gs).length;
-  document.getElementById('mainTitle').innerHTML = `${label} <span>${count} conta${count!==1?'s':''}</span>`;
-  document.querySelectorAll('.summary-card').forEach(c => c.classList.remove('active'));
+function resetAllQuickBtns(){document.querySelectorAll('.gs-btn:not(#view-list-btn):not(#view-table-btn)').forEach(b=>b.classList.remove('active'));}
+
+function filterGS(gs,btn){
+  currentFilter={...currentFilter,gs,status:null,bookPending:false,worsened:false,improved:false,churn:false};
+  resetAllQuickBtns();
+  if(btn)btn.classList.add('active');
+  else{document.getElementById('gs-all').classList.remove('active');document.querySelectorAll('.gs-btn-person').forEach(b=>{if(b.dataset.gsName===gs)b.classList.add('active');});}
+  const count=gs==='all'?clients.length:clients.filter(c=>c.gs===gs).length;
+  document.getElementById('mainTitle').innerHTML=`${gs==='all'?'Todas as Contas':gs} <span>${count} conta${count!==1?'s':''}</span>`;
+  document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   document.getElementById('sc-all').classList.add('active');
   render();
 }
 
-function filterStatus(st, btn) {
-  const toggling = currentFilter.status === st;
-  currentFilter.status = toggling ? null : st;
-  currentFilter.gs = 'all';
-  currentFilter.bookPending = false;
-  document.querySelectorAll('.gs-btn:not(#view-kanban-btn):not(#view-table-btn)').forEach(b => b.classList.remove('active'));
-  if (currentFilter.status) {
-    btn.classList.add('active');
-    const labels = {V:'Vermelhos', A:'Amarelos', pending:'Pendentes'};
-    const count = clients.filter(c => getEntryStatus(c.id) === st).length;
-    document.getElementById('mainTitle').innerHTML = `${labels[st]||st} <span>${count} conta${count!==1?'s':''}</span>`;
-  } else {
-    document.getElementById('gs-all').classList.add('active');
-    document.getElementById('mainTitle').innerHTML = `Todas as Contas <span>${clients.length} contas</span>`;
-  }
+function filterStatus(st,btn){
+  const toggling=currentFilter.status===st;
+  currentFilter={...currentFilter,status:toggling?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false};
+  resetAllQuickBtns();
+  if(currentFilter.status){btn.classList.add('active');const labels={V:'Vermelhos',G:'Verdes',A:'Amarelos',pending:'Pendentes'};const count=clients.filter(c=>getEntryStatus(c.id)===st).length;document.getElementById('mainTitle').innerHTML=`${labels[st]||st} <span>${count} conta${count!==1?'s':''}</span>`;}
+  else{document.getElementById('gs-all').classList.add('active');document.getElementById('mainTitle').innerHTML=`Todas as Contas <span>${clients.length} contas</span>`;}
   render();
 }
 
-function filterBookPending(btn) {
-  currentFilter.bookPending = !currentFilter.bookPending;
-  currentFilter.status = null;
-  currentFilter.gs = 'all';
-  document.querySelectorAll('.gs-btn:not(#view-kanban-btn):not(#view-table-btn)').forEach(b => b.classList.remove('active'));
-  if (currentFilter.bookPending) {
-    btn.classList.add('active');
-    const count = clients.filter(c => c.book && (!entries[c.id] || !entries[c.id].bookSent)).length;
-    document.getElementById('mainTitle').innerHTML = `Book Pendente <span>${count} conta${count!==1?'s':''}</span>`;
-  } else {
-    document.getElementById('gs-all').classList.add('active');
-    document.getElementById('mainTitle').innerHTML = `Todas as Contas <span>${clients.length} contas</span>`;
-  }
+function filterChurn(btn){
+  currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:'all',bookPending:false,worsened:false,improved:false};
+  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
+  if(currentFilter.churn){btn.classList.add('active');document.getElementById('sc-churn').classList.add('active');const count=clients.filter(c=>hasChurnRisk(c.id)).length;document.getElementById('mainTitle').innerHTML=`⚠ Risco de Churn <span>${count} conta${count!==1?'s':''}</span>`;}
+  else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');document.getElementById('mainTitle').innerHTML=`Todas as Contas <span>${clients.length} contas</span>`;}
   render();
 }
 
-function filterByCard(st) {
-  // toggle off if same card clicked again
-  const toggling = currentFilter.status === st && st !== 'all';
-  currentFilter.status = (st === 'all' || toggling) ? null : st;
-  currentFilter.gs = 'all';
-  currentFilter.bookPending = false;
-  currentFilter.search = '';
-  document.querySelector('.search-input').value = '';
-
-  // reset sidebar
-  document.querySelectorAll('.gs-btn:not(#view-kanban-btn):not(#view-table-btn)').forEach(b => b.classList.remove('active'));
-  document.getElementById('gs-all').classList.add('active');
-
-  // update title
-  const labels = { V:'🔴 Vermelhos', A:'🟡 Amarelos', G:'🟢 Verdes', pending:'⏳ Pendentes', null:'Todas as Contas' };
-  const activeStatus = currentFilter.status;
-  const count = activeStatus
-    ? clients.filter(c => getEntryStatus(c.id) === activeStatus).length
-    : clients.length;
-  document.getElementById('mainTitle').innerHTML = `${labels[activeStatus] || 'Todas as Contas'} <span>${count} conta${count!==1?'s':''}</span>`;
-
-  // highlight active card
-  document.querySelectorAll('.summary-card').forEach(c => c.classList.remove('active'));
-  const cardMap = { null:'sc-all', V:'sc-red', A:'sc-yellow', G:'sc-green', pending:'sc-pending' };
-  const activeCard = document.getElementById(cardMap[activeStatus] || 'sc-all');
-  if (activeCard) activeCard.classList.add('active');
-
+function filterBookPending(btn){
+  currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:'all',worsened:false,improved:false,churn:false};
+  resetAllQuickBtns();
+  if(currentFilter.bookPending){btn.classList.add('active');const count=clients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length;document.getElementById('mainTitle').innerHTML=`Book Pendente <span>${count} conta${count!==1?'s':''}</span>`;}
+  else{document.getElementById('gs-all').classList.add('active');document.getElementById('mainTitle').innerHTML=`Todas as Contas <span>${clients.length} contas</span>`;}
   render();
 }
 
-function filterWorsened(btn) {
-  currentFilter.worsened = !currentFilter.worsened;
-  currentFilter.improved = false;
-  currentFilter.status = null;
-  currentFilter.gs = 'all';
-  currentFilter.bookPending = false;
-  document.querySelectorAll('.gs-btn:not(#view-kanban-btn):not(#view-table-btn)').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.summary-card').forEach(c => c.classList.remove('active'));
-  document.getElementById('sc-all').classList.add('active');
-  if (currentFilter.worsened) {
-    btn.classList.add('active');
-    const count = clients.filter(c => { const prev = getPrevEntry(c.id); if (!prev) return false; return statusOrder(getEntryStatus(c.id)) < statusOrder(getEntryStatus_from(prev)); }).length;
-    document.getElementById('mainTitle').innerHTML = `↓ Pioraram vs semana anterior <span>${count} conta${count!==1?'s':''}</span>`;
-  } else {
-    document.getElementById('gs-all').classList.add('active');
-    document.getElementById('mainTitle').innerHTML = `Todas as Contas <span>${clients.length} contas</span>`;
-  }
+function filterByCard(st){
+  if(st==='churn'){filterChurn(document.getElementById('quick-churn'));return;}
+  const toggling=currentFilter.status===st&&st!=='all';
+  currentFilter={...currentFilter,status:(st==='all'||toggling)?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,search:''};
+  document.querySelector('.search-input').value='';
+  resetAllQuickBtns();document.getElementById('gs-all').classList.add('active');
+  const labels={V:'🔴 Vermelhos',A:'🟡 Amarelos',G:'🟢 Verdes',pending:'⏳ Pendentes'};
+  const activeStatus=currentFilter.status;
+  const count=activeStatus?clients.filter(c=>getEntryStatus(c.id)===activeStatus).length:clients.length;
+  document.getElementById('mainTitle').innerHTML=`${labels[activeStatus]||'Todas as Contas'} <span>${count} conta${count!==1?'s':''}</span>`;
+  document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
+  const cardMap={null:'sc-all',V:'sc-red',A:'sc-yellow',G:'sc-green',pending:'sc-all'};
+  (document.getElementById(cardMap[activeStatus])||document.getElementById('sc-all')).classList.add('active');
   render();
 }
 
-function filterImproved(btn) {
-  currentFilter.improved = !currentFilter.improved;
-  currentFilter.worsened = false;
-  currentFilter.status = null;
-  currentFilter.gs = 'all';
-  currentFilter.bookPending = false;
-  document.querySelectorAll('.gs-btn:not(#view-kanban-btn):not(#view-table-btn)').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.summary-card').forEach(c => c.classList.remove('active'));
-  document.getElementById('sc-all').classList.add('active');
-  if (currentFilter.improved) {
-    btn.classList.add('active');
-    const count = clients.filter(c => { const prev = getPrevEntry(c.id); if (!prev) return false; return statusOrder(getEntryStatus(c.id)) > statusOrder(getEntryStatus_from(prev)); }).length;
-    document.getElementById('mainTitle').innerHTML = `↑ Melhoraram vs semana anterior <span>${count} conta${count!==1?'s':''}</span>`;
-  } else {
-    document.getElementById('gs-all').classList.add('active');
-    document.getElementById('mainTitle').innerHTML = `Todas as Contas <span>${clients.length} contas</span>`;
-  }
+function filterWorsened(btn){
+  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:'all',bookPending:false,churn:false};
+  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
+  if(currentFilter.worsened){btn.classList.add('active');const count=clients.filter(c=>{const prev=getPrevEntry(c.id);if(!prev)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(prev));}).length;document.getElementById('mainTitle').innerHTML=`↓ Pioraram <span>${count} conta${count!==1?'s':''}</span>`;}
+  else{document.getElementById('gs-all').classList.add('active');document.getElementById('mainTitle').innerHTML=`Todas as Contas <span>${clients.length} contas</span>`;}
   render();
 }
 
-function searchClients(val) {
-  currentFilter.search = val;
-  if (val) {
-    const count = clients.filter(c => c.name.toLowerCase().includes(val.toLowerCase())).length;
-    document.getElementById('mainTitle').innerHTML = `Busca: "${val}" <span>${count} resultado${count!==1?'s':''}</span>`;
-  } else {
-    document.getElementById('mainTitle').innerHTML = `Todas as Contas <span>${clients.length} contas</span>`;
-  }
+function filterImproved(btn){
+  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:'all',bookPending:false,churn:false};
+  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
+  if(currentFilter.improved){btn.classList.add('active');const count=clients.filter(c=>{const prev=getPrevEntry(c.id);if(!prev)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(prev));}).length;document.getElementById('mainTitle').innerHTML=`↑ Melhoraram <span>${count} conta${count!==1?'s':''}</span>`;}
+  else{document.getElementById('gs-all').classList.add('active');document.getElementById('mainTitle').innerHTML=`Todas as Contas <span>${clients.length} contas</span>`;}
   render();
 }
 
-function setView(v, btn) {
-  currentView = v;
-  document.getElementById('kanban-view').style.display = v === 'kanban' ? 'block' : 'none';
-  document.getElementById('table-view').style.display = v === 'table' ? 'block' : 'none';
-  document.getElementById('view-kanban-btn').classList.toggle('active', v === 'kanban');
-  document.getElementById('view-table-btn').classList.toggle('active', v === 'table');
+function searchClients(val){
+  currentFilter.search=val;
+  if(val){const count=clients.filter(c=>c.name.toLowerCase().includes(val.toLowerCase())).length;document.getElementById('mainTitle').innerHTML=`Busca: "${val}" <span>${count} resultado${count!==1?'s':''}</span>`;}
+  else{document.getElementById('mainTitle').innerHTML=`Todas as Contas <span>${clients.length} contas</span>`;}
   render();
 }
 
-// ── ADMIN ──────────────────────────────────────────────────────────────────
-function openAdmin() {
-  renderEditList();
-  renderGSList();
-  document.getElementById('adminModal').classList.add('open');
+function setView(v,btn){
+  currentView=v;
+  document.getElementById('list-view').style.display=v==='list'?'block':'none';
+  document.getElementById('table-view').style.display=v==='table'?'block':'none';
+  document.getElementById('view-list-btn').classList.toggle('active',v==='list');
+  document.getElementById('view-table-btn').classList.toggle('active',v==='table');
+  render();
 }
 
-function switchAdminTab(tab, btn) {
-  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById(`tab-${tab}`).classList.add('active');
-}
-
-function renderEditList() {
-  const list = document.getElementById('editClientList');
-  list.innerHTML = '';
-  clients.forEach((c, i) => {
-    const row = document.createElement('div');
-    row.className = 'client-edit-row';
-    row.innerHTML = `
-      <input type="text" value="${c.name}" data-idx="${i}" data-field="name" oninput="updateClientField(this)">
-      <select data-idx="${i}" data-field="gs" onchange="updateClientField(this)">
-        ${gsList.map(g => `<option${g===c.gs?' selected':''}>${g}</option>`).join('')}
-      </select>
-      <select data-idx="${i}" data-field="book" onchange="updateClientField(this)">
-        <option value="false"${!c.book?' selected':''}>Não</option>
-        <option value="true"${c.book?' selected':''}>Sim</option>
-      </select>
-      <button class="del-btn" onclick="deleteClient(${i})">✕</button>
-    `;
+// ── ADMIN ───────────────────────────────────────────────────────────────────
+function openAdmin(){renderEditList();renderGSList();document.getElementById('adminModal').classList.add('open');}
+function switchAdminTab(tab,btn){document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById(`tab-${tab}`).classList.add('active');}
+function renderEditList(){
+  const list=document.getElementById('editClientList');list.innerHTML='';
+  clients.forEach((c,i)=>{
+    const row=document.createElement('div');row.className='client-edit-row';
+    row.innerHTML=`<input type="text" value="${c.name}" data-idx="${i}" data-field="name" oninput="updateClientField(this)"><select data-idx="${i}" data-field="gs" onchange="updateClientField(this)">${gsList.map(g=>`<option${g===c.gs?' selected':''}>${g}</option>`).join('')}</select><select data-idx="${i}" data-field="book" onchange="updateClientField(this)"><option value="false"${!c.book?' selected':''}>Não</option><option value="true"${c.book?' selected':''}>Sim</option></select><button class="del-btn" onclick="deleteClient(${i})">✕</button>`;
     list.appendChild(row);
   });
 }
-
-function updateClientField(el) {
-  const idx = +el.dataset.idx;
-  const field = el.dataset.field;
-  if (field === 'book') clients[idx][field] = el.value === 'true';
-  else clients[idx][field] = el.value;
+function updateClientField(el){const idx=+el.dataset.idx,field=el.dataset.field;if(field==='book')clients[idx][field]=el.value==='true';else clients[idx][field]=el.value;}
+function deleteClient(idx){if(!confirm(`Remover "${clients[idx].name}"?`))return;clients.splice(idx,1);renderEditList();}
+function addClientRow(){const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);clients.push({id:maxId+1,name:'Novo Cliente',gs:gsList[0],book:false});renderEditList();document.getElementById('editClientList').scrollTop=9999;}
+function renderGSList(){
+  const list=document.getElementById('editGSList');list.innerHTML='';
+  gsList.forEach((gs,i)=>{const row=document.createElement('div');row.className='client-edit-row';row.style.gridTemplateColumns='1fr 32px';row.innerHTML=`<input type="text" value="${gs}" data-idx="${i}" oninput="gsList[this.dataset.idx]=this.value"><button class="del-btn" onclick="deleteGS(${i})">✕</button>`;list.appendChild(row);});
 }
+function addGSRow(){gsList.push('Novo GS');renderGSList();}
+function deleteGS(idx){if(!confirm(`Remover "${gsList[idx]}"?`))return;gsList.splice(idx,1);renderGSList();}
+function saveAdmin(){localStorage.setItem('roca_clients',JSON.stringify(clients));localStorage.setItem('roca_gs',JSON.stringify(gsList));closeModal('adminModal');buildSidebar();render();}
 
-function deleteClient(idx) {
-  if (!confirm(`Remover "${clients[idx].name}"?`)) return;
-  clients.splice(idx, 1);
-  renderEditList();
-}
-
-function addClientRow() {
-  const maxId = clients.reduce((m,c) => Math.max(m,c.id), 0);
-  clients.push({id: maxId+1, name:'Novo Cliente', gs: gsList[0], book: false});
-  renderEditList();
-  document.getElementById('editClientList').scrollTop = 9999;
-}
-
-function renderGSList() {
-  const list = document.getElementById('editGSList');
-  list.innerHTML = '';
-  gsList.forEach((gs, i) => {
-    const row = document.createElement('div');
-    row.className = 'client-edit-row';
-    row.style.gridTemplateColumns = '1fr 36px';
-    row.innerHTML = `
-      <input type="text" value="${gs}" data-idx="${i}" oninput="gsList[this.dataset.idx]=this.value">
-      <button class="del-btn" onclick="deleteGS(${i})">✕</button>
-    `;
-    list.appendChild(row);
-  });
-}
-
-function addGSRow() {
-  gsList.push('Novo GS');
-  renderGSList();
-}
-
-function deleteGS(idx) {
-  if (!confirm(`Remover "${gsList[idx]}"?`)) return;
-  gsList.splice(idx, 1);
-  renderGSList();
-}
-
-function saveAdmin() {
-  localStorage.setItem('roca_clients', JSON.stringify(clients));
-  localStorage.setItem('roca_gs', JSON.stringify(gsList));
-  closeModal('adminModal');
-  buildSidebar();
-  render();
-}
-
-// ── IMPORT ─────────────────────────────────────────────────────────────────
-function importFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const wb = XLSX.read(e.target.result, {type:'binary'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      const preview = document.getElementById('import-preview');
-      
-      // Detect header row
-      let startRow = 0;
-      if (data[0] && typeof data[0][0] === 'string' && data[0][0].toLowerCase().includes('client')) startRow = 1;
-      
-      const imported = [];
-      const maxId = clients.reduce((m,c) => Math.max(m,c.id), 0);
-      let newId = maxId + 1;
-      
-      for (let i = startRow; i < data.length; i++) {
-        const row = data[i];
-        const name = String(row[0] || '').trim();
-        const gs = String(row[1] || '').trim();
-        const book = String(row[2] || '').trim().toUpperCase() === 'S';
-        if (!name) continue;
-        imported.push({id: newId++, name, gs: gs || gsList[0], book});
-      }
-      
-      preview.innerHTML = `
-        <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-          <strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong>
-          <div style="font-size:12px;color:var(--muted);margin-top:4px;">A importação <strong>substituirá</strong> a lista atual. Confirme abaixo.</div>
-        </div>
-        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
-          ${imported.slice(0,20).map(c=>`<div style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:12.5px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">${c.gs}${c.book?' · 📋':''}</span></div>`).join('')}
-          ${imported.length>20?`<div style="padding:8px 12px;color:var(--muted);font-size:12px;">...e mais ${imported.length-20} clientes</div>`:''}
-        </div>
-        <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="confirmImport(${JSON.stringify(imported).replace(/"/g,'&quot;')})">✓ Confirmar importação</button>
-      `;
-    } catch(err) {
-      document.getElementById('import-preview').innerHTML = `<div style="color:var(--red);padding:12px;">Erro ao ler arquivo: ${err.message}</div>`;
-    }
+// ── IMPORT ──────────────────────────────────────────────────────────────────
+function importFile(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      let startRow=0;if(data[0]&&typeof data[0][0]==='string'&&data[0][0].toLowerCase().includes('client'))startRow=1;
+      const imported=[];const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);let newId=maxId+1;
+      for(let i=startRow;i<data.length;i++){const row=data[i];const name=String(row[0]||'').trim();const gs=String(row[1]||'').trim();const book=String(row[2]||'').trim().toUpperCase()==='S';if(!name)continue;imported.push({id:newId++,name,gs:gs||gsList[0],book});}
+      document.getElementById('import-preview').innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">${c.gs}${c.book?' · 📋':''}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick='confirmImport(${JSON.stringify(imported).replace(/'/g,"&apos;")})'>✓ Confirmar importação</button>`;
+    }catch(err){document.getElementById('import-preview').innerHTML=`<div style="color:var(--red);padding:10px;">Erro ao ler arquivo: ${err.message}</div>`;}
   };
   reader.readAsBinaryString(file);
 }
+function confirmImport(data){clients=data;localStorage.setItem('roca_clients',JSON.stringify(clients));closeModal('adminModal');buildSidebar();render();}
 
-function confirmImport(data) {
-  clients = data;
-  localStorage.setItem('roca_clients', JSON.stringify(clients));
-  closeModal('adminModal');
-  buildSidebar();
-  render();
-}
-
-// ── ADVANCE WEEK ──────────────────────────────────────────────────────────
-async function advanceWeek() {
-  if (!confirm('Arquivar semana atual e iniciar nova semana em branco?\nOs dados ficam salvos no histórico.')) return;
+// ── ADVANCE WEEK ────────────────────────────────────────────────────────────
+async function advanceWeek(){
+  if(!confirm('Arquivar semana atual e iniciar nova semana em branco?\nOs dados ficam salvos no histórico.'))return;
+  // 1. Archive current entries into history (Firebase + localStorage)
   archiveCurrentWeek();
-  // clear entries in Firebase
   showSyncStatus('saving');
-  try {
-    await fbSet('roca/entries', {});
-    entries = {};
-    localStorage.setItem('roca_entries', JSON.stringify(entries));
+  try{
+    // 2. Clear current entries in Firebase
+    await fbSet('roca/entries',{});
+    // 3. Clear local entries
+    entries={};
+    localStorage.setItem('roca_entries',JSON.stringify(entries));
+    // 4. Reload full roca node from Firebase so weekHistory is fresh and normalized
+    await spLoadAll();
     showSyncStatus('saved');
-  } catch(e) {
-    console.error('advanceWeek Firebase error:', e);
+  }catch(e){
+    console.error('advanceWeek error:',e);
     showSyncStatus('error');
   }
   render();
 }
 
-// ── EXPORT ─────────────────────────────────────────────────────────────────
-function exportData() {
-  const rows = [['Cliente','GS','Book','R','Justificativa R','O','Justificativa O','C','Justificativa C','A','Justificativa A','Status Geral','Ação Tomada','Precisa de Fróes','Book Enviado','Data Book','Preenchido em']];
-  clients.forEach(c => {
-    const e = entries[c.id] || {};
-    const st = getEntryStatus(c.id);
-    rows.push([
-      c.name, c.gs, c.book ? 'Sim' : 'Não',
-      e.R||'', e.justR||'', e.O||'', e.justO||'', e.C||'', e.justC||'', e.A||'', e.justA||'',
-      st === 'V' ? 'VERMELHO' : st === 'A' ? 'AMARELO' : st === 'G' ? 'VERDE' : 'PENDENTE',
-      e.actionTaken||'', e.needFrom||'',
-      e.bookSent ? 'Sim' : '', e.bookDate||'',
-      e.timestamp ? new Date(e.timestamp).toLocaleString('pt-BR') : ''
+// ── EXPORT ──────────────────────────────────────────────────────────────────
+function exportData(){
+  const billingLabels={up:'Subiu',down:'Caiu',stable:'Estável'};
+  const rows=[['Cliente','GS','Health Score','R','Just. R','O','Just. O','C','Just. C','A','Just. A','Status','Risco Churn','Notas Churn','Últ. Reunião Online','Últ. Visita Presencial','Faturamento','Obs. Faturamento','Ação Tomada','Precisa de Fróes','Book Enviado','Data Book','Preenchido em']];
+  clients.forEach(c=>{
+    const e=entries[c.id]||{};const st=getEntryStatus(c.id);const hs=calcHealthScore(c.id);
+    const churnRisks=e.churnRisk?(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(r=>r!=='none'&&r!==''):[];
+    rows.push([c.name,c.gs,hs!==null?hs+'%':'–',e.R||'',e.justR||'',e.O||'',e.justO||'',e.C||'',e.justC||'',e.A||'',e.justA||'',st==='V'?'VERMELHO':st==='A'?'AMARELO':st==='G'?'VERDE':'PENDENTE',churnRisks.map(r=>r==='billing'?'Queda de faturamento':'Risco de cancelamento').join(', ')||'–',e.churnNotes||'',e.lastMeeting||'',e.lastVisit||'',billingLabels[e.billing]||'',e.billingObs||'',e.actionTaken||'',e.needFrom||'',e.bookSent?'Sim':'',e.bookDate||'',e.timestamp?new Date(e.timestamp).toLocaleString('pt-BR'):''
     ]);
   });
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = rows[0].map((_,i) => ({wch: i===0?35:i===1?18:i===12||i===13?40:16}));
-  XLSX.utils.book_append_sheet(wb, ws, 'ROCA Dashboard');
-  const now = new Date();
-  XLSX.writeFile(wb, `SAFIRA_ROCA_${now.toISOString().slice(0,10)}.xlsx`);
+  const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=rows[0].map((_,i)=>({wch:i===0?35:i===1?18:i===2?10:i===12||i===13||i===18||i===19?40:16}));
+  XLSX.utils.book_append_sheet(wb,ws,'ROCA Dashboard');
+  XLSX.writeFile(wb,`SAFIRA_ROCA_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-// ── UTILS ──────────────────────────────────────────────────────────────────
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
-document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
-});
-
-window.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(o => o.classList.remove('open'));
-});
+// ── UTILS ────────────────────────────────────────────────────────────────────
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));});
 
 init();
 </script>
