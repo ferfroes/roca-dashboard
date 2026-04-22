@@ -2186,6 +2186,9 @@ function enterDashboard() {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('changePwModal').classList.add('hidden');
 
+  // Reset all filters — clean slate on every login
+  currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,contractDays:null,consec:false};
+
   // Show user badge in topbar
   const badge = document.getElementById('userBadge');
   const label = document.getElementById('userLabel');
@@ -2197,7 +2200,6 @@ function enterDashboard() {
   // Show/hide admin-only elements
   const isAdmin = currentUser.role === 'admin';
   document.getElementById('tab-btn-config').style.display = isAdmin ? '' : 'none';
-  // Hide admin tab for CS users
   if (!isAdmin) {
     document.querySelectorAll('.main-tab').forEach(btn => {
       if (btn.textContent.includes('Administração')) btn.style.display = 'none';
@@ -2211,14 +2213,11 @@ function enterDashboard() {
     const dbUserCS = authUsers.find(u=>u.email===currentUser.email);
     const csName = dbUserCS?.csName || dbUserCS?.name || currentUser.name;
     currentFilter.gs = csName;
-    // Clear any stale localStorage history/entries that might belong to other sessions
-    // CS gets fresh data from Firebase only — don't use potentially stale localStorage
     localStorage.removeItem('roca_entries');
     localStorage.removeItem('roca_history');
     localStorage.removeItem('roca_clients');
     localStorage.removeItem('roca_contracts');
     localStorage.removeItem('roca_gs');
-    // Lock sidebar GS filter — CS cannot change
     document.getElementById('gs-all').style.display = 'none';
     document.getElementById('gs-sidebar-list').style.pointerEvents = 'none';
     document.getElementById('gs-sidebar-list').style.opacity = '0.5';
@@ -2433,11 +2432,11 @@ async function checkAuthAndInit() {
 
   const session = loadSession();
   if (session) {
-    // Validate session user still exists and is active
+    // Always use fresh user data from Firebase, not stale session data
     const dbUser = authUsers.find(u => u.email === session.email && u.active !== false);
     if (dbUser) {
-      currentUser = session;
-      // Refresh session timer
+      // Rebuild currentUser from fresh Firebase data
+      currentUser = { email: dbUser.email, name: dbUser.name, role: dbUser.role, uid: dbUser.uid };
       saveSession(currentUser);
       enterDashboard();
       return;
