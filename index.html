@@ -898,27 +898,18 @@ async function spLoadAll(){
       const rh=data.history||{};weekHistory={};
       Object.keys(rh).forEach(wk=>{const ws={};Object.keys(rh[wk]).forEach(c=>{ws[parseInt(c)]=rh[wk][c];});weekHistory[wk]=ws;});
       contracts=data.contracts||[];
-      // Load clients from Firebase — handle array or object (Firebase quirk)
-      if(data.clients){
-        const rawClients=Array.isArray(data.clients)
-          ?data.clients
-          :Object.values(data.clients).filter(x=>x&&x.name);
-        if(rawClients.length>0){
-          clients=rawClients;
-          clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-          localStorage.setItem('roca_clients',JSON.stringify(clients));
-        }else{clients=[];}
-      }else{clients=[];}
-      if(data.gsList){
-        const rawGS=Array.isArray(data.gsList)
-          ?data.gsList
-          :Object.values(data.gsList).filter(x=>typeof x==='string');
-        if(rawGS.length>0){
-          gsList=rawGS;
-          gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));
-          localStorage.setItem('roca_gs',JSON.stringify(gsList));
-        }else{gsList=[];}
-      }else{gsList=[];}
+      // Load clients — handle both array and Firebase object format
+      const rawC=data.clients
+        ? (Array.isArray(data.clients) ? data.clients : Object.values(data.clients).filter(x=>x&&x.name))
+        : [];
+      clients = rawC.length > 0 ? rawC.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')) : [];
+      localStorage.setItem('roca_clients',JSON.stringify(clients));
+
+      const rawG=data.gsList
+        ? (Array.isArray(data.gsList) ? data.gsList : Object.values(data.gsList).filter(x=>typeof x==='string'))
+        : [];
+      gsList = rawG.length > 0 ? rawG.sort((a,b)=>a.localeCompare(b,'pt-BR')) : [];
+      localStorage.setItem('roca_gs',JSON.stringify(gsList));
     }else{entries={};weekHistory={};contracts=[];}
     showSyncStatus('ok');return true;
   }catch(e){console.error('Firebase load failed:',e);showSyncStatus('offline');return false;}
@@ -1930,10 +1921,14 @@ function deleteAllClients(){
   localStorage.setItem('roca_gs',JSON.stringify(gsList));
   localStorage.setItem('roca_contracts',JSON.stringify(contracts));
   localStorage.setItem('roca_history',JSON.stringify({}));
-  // Wipe entire roca node in Firebase — full reset
-  fbSet('roca',{clients:[],gsList:[],entries:{},contracts:[],history:{}})
-    .then(()=>fbGet('roca/users').then(u=>fbSet('roca',{clients:[],gsList:[],entries:{},contracts:[],history:{},users:u||{}})))
-    .catch(e=>console.warn('Firebase wipe failed:',e));
+  // Wipe only operational data — never touch users or auditLog
+  Promise.all([
+    fbSet('roca/clients',[]),
+    fbSet('roca/gsList',[]),
+    fbSet('roca/entries',{}),
+    fbSet('roca/contracts',[]),
+    fbSet('roca/history',{})
+  ]).catch(e=>console.warn('Firebase wipe failed:',e));
   buildSidebar();render();renderAdminList();renderGSList();renderContractAdminList();
   showSyncStatus('saved');
   addAudit('delete','Reset completo — todos os dados apagados do Firebase');
@@ -1943,7 +1938,11 @@ function saveAdmin(){
   localStorage.setItem('roca_clients',JSON.stringify(clients));localStorage.setItem('roca_gs',JSON.stringify(gsList));
   saveContractsToStorage();
   // Save clients and gsList to Firebase so all users see the same data
-  fbPatch('roca',{clients,gsList}).catch(e=>console.warn('Save clients failed:',e));
+  // Use individual paths to avoid race conditions with other roca/* data
+  Promise.all([
+    fbSet('roca/clients',clients),
+    fbSet('roca/gsList',gsList)
+  ]).catch(e=>console.warn('Save clients failed:',e));
   buildSidebar();render();renderAdminList();renderGSList();renderContractAdminList();
   addAudit('edit','Clientes e CS atualizados na aba Administração');
   alert('✓ Alterações salvas com sucesso.');
@@ -1999,7 +1998,7 @@ function importFile(input){
   };
   reader.readAsBinaryString(file);
 }
-function confirmImport(){if(!window._importedClients)return;clients=window._importedClients;clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));localStorage.setItem('roca_clients',JSON.stringify(clients));fbPatch('roca',{clients}).catch(e=>console.warn('Import save failed:',e));buildSidebar();render();renderAdminList();addAudit('create',`${clients.length} clientes importados via Excel`);alert(`✓ ${clients.length} clientes importados com sucesso.`);}
+function confirmImport(){if(!window._importedClients)return;clients=window._importedClients;clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));localStorage.setItem('roca_clients',JSON.stringify(clients));fbSet('roca/clients',clients).catch(e=>console.warn('Import save failed:',e));buildSidebar();render();renderAdminList();addAudit('create',`${clients.length} clientes importados via Excel`);alert(`✓ ${clients.length} clientes importados com sucesso.`);}
 
 // ── ADVANCE WEEK ──────────────────────────────────────────────────────────────
 async function advanceWeek(){
@@ -2118,13 +2117,21 @@ async function doLogin() {
 
   // Bootstrap: if no users exist, auto-create admin
   if (authUsers.length === 0) {
+    // No users at all — bootstrap admin account
+    if (!email.includes('safirast.com')) { errEl.textContent = 'Use seu email @safirast.com.'; return; }
     await bootstrapAdmin(email, pw);
     return;
   }
 
   const hash = await sha256(pw);
   const user = authUsers.find(u => u.email === email && u.active !== false);
-  if (!user) { errEl.textContent = 'Usuário não encontrado ou inativo.'; return; }
+  if (!user) {
+    // Check if users exist but none match — vs completely empty
+    errEl.textContent = authUsers.length > 0
+      ? 'Usuário não encontrado ou inativo.'
+      : 'Nenhum usuário cadastrado. Crie a conta admin agora.';
+    return;
+  }
   if (user.passwordHash !== hash) { errEl.textContent = 'Senha incorreta.'; return; }
 
   currentUser = { email: user.email, name: user.name, role: user.role, uid: user.uid };
