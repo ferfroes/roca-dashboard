@@ -360,6 +360,9 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     <button class="gs-btn" onclick="filterWorsened(this)" id="quick-worsened">
       <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">↓</div>Pioraram<span class="gs-count" id="count-worsened">0</span>
     </button>
+    <button class="gs-btn" onclick="filterConsecutiveCritical(this)" id="quick-consec">
+      <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">🔁</div>Crítico Recorrente<span class="gs-count" id="count-consec">0</span>
+    </button>
     <button class="gs-btn" onclick="filterImproved(this)" id="quick-improved">
       <div class="gs-avatar" style="background:var(--green-bg);color:var(--green);">↑</div>Melhoraram<span class="gs-count" id="count-improved">0</span>
     </button>
@@ -888,7 +891,7 @@ let gsList=["Alinne Carmo","Daiane Queiroz","Douglas Romão","Fróes","Lucineia 
 const gsColors={"Alinne Carmo":{bg:"#FEF3C7",color:"#92400E"},"Daiane Queiroz":{bg:"#FCE7F3",color:"#9D174D"},"Douglas Romão":{bg:"#E0E7FF",color:"#3730A3"},"Fróes":{bg:"#0D2B4E",color:"#FFFFFF"},"Lucineia Guizardi":{bg:"#D1FAE5",color:"#065F46"},"Michelle Stefenson":{bg:"#FEE2E2",color:"#991B1B"},"Renata Gomes":{bg:"#ECFDF5",color:"#047857"},"Telma":{bg:"#F0FDF4",color:"#166534"}};
 
 let entries={},weekHistory={},contracts=[];
-let currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,contractDays:null};
+let currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,contractDays:null,consec:false};
 let currentView='list',editingClientId=null;
 let currentFarol={R:null,O:null,C:null,A:null},churnSelected=new Set(),currentBilling=null;
 
@@ -897,62 +900,6 @@ const daysSince=d=>d?Math.floor((new Date()-new Date(d))/86400000):null;
 const daysUntil=d=>d?Math.ceil((new Date(d)-new Date())/86400000):null;
 function getWeekKey(off=0){const n=new Date();n.setDate(n.getDate()+off*7);const dy=n.getDay();const mn=new Date(n);mn.setDate(n.getDate()+(dy===0?-6:1-dy));mn.setHours(0,0,0,0);return mn.toISOString().slice(0,10);}
 function getPrevEntry(id){const p=weekHistory[getWeekKey(-1)];return p?(p[id]||null):null;}
-function archiveCurrentWeek(){const k=getWeekKey();const s=JSON.parse(JSON.stringify(entries));weekHistory[k]=s;localStorage.setItem('roca_history',JSON.stringify(weekHistory));fbArchiveWeek(k,s).catch(e=>console.warn('Archive failed:',e));}
-function statusOrder(s){return{V:0,A:1,G:2,pending:3}[s]??3;}
-function getEntryStatus(id){
-  const e=entries[id];
-  if(!e||!e.R||!e.O||!e.C||!e.A)return'pending'; // pending if any dimension missing
-  if([e.R,e.O,e.C,e.A].includes('V'))return'V';
-  if([e.R,e.O,e.C,e.A].includes('A'))return'A';
-  return'G';
-}
-function getEntryStatus_from(e){if(!e||!e.R)return'pending';if([e.R,e.O,e.C,e.A].includes('V'))return'V';if([e.R,e.O,e.C,e.A].includes('A'))return'A';return'G';}
-function isPartial(id){
-  const e=entries[id];if(!e)return false;
-  const filled=[e.R,e.O,e.C,e.A].filter(x=>!!x).length;
-  return filled>0&&filled<4; // has some but not all
-}
-function isPending(id){
-  const e=entries[id];
-  return !e||![e.R,e.O,e.C,e.A].every(x=>!!x);
-}
-function hasChurnRisk(id){
-  const e=entries[id];if(!e)return false;
-  // Auto: R or C red = churn risk regardless of CS manual flag
-  if(e.R==='V'||e.C==='V')return true;
-  if(!e.churnRisk)return false;
-  const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];
-  return r.some(x=>x!=='none'&&x!=='');
-}
-
-// ── CONTRACT HELPERS ─────────────────────────────────────────────────────────
-// Returns all contracts for a client (normalised name match)
-function getClientContracts(id){
-  const cl=clients.find(x=>x.id===id);if(!cl)return[];
-  const norm=s=>s.toLowerCase().trim();
-  return contracts.filter(ct=>norm(ct.clientName)===norm(cl.name));
-}
-// Returns days until most urgent contract (smallest positive days)
-function getContractDaysLeft(id){
-  const cts=getClientContracts(id);
-  if(!cts.length)return null;
-  const days=cts.map(ct=>daysUntil(ct.endDate)).filter(d=>d!==null);
-  if(!days.length)return null;
-  return Math.min(...days);
-}
-// Returns ALL contracts with their days, sorted ascending
-function getContractsSorted(id){
-  return getClientContracts(id)
-    .map(ct=>({...ct,days:daysUntil(ct.endDate)}))
-    .sort((a,b)=>(a.days??9999)-(b.days??9999));
-}
-function contractBucket(days){
-  if(days===null)return null;
-  if(days<=30)return 30;
-  if(days<=60)return 60;
-  if(days<=90)return 90;
-  return 999;
-}
 
 // ── HEALTH SCORE ─────────────────────────────────────────────────────────────
 function calcHealthScore(id){
@@ -975,7 +922,10 @@ function calcHealthScore(id){
 
   // Tier A/VIP: tolerância zero com risco
   if((tier==='A'||isVIP)&&cv>=1)penalty+=15; // extra para tier A
-  if((tier==='A'||isVIP)&&hasChurnRisk(id))penalty+=10;
+  // Tier A/VIP extra penalty — inline check (no hasChurnRisk call to avoid circular)
+  const rcRed=e.R==='V'||e.C==='V';
+  const manualChurnFlag=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
+  if((tier==='A'||isVIP)&&(rcRed||manualChurnFlag))penalty+=10;
 
   // Churn — auto if R or C red, or manually flagged by CS
   const autoChurn=e.R==='V'||e.C==='V';
@@ -1116,10 +1066,134 @@ function calcHSDetail(id){
   return{score:final,factors,checklist};
 }
 
+
+// Calculate HS from a historical entry snapshot (same logic, no side effects)
+function calcHealthScore_from(e, id){
+  if(!e||!e.R)return null;
+  const c=clients.find(x=>x.id===id)||{};
+  const tier=c.tier||'C';const isVIP=c.vip||false;
+  const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
+  let score=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
+  let penalty=0;
+  const dims=[e.R,e.O,e.C,e.A];const cv=dims.filter(d=>d==='V').length;
+  if(cv>=2)penalty+=20;else if(cv===1)penalty+=10;
+  if(dims.filter(d=>d==='A').length>=3)penalty+=8;
+  if((tier==='A'||isVIP)&&cv>=1)penalty+=15;
+  const autoChurn=e.R==='V'||e.C==='V';
+  const manualChurn=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
+  if(autoChurn&&manualChurn)penalty+=30;
+  else if(autoChurn)penalty+=20;
+  else if(manualChurn){const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];penalty+=r.filter(x=>x!=='none'&&x!=='').length>=2?25:15;}
+  if(e.billing==='down')penalty+=10;
+  const daysSince=d=>d?Math.floor((new Date()-new Date(d))/86400000):null;
+  const md=daysSince(e.lastMeeting);
+  if(md===null)penalty+=15;else if(md>30)penalty+=20;else if(md>21)penalty+=12;else if(md>14)penalty+=6;else if(md>7)penalty+=2;
+  const vd=daysSince(e.lastVisit);const vThr=tier==='A'?30:60;const vCrit=tier==='A'?60:90;
+  if(vd===null)penalty+=5;else if(vd>vCrit)penalty+=10;else if(vd>vThr)penalty+=5;
+  const nps=e.npsScore?parseInt(e.npsScore):null;
+  if(nps===null)penalty+=8;else if(nps<=5)penalty+=18;else if(nps<=6)penalty+=10;else if(nps<=7)penalty+=4;
+  if(e.npsDate&&daysSince(e.npsDate)>120)penalty+=6;
+  if(e.needFrom&&!e.actionTaken)penalty+=5;
+  if(e.needFrom&&e.needFromDate&&daysSince(e.needFromDate)>7)penalty+=5;
+  // Contract penalty (uses global contracts array)
+  if(typeof contracts!=='undefined'&&contracts.length){
+    const norm=s=>s.toLowerCase().trim();
+    const cl=clients.find(x=>x.id===id);
+    if(cl){
+      const cts=contracts.filter(ct=>norm(ct.clientName)===norm(cl.name))
+        .map(ct=>{const d=ct.endDate?Math.ceil((new Date(ct.endDate+'T12:00:00')-new Date())/86400000):null;return d;})
+        .filter(d=>d!==null).sort((a,b)=>a-b);
+      let cp=0;
+      cts.forEach((d,i)=>{let p=0;if(d<=30)p=i===0?20:10;else if(d<=60)p=i===0?8:4;cp+=p;});
+      penalty+=Math.min(30,cp);
+    }
+  }
+  return Math.max(0,Math.min(100,Math.round(score-penalty)));
+}
+
+// Returns how many consecutive weeks this account has been critical (HS < 70)
+function consecutiveCriticalWeeks(id){
+  const currentHS=calcHealthScore(id);
+  if(currentHS===null||currentHS>=70)return 0; // not critical now
+  let count=1; // current week is critical
+  // Check previous weeks in history
+  let offset=-1;
+  while(true){
+    const wk=getWeekKey(offset);
+    const snap=weekHistory[wk];
+    if(!snap||!snap[id])break; // no more history
+    const prevHS=calcHealthScore_from(snap[id],id);
+    if(prevHS===null||prevHS>=70)break; // not critical that week
+    count++;
+    offset--;
+    if(Math.abs(offset)>8)break; // cap at 8 weeks lookback
+  }
+  return count;
+}
+function archiveCurrentWeek(){const k=getWeekKey();const s=JSON.parse(JSON.stringify(entries));weekHistory[k]=s;localStorage.setItem('roca_history',JSON.stringify(weekHistory));fbArchiveWeek(k,s).catch(e=>console.warn('Archive failed:',e));}
+function statusOrder(s){return{V:0,A:1,G:2,pending:3}[s]??3;}
+function getEntryStatus(id){
+  const e=entries[id];
+  if(!e||!e.R||!e.O||!e.C||!e.A)return'pending'; // pending if any dimension missing
+  if([e.R,e.O,e.C,e.A].includes('V'))return'V';
+  if([e.R,e.O,e.C,e.A].includes('A'))return'A';
+  return'G';
+}
+function getEntryStatus_from(e){if(!e||!e.R)return'pending';if([e.R,e.O,e.C,e.A].includes('V'))return'V';if([e.R,e.O,e.C,e.A].includes('A'))return'A';return'G';}
+function isPartial(id){
+  const e=entries[id];if(!e)return false;
+  const filled=[e.R,e.O,e.C,e.A].filter(x=>!!x).length;
+  return filled>0&&filled<4; // has some but not all
+}
+function isPending(id){
+  const e=entries[id];
+  return !e||![e.R,e.O,e.C,e.A].every(x=>!!x);
+}
+function hasChurnRisk(id){
+  const e=entries[id];if(!e)return false;
+  // Auto: R or C red = churn risk regardless of CS manual flag
+  if(e.R==='V'||e.C==='V')return true;
+  // Auto: 2+ consecutive weeks critical = structural risk
+  if(consecutiveCriticalWeeks(id)>=2)return true;
+  if(!e.churnRisk)return false;
+  const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];
+  return r.some(x=>x!=='none'&&x!=='');
+}
+
+// ── CONTRACT HELPERS ─────────────────────────────────────────────────────────
+// Returns all contracts for a client (normalised name match)
+function getClientContracts(id){
+  const cl=clients.find(x=>x.id===id);if(!cl)return[];
+  const norm=s=>s.toLowerCase().trim();
+  return contracts.filter(ct=>norm(ct.clientName)===norm(cl.name));
+}
+// Returns days until most urgent contract (smallest positive days)
+function getContractDaysLeft(id){
+  const cts=getClientContracts(id);
+  if(!cts.length)return null;
+  const days=cts.map(ct=>daysUntil(ct.endDate)).filter(d=>d!==null);
+  if(!days.length)return null;
+  return Math.min(...days);
+}
+// Returns ALL contracts with their days, sorted ascending
+function getContractsSorted(id){
+  return getClientContracts(id)
+    .map(ct=>({...ct,days:daysUntil(ct.endDate)}))
+    .sort((a,b)=>(a.days??9999)-(b.days??9999));
+}
+function contractBucket(days){
+  if(days===null)return null;
+  if(days<=30)return 30;
+  if(days<=60)return 60;
+  if(days<=90)return 90;
+  return 999;
+}
+
+
 function hsColor(score){
   if(score===null)return{fg:'var(--muted)',bg:'var(--surface2)',bar:'#ccd3e3'};
-  if(score>=70)return{fg:'var(--green)',bg:'var(--green-bg)',bar:'var(--green)'};
-  if(score>=45)return{fg:'var(--yellow)',bg:'var(--yellow-bg)',bar:'#f59e0b'};
+  if(score>=90)return{fg:'var(--green)',bg:'var(--green-bg)',bar:'var(--green)'};
+  if(score>=70)return{fg:'var(--yellow)',bg:'var(--yellow-bg)',bar:'#f59e0b'};
   return{fg:'var(--red)',bg:'var(--red-bg)',bar:'var(--red)'};
 }
 function calcGSHealthAvg(gs){const sc=clients.filter(c=>c.gs===gs).map(c=>calcHealthScore(c.id)).filter(s=>s!==null);if(!sc.length)return null;return Math.round(sc.reduce((a,b)=>a+b,0)/sc.length);}
@@ -1276,6 +1350,7 @@ function filteredClients(){
     if(currentFilter.gs!=='all'&&c.gs!==currentFilter.gs)return false;
     if(currentFilter.search&&!c.name.toLowerCase().includes(currentFilter.search.toLowerCase()))return false;
     if(currentFilter.churn)return hasChurnRisk(c.id);
+    if(currentFilter.consec)return consecutiveCriticalWeeks(c.id)>=2;
     if(currentFilter.vip)return c.vip||c.tier==='A';
     if(currentFilter.status==='partial')return isPartial(c.id);
     if(currentFilter.status==='pending')return isPending(c.id);
@@ -1310,6 +1385,8 @@ function updateSummary(fc){
   document.getElementById('count-book').textContent=clients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length;
   const partialEl=document.getElementById('count-partial');
   if(partialEl)partialEl.textContent=clients.filter(c=>isPartial(c.id)).length;
+  const consecEl=document.getElementById('count-consec');
+  if(consecEl)consecEl.textContent=clients.filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;
   document.getElementById('count-worsened').textContent=clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length;
   document.getElementById('count-improved').textContent=clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length;
   document.querySelectorAll('.gs-btn-person').forEach(b=>{const gs=b.dataset.gsName;const cnt=b.querySelector('.gs-count');if(cnt&&gs)cnt.textContent=clients.filter(c=>c.gs===gs).length;});
@@ -1353,10 +1430,21 @@ function renderList(fc){
     const nps=e.npsScore?parseInt(e.npsScore):null;let npsHtml='';
     if(nps!==null){const nc=nps<=5?'var(--red)':nps<=7?'var(--yellow)':'var(--green)';const nb=nps<=5?'var(--red-bg)':nps<=7?'var(--yellow-bg)':'var(--green-bg)';npsHtml=`<span class="badge" style="color:${nc};background:${nb};" title="NPS: ${nps}/10">NPS ${nps}</span>`;}
 
+    // Consecutive critical badge
+    const consec=consecutiveCriticalWeeks(c.id);
+    let consecHtml='';
+    if(consec>=2){
+      const consecColor=consec>=3?'var(--red)':'var(--churn)';
+      const consecBg=consec>=3?'var(--red-bg)':'var(--churn-bg)';
+      consecHtml=`<span class="badge" style="color:${consecColor};background:${consecBg};border:1px solid ${consec>=3?'var(--red-bd)':'var(--churn-bd)'};" title="${consec} semanas seguidas em crítico">🔁 ${consec}ª sem. crítica</span>`;
+    }
+
     const row=document.createElement('div');
-    row.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 16px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px;flex-wrap:wrap;';
-    row.onmouseenter=()=>{row.style.boxShadow='var(--shadow)';row.style.borderColor='var(--border2)';};
-    row.onmouseleave=()=>{row.style.boxShadow='';row.style.borderColor='var(--border)';};
+    // Pulse animation border for 2+ consecutive weeks critical
+    const rowBorder=consec>=2?`border:1.5px solid var(--red);`:'border:1px solid var(--border);';
+    row.style.cssText=`background:var(--card);${rowBorder}border-radius:var(--radius);padding:13px 16px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px;flex-wrap:wrap;`;
+    row.onmouseenter=()=>{row.style.boxShadow='var(--shadow)';};
+    row.onmouseleave=()=>{row.style.boxShadow='';};
     row.onclick=()=>openFillModal(c.id);
 
     const bar=document.createElement('div');
@@ -1371,6 +1459,7 @@ function renderList(fc){
         <span class="badge badge-tier-${(c.tier||'c').toLowerCase()}">Tier ${c.tier||'C'}</span>
         ${c.book?'<span class="badge badge-book">BOOK</span>':''}
         ${hasChurnRisk(c.id)?'<span class="badge badge-churn">⚠ CHURN</span>':''}
+        ${consec>=2?consecHtml:''}
         ${e.needFrom?'<span class="badge badge-need">⚠ Escalar</span>':''}
         ${billingHtml}${meetHtml}${visitHtml}${contractHtml}${npsHtml}
       </div>
@@ -1433,14 +1522,24 @@ function renderTable(fc){
 function openHSDetail(id){
   const c=clients.find(x=>x.id===id)||{};
   const detail=calcHSDetail(id);
+  const consec=consecutiveCriticalWeeks(id);
   document.getElementById('hsModalTitle').textContent=c.name||(id||'');
-  document.getElementById('hsModalSub').textContent=`CS: ${c.gs||'–'} · Tier ${c.tier||'C'}${c.vip?' · ⭐ VIP':''}`;
+  document.getElementById('hsModalSub').textContent=`CS: ${c.gs||'–'} · Tier ${c.tier||'C'}${c.vip?' · ⭐ VIP':''}${consec>=2?' · 🔁 '+consec+'ª semana crítica':''}`;
   const hsc=hsColor(detail.score);
   const body=document.getElementById('hsModalBody');
+
+  // Consecutive critical alert banner
+  const consecBanner=consec>=2
+    ?`<div style="background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:14px;">🔁</span>
+        <span style="font-size:12px;color:var(--red);font-weight:600;">${consec}ª semana consecutiva em crítico${consec>=3?' — intervenção executiva necessária':' — atenção imediata'}</span>
+      </div>`
+    :'';
+
   const scoreHtml=detail.score!==null
     ?`<div class="hs-detail-score">
         <div class="hs-detail-num" style="color:${hsc.fg};">${detail.score}%</div>
-        <div class="hs-detail-label">Health Score · ${detail.score>=70?'Saudável':detail.score>=45?'Atenção':'Crítico'}</div>
+        <div class="hs-detail-label">Health Score · ${detail.score>=90?'Saudável':detail.score>=70?'Atenção':'Crítico'}</div>
         <div class="hs-detail-bar-track"><div class="hs-detail-bar-fill" style="width:${detail.score}%;background:${hsc.bar};"></div></div>
       </div>`
     :'<div class="hs-detail-score"><div class="hs-detail-num" style="color:var(--muted);">–</div><div class="hs-detail-label">Conta não preenchida esta semana</div></div>';
@@ -1455,7 +1554,7 @@ function openHSDetail(id){
       ${doneItems.map(x=>`<div class="hs-check-item done"><span>✓</span>${x.text}</div>`).join('')}
     </div>`;
 
-  body.innerHTML=scoreHtml+factorsHtml+(detail.checklist.length?checklistHtml:'');
+  body.innerHTML=consecBanner+scoreHtml+factorsHtml+(detail.checklist.length?checklistHtml:'');
   document.getElementById('hsModal').classList.add('open');
 }
 
@@ -1538,7 +1637,7 @@ function resetAllQuickBtns(){document.querySelectorAll('.gs-btn:not(#view-list-b
 function setTitle(t,count){document.getElementById('mainTitle').innerHTML=`${t} <span>${count} conta${count!==1?'s':''}</span>`;}
 
 function filterGS(gs,btn){
-  currentFilter={...currentFilter,gs,status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false};
+  currentFilter={...currentFilter,gs,status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
   if(btn)btn.classList.add('active');
   else document.querySelectorAll('.gs-btn-person').forEach(b=>{if(b.dataset.gsName===gs)b.classList.add('active');});
@@ -1549,28 +1648,28 @@ function filterGS(gs,btn){
 }
 function filterStatus(st,btn){
   const tog=currentFilter.status===st;
-  currentFilter={...currentFilter,status:tog?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false};
+  currentFilter={...currentFilter,status:tog?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
   if(currentFilter.status){btn.classList.add('active');const l={V:'Problema Real',G:'Acompanhar e Manter',A:'Tomar Ação',pending:'Pendentes',partial:'Parciais'};const count=st==='pending'?clients.filter(c=>isPending(c.id)).length:st==='partial'?clients.filter(c=>isPartial(c.id)).length:clients.filter(c=>getEntryStatus(c.id)===st).length;setTitle(l[st]||st,count);}
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
   render();
 }
 function filterChurn(btn){
-  currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:'all',bookPending:false,worsened:false,improved:false,vip:false};
+  currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:'all',bookPending:false,worsened:false,improved:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   if(currentFilter.churn){btn.classList.add('active');document.getElementById('sc-churn').classList.add('active');setTitle('⚠ Risco de Churn',clients.filter(c=>hasChurnRisk(c.id)).length);}
   else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
   render();
 }
 function filterVIP(btn){
-  currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:'all',bookPending:false,worsened:false,improved:false,churn:false};
+  currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ Tier A',clients.filter(c=>c.vip||c.tier==='A').length);}
   else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
   render();
 }
 function filterBookPending(btn){
-  currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:'all',worsened:false,improved:false,churn:false,vip:false};
+  currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:'all',worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
   if(currentFilter.bookPending){btn.classList.add('active');setTitle('Book Pendente',clients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length);}
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
@@ -1579,7 +1678,7 @@ function filterBookPending(btn){
 function filterByCard(st){
   if(st==='churn'){filterChurn(document.getElementById('quick-churn'));return;}
   const tog=currentFilter.status===st&&st!=='all';
-  currentFilter={...currentFilter,status:(st==='all'||tog)?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false,search:''};
+  currentFilter={...currentFilter,status:(st==='all'||tog)?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false,search:'',consec:false};
   document.querySelector('.search-input').value='';resetAllQuickBtns();document.getElementById('gs-all').classList.add('active');
   const l={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar e Manter',pending:'⏳ Pendentes',churn:'⚠ Risco de Churn'};
   const as=currentFilter.status;const count=as?clients.filter(c=>getEntryStatus(c.id)===as).length:clients.length;
@@ -1588,15 +1687,23 @@ function filterByCard(st){
   const cm={null:'sc-all',V:'sc-red',A:'sc-yellow',G:'sc-green',pending:'sc-pending',churn:'sc-churn'};
   (document.getElementById(cm[as])||document.getElementById('sc-all')).classList.add('active');render();
 }
+function filterConsecutiveCritical(btn){
+  const isActive=currentFilter.consec;
+  currentFilter={...currentFilter,consec:!isActive,status:null,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false};
+  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
+  if(!isActive){btn.classList.add('active');const count=clients.filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;setTitle('🔁 Crítico Recorrente',count);}
+  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
+  render();
+}
 function filterWorsened(btn){
-  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:'all',bookPending:false,churn:false,vip:false};
+  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:'all',bookPending:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
   if(currentFilter.worsened){btn.classList.add('active');setTitle('↓ Pioraram',clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length);}
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
   render();
 }
 function filterImproved(btn){
-  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:'all',bookPending:false,churn:false,vip:false};
+  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:'all',bookPending:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
   if(currentFilter.improved){btn.classList.add('active');setTitle('↑ Melhoraram',clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length);}
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
