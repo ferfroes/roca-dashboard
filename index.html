@@ -285,6 +285,44 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 .contract-admin-row input:focus{outline:none;border-color:var(--accent3);}
 .contract-sub-label{font-size:9.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;}
 
+
+/* ── AUTH ── */
+#loginScreen{position:fixed;inset:0;background:var(--accent);display:flex;align-items:center;justify-content:center;z-index:9999;}
+#loginScreen.hidden{display:none;}
+.login-box{background:var(--card);border-radius:16px;padding:40px 44px;width:360px;box-shadow:0 24px 60px rgba(0,0,0,.25);}
+.login-logo{font-size:13px;font-weight:800;letter-spacing:.18em;color:var(--accent);margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.login-sub{font-size:11px;color:var(--muted);letter-spacing:.08em;font-family:'JetBrains Mono',monospace;margin-bottom:28px;}
+.login-title{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:20px;}
+.login-field{margin-bottom:14px;}
+.login-field label{display:block;font-size:11.5px;font-weight:600;color:var(--ink2);margin-bottom:5px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em;}
+.login-field input{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13.5px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);background:var(--surface);outline:none;transition:border .15s;}
+.login-field input:focus{border-color:var(--accent3);}
+.login-err{font-size:12px;color:var(--red);margin-bottom:10px;min-height:18px;font-weight:500;}
+.login-btn{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:opacity .15s;}
+.login-btn:hover{opacity:.88;}
+/* ── CHANGE PASSWORD MODAL ── */
+#changePwModal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:10000;}
+#changePwModal.hidden{display:none;}
+.changepw-box{background:var(--card);border-radius:14px;padding:32px 36px;width:340px;box-shadow:0 16px 48px rgba(0,0,0,.2);}
+/* ── USER BADGE IN TOPBAR ── */
+.user-badge{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,.7);font-family:'JetBrains Mono',monospace;cursor:pointer;padding:4px 10px;border-radius:6px;transition:background .12s;}
+.user-badge:hover{background:rgba(255,255,255,.1);}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;}
+/* ── AUDIT LOG ── */
+.audit-row{display:grid;grid-template-columns:130px 160px 1fr 140px;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:11.5px;align-items:start;}
+.audit-row:hover{background:var(--surface);}
+.audit-hdr{background:var(--surface);font-weight:700;font-size:10px;letter-spacing:.06em;color:var(--muted);font-family:'JetBrains Mono',monospace;border-radius:8px 8px 0 0;}
+.audit-type{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.audit-create{background:var(--green-bg);color:var(--green);}
+.audit-edit{background:var(--accent-bg);color:var(--accent2);}
+.audit-delete{background:var(--red-bg);color:var(--red);}
+.audit-auth{background:var(--yellow-bg);color:var(--yellow);}
+/* ── USER MGMT ── */
+.user-row{display:grid;grid-template-columns:1fr 1fr 80px 80px 90px 80px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12px;}
+.user-row-hdr{background:var(--surface);font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.06em;font-family:'JetBrains Mono',monospace;border-radius:8px 8px 0 0;}
+.user-status-active{color:var(--green);font-weight:600;}
+.user-status-inactive{color:var(--red);font-weight:600;}
+
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   .sidebar{display:none;}
@@ -298,6 +336,46 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 </head>
 <body>
 
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">SAFIRA</div>
+    <div class="login-sub">ROCA · CS · DASHBOARD</div>
+    <div class="login-title">Entrar</div>
+    <div class="login-field">
+      <label>E-MAIL</label>
+      <input type="email" id="loginEmail" placeholder="seu@safirast.com" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>SENHA</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL (first access or manual) -->
+<div id="changePwModal" class="hidden">
+  <div class="changepw-box">
+    <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:6px;">Criar nova senha</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px;" id="changePwReason">Primeiro acesso — defina sua senha.</div>
+    <div class="login-field">
+      <label>NOVA SENHA</label>
+      <input type="password" id="newPw1" placeholder="mínimo 6 caracteres">
+    </div>
+    <div class="login-field">
+      <label>CONFIRMAR SENHA</label>
+      <input type="password" id="newPw2" placeholder="repita a senha"
+        onkeydown="if(event.key==='Enter')doChangePw()">
+    </div>
+    <div class="login-err" id="changePwErr"></div>
+    <button class="login-btn" onclick="doChangePw()">Salvar senha</button>
+  </div>
+</div>
+
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-brand">
@@ -305,7 +383,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     <div class="topbar-sep"></div>
     <div class="topbar-sub">ROCA · CS</div>
   </div>
-  <div class="topbar-right">
+  <div class="topbar-right"><div class="user-badge" id="userBadge" onclick="showUserMenu()" style="display:none;"><div class="user-avatar" id="userAvatar">?</div><span id="userLabel">–</span></div>
     <div class="week-badge" id="weekBadge"></div>
     <span id="syncStatus"></span>
     <button class="tbtn" onclick="spLoadAll().then(()=>render())" title="Recarregar">⟳</button>
@@ -319,6 +397,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
   <div class="main-tabs">
     <button class="main-tab active" onclick="switchMainTab('gerencial',this)">📊 Gestão</button>
     <button class="main-tab" onclick="switchMainTab('administrativa',this)">⚙️ Administração</button>
+    <button class="main-tab" id="tab-btn-config" onclick="switchMainTab('configuracoes',this)" style="display:none;">🔒 Configurações</button>
   </div>
 </div>
 
@@ -540,6 +619,54 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
         <button class="btn" onclick="addContractManual()" style="font-size:12px;">+ Adicionar Contrato</button>
       </div>
       <div class="contract-admin-list" id="contractAdminList"></div>
+    </div>
+
+    <!-- USERS MANAGEMENT -->
+    <div style="margin-top:28px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-weight:700;font-size:13px;color:var(--ink);">👤 Controle de Acesso</div>
+        <button class="btn btn-primary" onclick="openNewUserModal()" style="font-size:12px;">+ Novo Usuário</button>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+        <div class="user-row user-row-hdr">
+          <span>E-MAIL</span><span>NOME</span><span>PERFIL</span><span>STATUS</span><span>ÚLTIMO ACESSO</span><span>AÇÕES</span>
+        </div>
+        <div id="userMgmtList"></div>
+      </div>
+    </div>
+
+    <!-- NEW / EDIT USER MODAL -->
+    <div id="userModal" class="modal-overlay hidden" style="display:none;">
+      <div class="modal" style="max-width:420px;">
+        <div class="modal-header">
+          <div class="modal-title" id="userModalTitle">Novo Usuário</div>
+          <button class="modal-close" onclick="closeUserModal()">✕</button>
+        </div>
+        <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
+          <div class="login-field" style="margin:0;">
+            <label>E-MAIL (@safirast.com)</label>
+            <input type="email" id="umEmail" placeholder="usuario@safirast.com">
+          </div>
+          <div class="login-field" style="margin:0;">
+            <label>NOME DE EXIBIÇÃO</label>
+            <input type="text" id="umName" placeholder="Nome Sobrenome">
+          </div>
+          <div class="login-field" style="margin:0;">
+            <label>PERFIL</label>
+            <select id="umRole" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
+              <option value="cs">CS (Customer Success)</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="login-field" style="margin:0;" id="umPwField">
+            <label>SENHA INICIAL</label>
+            <input type="text" id="umPassword" placeholder="mínimo 6 caracteres">
+            <div style="font-size:10.5px;color:var(--muted);margin-top:3px;">O usuário deverá trocar no primeiro acesso.</div>
+          </div>
+          <div class="login-err" id="userModalErr"></div>
+          <button class="login-btn" onclick="saveUserModal()">Salvar</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1221,6 +1348,7 @@ function switchMainTab(tab,btn){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById(`tab-${tab}`).classList.add('active');
+  if(tab==='configuracoes'){loadAuditLog().then(()=>{renderAuditLog();renderUserMgmtList();});}
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -1843,6 +1971,7 @@ function confirmContractImport(){
   saveContractsToStorage();
   renderContractAdminList();
   updateContractPanel();
+  addAudit('create',`${contracts.length} contratos importados via Excel`);
   render();
   const prev=document.getElementById('contract-import-preview');
   if(prev)prev.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:7px;padding:8px 12px;font-size:12px;color:var(--green);">✓ ${contracts.length} contrato${contracts.length>1?'s':''} importado${contracts.length>1?'s':''} com sucesso.</div>`;
@@ -1860,12 +1989,14 @@ function deleteAllClients(){
   fbPatch('roca',{contracts:[]}).catch(e=>console.warn('Firebase contracts clear failed:',e));
   buildSidebar();render();renderAdminList();renderGSList();renderContractAdminList();
   showSyncStatus('saved');
+  addAudit('delete','Todos os clientes, CS e contratos apagados');
 }
 function saveAdmin(){
   clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));
   localStorage.setItem('roca_clients',JSON.stringify(clients));localStorage.setItem('roca_gs',JSON.stringify(gsList));
   saveContractsToStorage();
   buildSidebar();render();renderAdminList();renderGSList();renderContractAdminList();
+  addAudit('edit','Clientes e CS atualizados na aba Administração');
   alert('✓ Alterações salvas com sucesso.');
 }
 
@@ -1919,7 +2050,7 @@ function importFile(input){
   };
   reader.readAsBinaryString(file);
 }
-function confirmImport(){if(!window._importedClients)return;clients=window._importedClients;clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));localStorage.setItem('roca_clients',JSON.stringify(clients));buildSidebar();render();renderAdminList();alert(`✓ ${clients.length} clientes importados com sucesso.`);}
+function confirmImport(){if(!window._importedClients)return;clients=window._importedClients;clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));localStorage.setItem('roca_clients',JSON.stringify(clients));buildSidebar();render();renderAdminList();addAudit('create',`${clients.length} clientes importados via Excel`);alert(`✓ ${clients.length} clientes importados com sucesso.`);}
 
 // ── ADVANCE WEEK ──────────────────────────────────────────────────────────────
 async function advanceWeek(){
@@ -1951,7 +2082,426 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
 window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));});
 
-init();
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTH SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════
+
+let currentUser = null; // {email, name, role, uid}
+let authUsers = [];     // all users from Firebase
+let auditLog = [];      // audit entries
+
+const ADMIN_EMAIL = 'ffroes@safirast.com';
+const SESSION_HOURS = 8;
+
+// SHA-256 hash (browser native)
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Firebase auth paths ──────────────────────────────────────────────────────
+async function loadAuthUsers() {
+  try {
+    const data = await fbGet('roca/users');
+    authUsers = data ? Object.entries(data).map(([uid,u])=>({uid,...u})) : [];
+  } catch(e) { authUsers = []; }
+}
+async function saveAuthUser(uid, userData) {
+  await fbPatch('roca/users', {[uid]: userData});
+}
+
+// ── Audit log ────────────────────────────────────────────────────────────────
+async function loadAuditLog() {
+  try {
+    const data = await fbGet('roca/auditLog');
+    auditLog = data ? Object.values(data).sort((a,b)=>b.ts-a.ts) : [];
+  } catch(e) { auditLog = []; }
+}
+async function addAudit(type, description) {
+  if (!currentUser) return;
+  const entry = {
+    ts: Date.now(),
+    email: currentUser.email,
+    name: currentUser.name,
+    type,   // 'auth'|'create'|'edit'|'delete'|'user'
+    description
+  };
+  auditLog.unshift(entry);
+  const key = `log_${entry.ts}_${Math.random().toString(36).slice(2,7)}`;
+  fbPatch('roca/auditLog', {[key]: entry}).catch(e=>console.warn('Audit save failed:', e));
+}
+function saveAuditLog() {
+  // Full replace — only used for clear
+  fbSet('roca/auditLog', {}).catch(e=>console.warn('Audit clear failed:', e));
+}
+
+// ── Session management ───────────────────────────────────────────────────────
+function saveSession(user) {
+  const session = { user, expires: Date.now() + SESSION_HOURS * 3600 * 1000 };
+  localStorage.setItem('roca_session', JSON.stringify(session));
+}
+function loadSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('roca_session') || 'null');
+    if (!s || Date.now() > s.expires) { localStorage.removeItem('roca_session'); return null; }
+    return s.user;
+  } catch(e) { return null; }
+}
+function clearSession() {
+  localStorage.removeItem('roca_session');
+  currentUser = null;
+}
+
+// ── Login flow ───────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pw = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent = '';
+
+  if (!email.endsWith('@safirast.com')) {
+    errEl.textContent = 'Use seu email @safirast.com.'; return;
+  }
+  if (!pw) { errEl.textContent = 'Informe a senha.'; return; }
+
+  errEl.textContent = 'Verificando...';
+  await loadAuthUsers();
+
+  // Bootstrap: if no users exist, auto-create admin
+  if (authUsers.length === 0) {
+    await bootstrapAdmin(email, pw);
+    return;
+  }
+
+  const hash = await sha256(pw);
+  const user = authUsers.find(u => u.email === email && u.active !== false);
+  if (!user) { errEl.textContent = 'Usuário não encontrado ou inativo.'; return; }
+  if (user.passwordHash !== hash) { errEl.textContent = 'Senha incorreta.'; return; }
+
+  currentUser = { email: user.email, name: user.name, role: user.role, uid: user.uid };
+
+  // Update last access
+  saveAuthUser(user.uid, {...user, lastAccess: Date.now()}).catch(()=>{});
+
+  if (user.mustChangePw) {
+    document.getElementById('changePwReason').textContent = 'Primeiro acesso — defina sua senha permanente.';
+    document.getElementById('changePwModal').classList.remove('hidden');
+    errEl.textContent = '';
+    return;
+  }
+
+  saveSession(currentUser);
+  addAudit('auth', `Login realizado`);
+  enterDashboard();
+}
+
+async function bootstrapAdmin(email, pw) {
+  // First ever login — creates admin account
+  const hash = await sha256(pw);
+  const uid = 'user_' + Date.now();
+  const adminUser = {
+    email, name: 'Fróes', role: 'admin',
+    passwordHash: hash, active: true, mustChangePw: false,
+    createdAt: Date.now(), lastAccess: Date.now()
+  };
+  await saveAuthUser(uid, adminUser);
+  authUsers = [{uid, ...adminUser}];
+  currentUser = {email, name: 'Fróes', role: 'admin', uid};
+  saveSession(currentUser);
+  addAudit('auth', 'Primeiro acesso — conta admin criada');
+  enterDashboard();
+}
+
+async function doChangePw() {
+  const pw1 = document.getElementById('newPw1').value;
+  const pw2 = document.getElementById('newPw2').value;
+  const errEl = document.getElementById('changePwErr');
+  errEl.textContent = '';
+  if (pw1.length < 6) { errEl.textContent = 'Mínimo 6 caracteres.'; return; }
+  if (pw1 !== pw2) { errEl.textContent = 'As senhas não coincidem.'; return; }
+
+  const hash = await sha256(pw1);
+  const user = authUsers.find(u => u.email === currentUser.email);
+  if (!user) { errEl.textContent = 'Erro interno.'; return; }
+  const updated = {...user, passwordHash: hash, mustChangePw: false, lastAccess: Date.now()};
+  await saveAuthUser(user.uid, updated);
+  authUsers = authUsers.map(u => u.uid === user.uid ? {uid: user.uid, ...updated} : u);
+
+  document.getElementById('changePwModal').classList.add('hidden');
+  saveSession(currentUser);
+  addAudit('auth', 'Senha alterada');
+  enterDashboard();
+}
+
+function enterDashboard() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('changePwModal').classList.add('hidden');
+
+  // Show user badge in topbar
+  const badge = document.getElementById('userBadge');
+  const label = document.getElementById('userLabel');
+  const avatar = document.getElementById('userAvatar');
+  badge.style.display = 'flex';
+  label.textContent = currentUser.name || currentUser.email.split('@')[0];
+  avatar.textContent = (currentUser.name || currentUser.email)[0].toUpperCase();
+
+  // Show/hide admin-only elements
+  const isAdmin = currentUser.role === 'admin';
+  document.getElementById('tab-btn-config').style.display = isAdmin ? '' : 'none';
+  // Hide admin tab for CS users
+  if (!isAdmin) {
+    document.querySelectorAll('.main-tab').forEach(btn => {
+      if (btn.textContent.includes('Administração')) btn.style.display = 'none';
+    });
+  }
+
+  // Apply CS filter — CS only sees own accounts
+  if (currentUser.role === 'cs') {
+    // Find matching CS name by email
+    const csName = authUsers.find(u=>u.email===currentUser.email)?.csName || currentUser.name;
+    currentFilter.gs = csName;
+    // Lock sidebar GS filter — CS cannot change
+    document.getElementById('gs-all').style.display = 'none';
+    document.getElementById('gs-sidebar-list').style.pointerEvents = 'none';
+    document.getElementById('gs-sidebar-list').style.opacity = '0.5';
+  }
+
+  init();
+}
+
+function showUserMenu() {
+  if (confirm(`Sair da conta de ${currentUser.email}?`)) {
+    addAudit('auth', 'Logout');
+    clearSession();
+    location.reload();
+  }
+}
+
+// ── User management ──────────────────────────────────────────────────────────
+let editingUserId = null;
+
+function openNewUserModal() {
+  editingUserId = null;
+  document.getElementById('userModalTitle').textContent = 'Novo Usuário';
+  document.getElementById('umEmail').value = '';
+  document.getElementById('umName').value = '';
+  document.getElementById('umRole').value = 'cs';
+  document.getElementById('umPassword').value = '';
+  document.getElementById('umPwField').style.display = '';
+  document.getElementById('userModalErr').textContent = '';
+  document.getElementById('userModal').style.display = 'flex';
+}
+
+function openEditUserModal(uid) {
+  const user = authUsers.find(u => u.uid === uid);
+  if (!user) return;
+  editingUserId = uid;
+  document.getElementById('userModalTitle').textContent = 'Editar Usuário';
+  document.getElementById('umEmail').value = user.email;
+  document.getElementById('umName').value = user.name;
+  document.getElementById('umRole').value = user.role;
+  document.getElementById('umPwField').style.display = 'none'; // edit doesn't change pw here
+  document.getElementById('userModalErr').textContent = '';
+  document.getElementById('userModal').style.display = 'flex';
+}
+
+function closeUserModal() {
+  document.getElementById('userModal').style.display = 'none';
+  editingUserId = null;
+}
+
+async function saveUserModal() {
+  const email = document.getElementById('umEmail').value.trim().toLowerCase();
+  const name = document.getElementById('umName').value.trim();
+  const role = document.getElementById('umRole').value;
+  const pw = document.getElementById('umPassword').value;
+  const errEl = document.getElementById('userModalErr');
+  errEl.textContent = '';
+
+  if (!email.endsWith('@safirast.com')) { errEl.textContent = 'Email deve ser @safirast.com.'; return; }
+  if (!name) { errEl.textContent = 'Informe o nome.'; return; }
+
+  if (editingUserId) {
+    // Edit existing
+    const user = authUsers.find(u => u.uid === editingUserId);
+    const updated = {...user, email, name, role};
+    await saveAuthUser(editingUserId, updated);
+    authUsers = authUsers.map(u => u.uid === editingUserId ? {uid: editingUserId, ...updated} : u);
+    addAudit('user', `Usuário editado: ${email} (${role})`);
+  } else {
+    // New user
+    if (pw.length < 6) { errEl.textContent = 'Senha mínima 6 caracteres.'; return; }
+    if (authUsers.find(u => u.email === email)) { errEl.textContent = 'E-mail já cadastrado.'; return; }
+    const hash = await sha256(pw);
+    const uid = 'user_' + Date.now();
+    const newUser = {
+      email, name, role,
+      passwordHash: hash, active: true, mustChangePw: true,
+      createdAt: Date.now(), lastAccess: null,
+      csName: name  // used to match with gsList
+    };
+    await saveAuthUser(uid, newUser);
+    authUsers.push({uid, ...newUser});
+    addAudit('user', `Novo usuário criado: ${email} (${role})`);
+  }
+
+  closeUserModal();
+  renderUserMgmtList();
+}
+
+async function toggleUserActive(uid) {
+  const user = authUsers.find(u => u.uid === uid);
+  if (!user) return;
+  if (user.email === ADMIN_EMAIL) { alert('Não é possível desativar o admin principal.'); return; }
+  const updated = {...user, active: !user.active};
+  await saveAuthUser(uid, updated);
+  authUsers = authUsers.map(u => u.uid === uid ? {uid, ...updated} : u);
+  addAudit('user', `Usuário ${updated.active?'ativado':'desativado'}: ${user.email}`);
+  renderUserMgmtList();
+}
+
+async function resetUserPw(uid) {
+  const user = authUsers.find(u => u.uid === uid);
+  if (!user) return;
+  const newPw = prompt(`Nova senha para ${user.email} (mínimo 6 caracteres):`);
+  if (!newPw || newPw.length < 6) { alert('Senha inválida.'); return; }
+  const hash = await sha256(newPw);
+  const updated = {...user, passwordHash: hash, mustChangePw: true};
+  await saveAuthUser(uid, updated);
+  authUsers = authUsers.map(u => u.uid === uid ? {uid, ...updated} : u);
+  addAudit('user', `Senha resetada para: ${user.email}`);
+  alert(`✓ Senha redefinida. O usuário deverá trocar no próximo acesso.`);
+  renderUserMgmtList();
+}
+
+function renderUserMgmtList() {
+  const list = document.getElementById('userMgmtList');
+  if (!list) return;
+  if (!authUsers.length) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">Nenhum usuário cadastrado.</div>';
+    return;
+  }
+  list.innerHTML = authUsers.sort((a,b)=>a.email.localeCompare(b.email)).map(u => {
+    const lastAccess = u.lastAccess ? new Date(u.lastAccess).toLocaleString('pt-BR') : '–';
+    const isMe = u.email === currentUser?.email;
+    return `<div class="user-row">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;">${u.email}</span>
+      <span>${u.name}</span>
+      <span><span class="badge" style="background:${u.role==='admin'?'var(--accent-bg)':'var(--green-bg)'};color:${u.role==='admin'?'var(--accent2)':'var(--green)'};">${u.role}</span></span>
+      <span class="${u.active!==false?'user-status-active':'user-status-inactive'}">${u.active!==false?'Ativo':'Inativo'}</span>
+      <span style="font-size:11px;color:var(--muted);">${lastAccess}</span>
+      <span style="display:flex;gap:4px;">
+        <button class="btn" style="font-size:10px;padding:2px 7px;" onclick="openEditUserModal('${u.uid}')">✏️</button>
+        <button class="btn" style="font-size:10px;padding:2px 7px;" onclick="resetUserPw('${u.uid}')" title="Resetar senha">🔑</button>
+        ${!isMe?`<button class="btn" style="font-size:10px;padding:2px 7px;color:${u.active!==false?'var(--red)':'var(--green)'};" onclick="toggleUserActive('${u.uid}')">${u.active!==false?'🚫':'✓'}</button>`:''}
+      </span>
+    </div>`;
+  }).join('');
+
+  // Populate audit user filter
+  const sel = document.getElementById('auditFilterUser');
+  if (sel) {
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">Todos os usuários</option>' +
+      authUsers.map(u=>`<option value="${u.email}" ${currentVal===u.email?'selected':''}>${u.name} (${u.email})</option>`).join('');
+  }
+}
+
+// ── Audit log rendering ──────────────────────────────────────────────────────
+function renderAuditLog() {
+  const list = document.getElementById('auditLogList');
+  if (!list) return;
+  const filterType = document.getElementById('auditFilterType')?.value || '';
+  const filterUser = document.getElementById('auditFilterUser')?.value || '';
+
+  let entries = auditLog;
+  if (filterType) entries = entries.filter(e => e.type === filterType);
+  if (filterUser) entries = entries.filter(e => e.email === filterUser);
+
+  if (!entries.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Nenhum registro encontrado.</div>';
+    return;
+  }
+
+  const typeLabel = { auth:'auth', create:'create', edit:'edit', delete:'delete', user:'user' };
+  list.innerHTML = entries.slice(0, 200).map(e => {
+    const dt = new Date(e.ts);
+    const dtStr = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const cls = {auth:'audit-auth',create:'audit-create',edit:'audit-edit',delete:'audit-delete',user:'audit-auth'}[e.type] || 'audit-edit';
+    return `<div class="audit-row">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);">${dtStr}</span>
+      <span style="font-size:11.5px;font-weight:500;">${e.name||e.email}</span>
+      <span style="font-size:11.5px;color:var(--ink2);">${e.description}</span>
+      <span><span class="audit-type ${cls}">${e.type}</span></span>
+    </div>`;
+  }).join('');
+}
+
+// ── Hook audit into key operations ──────────────────────────────────────────
+const _origSaveEntry = typeof saveEntry !== 'undefined' ? saveEntry : null;
+
+// ── Check session on load ─────────────────────────────────────────────────────
+async function checkAuthAndInit() {
+  await loadAuthUsers();
+  await loadAuditLog();
+  renderUserMgmtList();
+  renderAuditLog();
+
+  const session = loadSession();
+  if (session) {
+    // Validate session user still exists and is active
+    const dbUser = authUsers.find(u => u.email === session.email && u.active !== false);
+    if (dbUser) {
+      currentUser = session;
+      // Refresh session timer
+      saveSession(currentUser);
+      enterDashboard();
+      return;
+    }
+  }
+  // Show login
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+// ── Override saveEntry to audit edits ────────────────────────────────────────
+// Called after saveEntry() runs
+function auditSaveEntry(clientName) {
+  addAudit('edit', `Faróis atualizados: ${clientName}`);
+}
+
+checkAuthAndInit();
 </script>
+
+<!-- TAB: CONFIGURAÇÕES -->
+<div class="tab-content" id="tab-configuracoes">
+  <div style="padding:28px 32px;max-width:1100px;margin:0 auto;">
+    <div class="view-title">Configurações <span>Auditoria e segurança</span></div>
+
+    <!-- Filters -->
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;">
+      <select id="auditFilterType" onchange="renderAuditLog()" style="border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;color:var(--ink);background:var(--card);">
+        <option value="">Todos os eventos</option>
+        <option value="auth">Autenticação</option>
+        <option value="create">Criação</option>
+        <option value="edit">Edição</option>
+        <option value="delete">Deleção</option>
+        <option value="user">Usuários</option>
+      </select>
+      <select id="auditFilterUser" onchange="renderAuditLog()" style="border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;color:var(--ink);background:var(--card);">
+        <option value="">Todos os usuários</option>
+      </select>
+      <button class="btn" onclick="auditLog=[];saveAuditLog();renderAuditLog();" style="margin-left:auto;font-size:11.5px;color:var(--muted);">🗑 Limpar log</button>
+    </div>
+
+    <!-- Log -->
+    <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div class="audit-row audit-hdr">
+        <span>DATA / HORA</span><span>USUÁRIO</span><span>DESCRIÇÃO</span><span>TIPO</span>
+      </div>
+      <div id="auditLogList" style="max-height:520px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
