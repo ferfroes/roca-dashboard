@@ -651,9 +651,16 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
             <label>NOME DE EXIBIÇÃO</label>
             <input type="text" id="umName" placeholder="Nome Sobrenome">
           </div>
+          <div class="login-field" style="margin:0;" id="umCsNameField">
+            <label>NOME DO CS (deve ser idêntico ao cadastrado nos clientes)</label>
+            <select id="umCsName" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
+              <option value="">— selecione —</option>
+            </select>
+            <div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Define quais contas este CS vai ver ao fazer login.</div>
+          </div>
           <div class="login-field" style="margin:0;">
             <label>PERFIL</label>
-            <select id="umRole" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
+            <select id="umRole" onchange="toggleCsNameField()" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
               <option value="cs">CS (Customer Success)</option>
               <option value="admin">Admin</option>
             </select>
@@ -891,17 +898,27 @@ async function spLoadAll(){
       const rh=data.history||{};weekHistory={};
       Object.keys(rh).forEach(wk=>{const ws={};Object.keys(rh[wk]).forEach(c=>{ws[parseInt(c)]=rh[wk][c];});weekHistory[wk]=ws;});
       contracts=data.contracts||[];
-      // Load clients and gsList from Firebase (source of truth for all users)
-      if(data.clients&&Array.isArray(data.clients)&&data.clients.length>0){
-        clients=data.clients;
-        clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-        localStorage.setItem('roca_clients',JSON.stringify(clients));
-      }
-      if(data.gsList&&Array.isArray(data.gsList)&&data.gsList.length>0){
-        gsList=data.gsList;
-        gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));
-        localStorage.setItem('roca_gs',JSON.stringify(gsList));
-      }
+      // Load clients from Firebase — handle array or object (Firebase quirk)
+      if(data.clients){
+        const rawClients=Array.isArray(data.clients)
+          ?data.clients
+          :Object.values(data.clients).filter(x=>x&&x.name);
+        if(rawClients.length>0){
+          clients=rawClients;
+          clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+          localStorage.setItem('roca_clients',JSON.stringify(clients));
+        }else{clients=[];}
+      }else{clients=[];}
+      if(data.gsList){
+        const rawGS=Array.isArray(data.gsList)
+          ?data.gsList
+          :Object.values(data.gsList).filter(x=>typeof x==='string');
+        if(rawGS.length>0){
+          gsList=rawGS;
+          gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));
+          localStorage.setItem('roca_gs',JSON.stringify(gsList));
+        }else{gsList=[];}
+      }else{gsList=[];}
     }else{entries={};weekHistory={};contracts=[];}
     showSyncStatus('ok');return true;
   }catch(e){console.error('Firebase load failed:',e);showSyncStatus('offline');return false;}
@@ -1249,8 +1266,9 @@ async function init(){
   if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');const sc2=localStorage.getItem('roca_contracts');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);if(sc2)contracts=JSON.parse(sc2);}
   // Re-apply CS filter after data load (spLoadAll may have reset state)
   if(currentUser&&currentUser.role==='cs'){
-    const csName=authUsers.find(u=>u.email===currentUser.email)?.csName||currentUser.name;
-    currentFilter.gs=csName;
+    const _u=authUsers.find(u=>u.email===currentUser.email);
+    const _n=_u?.csName||_u?.name||currentUser.name;
+    currentFilter.gs=_n;
   }
   render();
 }
@@ -1268,10 +1286,10 @@ function switchMainTab(tab,btn){
 function buildSidebar(){
   const list=document.getElementById('gs-sidebar-list');list.innerHTML='';
   const isCS=currentUser&&currentUser.role==='cs';
-  const csName=isCS?(authUsers.find(u=>u.email===currentUser.email)?.csName||currentUser.name):null;
+  const dbU=isCS?authUsers.find(u=>u.email===currentUser.email):null;
+  const csName=isCS?(dbU?.csName||dbU?.name||currentUser.name):null;
   [...new Set(clients.map(c=>c.gs))].sort().forEach(gs=>{
-    // CS users only see their own entry in sidebar
-    if(isCS&&gs!==csName)return;
+    if(isCS&&gs.toLowerCase().trim()!==csName.toLowerCase().trim())return;
     const count=clients.filter(c=>c.gs===gs).length;
     const col=gsColors[gs]||{bg:'#f0f0f5',color:'#444'};
     const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1286,9 +1304,10 @@ function buildSidebar(){
 function renderGSHealthStrip(){
   const grid=document.getElementById('gsHealthGrid');grid.innerHTML='';
   const isCS=currentUser&&currentUser.role==='cs';
-  const csName=isCS?(authUsers.find(u=>u.email===currentUser.email)?.csName||currentUser.name):null;
+  const dbU2=isCS?authUsers.find(u=>u.email===currentUser.email):null;
+  const csName=isCS?(dbU2?.csName||dbU2?.name||currentUser.name):null;
   [...new Set(clients.map(c=>c.gs))].sort().forEach(gs=>{
-    if(isCS&&gs!==csName)return;
+    if(isCS&&gs.toLowerCase().trim()!==csName.toLowerCase().trim())return;
     const avg=calcGSHealthAvg(gs);const col=hsColor(avg);
     const gsCount=clients.filter(c=>c.gs===gs).length;
     const filled=clients.filter(c=>c.gs===gs&&entries[c.id]&&entries[c.id].R).length;
@@ -1395,7 +1414,7 @@ function filterByContract(days){
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function filteredClients(){
   return clients.filter(c=>{
-    if(currentFilter.gs!=='all'&&c.gs!==currentFilter.gs)return false;
+    if(currentFilter.gs!=='all'&&c.gs.toLowerCase().trim()!==currentFilter.gs.toLowerCase().trim())return false;
     if(currentFilter.search&&!c.name.toLowerCase().includes(currentFilter.search.toLowerCase()))return false;
     if(currentFilter.churn)return hasChurnRisk(c.id);
     if(currentFilter.consec)return consecutiveCriticalWeeks(c.id)>=2;
@@ -1416,15 +1435,17 @@ function render(){
 }
 
 function updateSummary(fc){
-  const gf=clients.filter(c=>(currentFilter.gs==='all'||c.gs===currentFilter.gs)&&(!currentFilter.search||c.name.toLowerCase().includes(currentFilter.search.toLowerCase())));
+  const gf=clients.filter(c=>(currentFilter.gs==='all'||c.gs.toLowerCase().trim()===currentFilter.gs.toLowerCase().trim())&&(!currentFilter.search||c.name.toLowerCase().includes(currentFilter.search.toLowerCase())));
   document.getElementById('s-total').textContent=gf.length;
   document.getElementById('s-red').textContent=gf.filter(c=>getEntryStatus(c.id)==='V').length;
   document.getElementById('s-yellow').textContent=gf.filter(c=>getEntryStatus(c.id)==='A').length;
   document.getElementById('s-green').textContent=gf.filter(c=>getEntryStatus(c.id)==='G').length;
   document.getElementById('s-churn').textContent=gf.filter(c=>hasChurnRisk(c.id)).length;
   document.getElementById('s-pending').textContent=gf.filter(c=>isPending(c.id)).length;
+  const _dbU=currentUser&&currentUser.role==='cs'?authUsers.find(u=>u.email===currentUser.email):null;
+  const _csN=_dbU?(_dbU.csName||_dbU.name||currentUser.name):null;
   const visibleClients=currentUser&&currentUser.role==='cs'
-    ?clients.filter(c=>c.gs===(authUsers.find(u=>u.email===currentUser.email)?.csName||currentUser.name))
+    ?clients.filter(c=>c.gs.toLowerCase().trim()===(_csN||'').toLowerCase().trim())
     :clients;
   document.getElementById('count-all').textContent=visibleClients.length;
   document.getElementById('count-red').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='V').length;
@@ -2187,7 +2208,8 @@ function enterDashboard() {
 
   // Apply CS filter — CS only sees own accounts
   if (currentUser.role === 'cs') {
-    const csName = authUsers.find(u=>u.email===currentUser.email)?.csName || currentUser.name;
+    const dbUserCS = authUsers.find(u=>u.email===currentUser.email);
+    const csName = dbUserCS?.csName || dbUserCS?.name || currentUser.name;
     currentFilter.gs = csName;
     // Clear any stale localStorage history/entries that might belong to other sessions
     // CS gets fresh data from Firebase only — don't use potentially stale localStorage
@@ -2216,6 +2238,18 @@ function showUserMenu() {
 // ── User management ──────────────────────────────────────────────────────────
 let editingUserId = null;
 
+function toggleCsNameField(){
+  const role=document.getElementById('umRole')?.value;
+  const field=document.getElementById('umCsNameField');
+  if(field)field.style.display=role==='cs'?'':'none';
+}
+function populateCsNameSelect(selectedName=''){
+  const sel=document.getElementById('umCsName');if(!sel)return;
+  // Get unique CS names from current clients list
+  const csNames=[...new Set(clients.map(c=>c.gs))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  sel.innerHTML='<option value="">— selecione —</option>'+
+    csNames.map(n=>`<option value="${n}" ${n===selectedName?'selected':''}>${n}</option>`).join('');
+}
 function openNewUserModal() {
   editingUserId = null;
   document.getElementById('userModalTitle').textContent = 'Novo Usuário';
@@ -2225,6 +2259,8 @@ function openNewUserModal() {
   document.getElementById('umPassword').value = '';
   document.getElementById('umPwField').style.display = '';
   document.getElementById('userModalErr').textContent = '';
+  document.getElementById('umCsNameField').style.display = '';
+  populateCsNameSelect();
   document.getElementById('userModal').style.display = 'flex';
 }
 
@@ -2238,6 +2274,8 @@ function openEditUserModal(uid) {
   document.getElementById('umRole').value = user.role;
   document.getElementById('umPwField').style.display = 'none'; // edit doesn't change pw here
   document.getElementById('userModalErr').textContent = '';
+  document.getElementById('umCsNameField').style.display = user.role==='cs'?'':'none';
+  populateCsNameSelect(user.csName||user.name);
   document.getElementById('userModal').style.display = 'flex';
 }
 
@@ -2260,7 +2298,8 @@ async function saveUserModal() {
   if (editingUserId) {
     // Edit existing
     const user = authUsers.find(u => u.uid === editingUserId);
-    const updated = {...user, email, name, role};
+    const csNameValE = role==='cs'?(document.getElementById('umCsName')?.value||user.csName||name):null;
+    const updated = {...user, email, name, role, csName:csNameValE};
     await saveAuthUser(editingUserId, updated);
     authUsers = authUsers.map(u => u.uid === editingUserId ? {uid: editingUserId, ...updated} : u);
     addAudit('user', `Usuário editado: ${email} (${role})`);
@@ -2270,11 +2309,12 @@ async function saveUserModal() {
     if (authUsers.find(u => u.email === email)) { errEl.textContent = 'E-mail já cadastrado.'; return; }
     const hash = await sha256(pw);
     const uid = 'user_' + Date.now();
+    const csNameVal = role==='cs'?(document.getElementById('umCsName')?.value||name):null;
     const newUser = {
       email, name, role,
       passwordHash: hash, active: true, mustChangePw: true,
       createdAt: Date.now(), lastAccess: null,
-      csName: name  // used to match with gsList
+      csName: csNameVal
     };
     await saveAuthUser(uid, newUser);
     authUsers.push({uid, ...newUser});
