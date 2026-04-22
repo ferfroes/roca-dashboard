@@ -891,6 +891,17 @@ async function spLoadAll(){
       const rh=data.history||{};weekHistory={};
       Object.keys(rh).forEach(wk=>{const ws={};Object.keys(rh[wk]).forEach(c=>{ws[parseInt(c)]=rh[wk][c];});weekHistory[wk]=ws;});
       contracts=data.contracts||[];
+      // Load clients and gsList from Firebase (source of truth for all users)
+      if(data.clients&&Array.isArray(data.clients)&&data.clients.length>0){
+        clients=data.clients;
+        clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+        localStorage.setItem('roca_clients',JSON.stringify(clients));
+      }
+      if(data.gsList&&Array.isArray(data.gsList)&&data.gsList.length>0){
+        gsList=data.gsList;
+        gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));
+        localStorage.setItem('roca_gs',JSON.stringify(gsList));
+      }
     }else{entries={};weekHistory={};contracts=[];}
     showSyncStatus('ok');return true;
   }catch(e){console.error('Firebase load failed:',e);showSyncStatus('offline');return false;}
@@ -1997,22 +2008,27 @@ function confirmContractImport(){
 }
 
 function deleteAllClients(){
-  if(!confirm('Apagar TUDO?\n\nSerão removidos:\n— Todos os clientes\n— Todos os CS\n— Todos os contratos\n— Todos os faróis da semana atual\n\nO histórico de semanas anteriores é mantido.\n\nConfirme para continuar.'))return;
-  clients=[];entries={};gsList=[];contracts=[];
+  if(!confirm('Apagar TUDO?\n\nSerão removidos:\n— Todos os clientes\n— Todos os CS\n— Todos os contratos\n— Todos os faróis da semana atual\n— Todo o histórico de semanas anteriores\n\nEsta ação é irreversível.\n\nConfirme para continuar.'))return;
+  clients=[];entries={};gsList=[];contracts=[];weekHistory={};
   localStorage.setItem('roca_clients',JSON.stringify(clients));
   localStorage.setItem('roca_entries',JSON.stringify(entries));
   localStorage.setItem('roca_gs',JSON.stringify(gsList));
   localStorage.setItem('roca_contracts',JSON.stringify(contracts));
-  fbSet('roca/entries',{}).catch(e=>console.warn('Firebase clear failed:',e));
-  fbPatch('roca',{contracts:[]}).catch(e=>console.warn('Firebase contracts clear failed:',e));
+  localStorage.setItem('roca_history',JSON.stringify({}));
+  // Wipe entire roca node in Firebase — full reset
+  fbSet('roca',{clients:[],gsList:[],entries:{},contracts:[],history:{}})
+    .then(()=>fbGet('roca/users').then(u=>fbSet('roca',{clients:[],gsList:[],entries:{},contracts:[],history:{},users:u||{}})))
+    .catch(e=>console.warn('Firebase wipe failed:',e));
   buildSidebar();render();renderAdminList();renderGSList();renderContractAdminList();
   showSyncStatus('saved');
-  addAudit('delete','Todos os clientes, CS e contratos apagados');
+  addAudit('delete','Reset completo — todos os dados apagados do Firebase');
 }
 function saveAdmin(){
   clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));
   localStorage.setItem('roca_clients',JSON.stringify(clients));localStorage.setItem('roca_gs',JSON.stringify(gsList));
   saveContractsToStorage();
+  // Save clients and gsList to Firebase so all users see the same data
+  fbPatch('roca',{clients,gsList}).catch(e=>console.warn('Save clients failed:',e));
   buildSidebar();render();renderAdminList();renderGSList();renderContractAdminList();
   addAudit('edit','Clientes e CS atualizados na aba Administração');
   alert('✓ Alterações salvas com sucesso.');
@@ -2068,7 +2084,7 @@ function importFile(input){
   };
   reader.readAsBinaryString(file);
 }
-function confirmImport(){if(!window._importedClients)return;clients=window._importedClients;clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));localStorage.setItem('roca_clients',JSON.stringify(clients));buildSidebar();render();renderAdminList();addAudit('create',`${clients.length} clientes importados via Excel`);alert(`✓ ${clients.length} clientes importados com sucesso.`);}
+function confirmImport(){if(!window._importedClients)return;clients=window._importedClients;clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));localStorage.setItem('roca_clients',JSON.stringify(clients));fbPatch('roca',{clients}).catch(e=>console.warn('Import save failed:',e));buildSidebar();render();renderAdminList();addAudit('create',`${clients.length} clientes importados via Excel`);alert(`✓ ${clients.length} clientes importados com sucesso.`);}
 
 // ── ADVANCE WEEK ──────────────────────────────────────────────────────────────
 async function advanceWeek(){
