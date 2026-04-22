@@ -387,8 +387,8 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     <div class="week-badge" id="weekBadge"></div>
     <span id="syncStatus"></span>
     <button class="tbtn" onclick="spLoadAll().then(()=>render())" title="Recarregar">⟳</button>
-    <button class="tbtn" onclick="advanceWeek()" title="Arquivar e abrir nova semana">↻ Nova Semana</button>
-    <button class="tbtn tbtn-primary" onclick="exportData()">↓ Exportar</button>
+    <button class="tbtn" id="btnNovaSmn" onclick="advanceWeek()" title="Arquivar e abrir nova semana">↻ Nova Semana</button>
+    <button class="tbtn tbtn-primary" id="btnExportar" onclick="exportData()">↓ Exportar</button>
   </div>
 </div>
 
@@ -1335,10 +1335,18 @@ async function init(){
   const fr=new Date(mn);fr.setDate(mn.getDate()+4);
   const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   document.getElementById('weekBadge').textContent=`Semana ${fmt(mn)} – ${fmt(fr)}`;
-  buildSidebar();renderAdminList();renderGSList();renderContractAdminList();
-  document.getElementById('sc-all').classList.add('active');
+  buildSidebar();
+  // Only show admin tabs if admin
+  if(currentUser&&currentUser.role==='admin'){renderAdminList();renderGSList();renderContractAdminList();}
+  // sc-all only active for admin; CS stays on their filter
+  if(!currentUser||currentUser.role==='admin'){document.getElementById('sc-all').classList.add('active');}
   const ok=await spLoadAll();
   if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');const sc2=localStorage.getItem('roca_contracts');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);if(sc2)contracts=JSON.parse(sc2);}
+  // Re-apply CS filter after data load (spLoadAll may have reset state)
+  if(currentUser&&currentUser.role==='cs'){
+    const csName=authUsers.find(u=>u.email===currentUser.email)?.csName||currentUser.name;
+    currentFilter.gs=csName;
+  }
   render();
 }
 
@@ -1354,7 +1362,11 @@ function switchMainTab(tab,btn){
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
 function buildSidebar(){
   const list=document.getElementById('gs-sidebar-list');list.innerHTML='';
+  const isCS=currentUser&&currentUser.role==='cs';
+  const csName=isCS?(authUsers.find(u=>u.email===currentUser.email)?.csName||currentUser.name):null;
   [...new Set(clients.map(c=>c.gs))].sort().forEach(gs=>{
+    // CS users only see their own entry in sidebar
+    if(isCS&&gs!==csName)return;
     const count=clients.filter(c=>c.gs===gs).length;
     const col=gsColors[gs]||{bg:'#f0f0f5',color:'#444'};
     const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1368,7 +1380,10 @@ function buildSidebar(){
 // ── GS HEALTH STRIP ───────────────────────────────────────────────────────────
 function renderGSHealthStrip(){
   const grid=document.getElementById('gsHealthGrid');grid.innerHTML='';
+  const isCS=currentUser&&currentUser.role==='cs';
+  const csName=isCS?(authUsers.find(u=>u.email===currentUser.email)?.csName||currentUser.name):null;
   [...new Set(clients.map(c=>c.gs))].sort().forEach(gs=>{
+    if(isCS&&gs!==csName)return;
     const avg=calcGSHealthAvg(gs);const col=hsColor(avg);
     const gsCount=clients.filter(c=>c.gs===gs).length;
     const filled=clients.filter(c=>c.gs===gs&&entries[c.id]&&entries[c.id].R).length;
@@ -1503,18 +1518,21 @@ function updateSummary(fc){
   document.getElementById('s-green').textContent=gf.filter(c=>getEntryStatus(c.id)==='G').length;
   document.getElementById('s-churn').textContent=gf.filter(c=>hasChurnRisk(c.id)).length;
   document.getElementById('s-pending').textContent=gf.filter(c=>isPending(c.id)).length;
-  document.getElementById('count-all').textContent=clients.length;
-  document.getElementById('count-red').textContent=clients.filter(c=>getEntryStatus(c.id)==='V').length;
-  document.getElementById('count-green').textContent=clients.filter(c=>getEntryStatus(c.id)==='G').length;
-  document.getElementById('count-yellow').textContent=clients.filter(c=>getEntryStatus(c.id)==='A').length;
-  document.getElementById('count-churn').textContent=clients.filter(c=>hasChurnRisk(c.id)).length;
-  document.getElementById('count-vip').textContent=clients.filter(c=>c.vip||c.tier==='A').length;
-  document.getElementById('count-pending').textContent=clients.filter(c=>isPending(c.id)).length;
-  document.getElementById('count-book').textContent=clients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length;
+  const visibleClients=currentUser&&currentUser.role==='cs'
+    ?clients.filter(c=>c.gs===(authUsers.find(u=>u.email===currentUser.email)?.csName||currentUser.name))
+    :clients;
+  document.getElementById('count-all').textContent=visibleClients.length;
+  document.getElementById('count-red').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='V').length;
+  document.getElementById('count-green').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='G').length;
+  document.getElementById('count-yellow').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='A').length;
+  document.getElementById('count-churn').textContent=visibleClients.filter(c=>hasChurnRisk(c.id)).length;
+  document.getElementById('count-vip').textContent=visibleClients.filter(c=>c.vip||c.tier==='A').length;
+  document.getElementById('count-pending').textContent=visibleClients.filter(c=>isPending(c.id)).length;
+  document.getElementById('count-book').textContent=visibleClients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length;
   const partialEl=document.getElementById('count-partial');
-  if(partialEl)partialEl.textContent=clients.filter(c=>isPartial(c.id)).length;
+  if(partialEl)partialEl.textContent=visibleClients.filter(c=>isPartial(c.id)).length;
   const consecEl=document.getElementById('count-consec');
-  if(consecEl)consecEl.textContent=clients.filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;
+  if(consecEl)consecEl.textContent=visibleClients.filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;
   document.getElementById('count-worsened').textContent=clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length;
   document.getElementById('count-improved').textContent=clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length;
   document.querySelectorAll('.gs-btn-person').forEach(b=>{const gs=b.dataset.gsName;const cnt=b.querySelector('.gs-count');if(cnt&&gs)cnt.textContent=clients.filter(c=>c.gs===gs).length;});
@@ -2253,13 +2271,21 @@ function enterDashboard() {
     document.querySelectorAll('.main-tab').forEach(btn => {
       if (btn.textContent.includes('Administração')) btn.style.display = 'none';
     });
+    const btnNS=document.getElementById('btnNovaSmn');if(btnNS)btnNS.style.display='none';
+    const btnEx=document.getElementById('btnExportar');if(btnEx)btnEx.style.display='none';
   }
 
   // Apply CS filter — CS only sees own accounts
   if (currentUser.role === 'cs') {
-    // Find matching CS name by email
     const csName = authUsers.find(u=>u.email===currentUser.email)?.csName || currentUser.name;
     currentFilter.gs = csName;
+    // Clear any stale localStorage history/entries that might belong to other sessions
+    // CS gets fresh data from Firebase only — don't use potentially stale localStorage
+    localStorage.removeItem('roca_entries');
+    localStorage.removeItem('roca_history');
+    localStorage.removeItem('roca_clients');
+    localStorage.removeItem('roca_contracts');
+    localStorage.removeItem('roca_gs');
     // Lock sidebar GS filter — CS cannot change
     document.getElementById('gs-all').style.display = 'none';
     document.getElementById('gs-sidebar-list').style.pointerEvents = 'none';
