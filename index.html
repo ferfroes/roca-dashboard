@@ -2468,6 +2468,14 @@ const _origSaveEntry = typeof saveEntry !== 'undefined' ? saveEntry : null;
 
 // ── Check session on load ─────────────────────────────────────────────────────
 async function checkAuthAndInit() {
+  // Always clear stale localStorage data on page load — fresh data always comes from Firebase
+  // This prevents stale data from a previous admin session leaking into a CS session
+  localStorage.removeItem('roca_entries');
+  localStorage.removeItem('roca_history');
+  localStorage.removeItem('roca_clients');
+  localStorage.removeItem('roca_contracts');
+  localStorage.removeItem('roca_gs');
+
   await loadAuthUsers();
   await loadAuditLog();
   renderUserMgmtList();
