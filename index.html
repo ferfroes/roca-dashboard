@@ -1435,6 +1435,11 @@ function filteredClients(){
 
 function render(){
   const fc=filteredClients();updateSummary(fc);renderGSHealthStrip();updateContractPanel();
+  // Always keep title count in sync with actual filtered results
+  const titleEl=document.getElementById('mainTitle');
+  if(titleEl&&titleEl.innerHTML.includes('Todas as Contas')){
+    setTitle('Todas as Contas',fc.length);
+  }
   if(currentView==='list')renderList(fc);else renderTable(fc);
 }
 
@@ -1717,7 +1722,7 @@ function filterGS(gs,btn){
   resetAllQuickBtns();
   if(btn)btn.classList.add('active');
   else document.querySelectorAll('.gs-btn-person').forEach(b=>{if(b.dataset.gsName===gs)b.classList.add('active');});
-  const count=gs==='all'?clients.length:clients.filter(c=>c.gs===gs).length;
+  const count=gs==='all'?filteredClients().length:filteredClients().filter(c=>c.gs===gs).length;
   setTitle(gs==='all'?'Todas as Contas':gs,count);
   document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   document.getElementById('sc-all').classList.add('active');render();
@@ -1735,7 +1740,7 @@ function filterStatus(st,btn){
   const tog=currentFilter.status===st;
   currentFilter={...currentFilter,status:tog?null:st,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
-  if(currentFilter.status){btn.classList.add('active');const l={V:'Problema Real',G:'Acompanhar e Manter',A:'Tomar Ação',pending:'Pendentes',partial:'Parciais'};const count=st==='pending'?clients.filter(c=>isPending(c.id)).length:st==='partial'?clients.filter(c=>isPartial(c.id)).length:clients.filter(c=>getEntryStatus(c.id)===st).length;setTitle(l[st]||st,count);}
+  if(currentFilter.status){btn.classList.add('active');const l={V:'Problema Real',G:'Acompanhar e Manter',A:'Tomar Ação',pending:'Pendentes',partial:'Parciais'};const fc2=filteredClients();const count=st==='pending'?fc2.filter(c=>isPending(c.id)).length:st==='partial'?fc2.filter(c=>isPartial(c.id)).length:fc2.filter(c=>getEntryStatus(c.id)===st).length;setTitle(l[st]||st,count);}
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
@@ -1766,7 +1771,8 @@ function filterByCard(st){
   currentFilter={...currentFilter,status:(st==='all'||tog)?null:st,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,search:'',consec:false};
   document.querySelector('.search-input').value='';resetAllQuickBtns();document.getElementById('gs-all').classList.add('active');
   const l={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar e Manter',pending:'⏳ Pendentes',churn:'⚠ Risco de Churn'};
-  const as=currentFilter.status;const count=as?clients.filter(c=>getEntryStatus(c.id)===as).length:clients.length;
+  const as=currentFilter.status;const fc2=filteredClients();
+  const count=as==='pending'?fc2.filter(c=>isPending(c.id)).length:as?fc2.filter(c=>getEntryStatus(c.id)===as).length:fc2.length;
   setTitle(l[as]||'Todas as Contas',count);
   document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   const cm={null:'sc-all',V:'sc-red',A:'sc-yellow',G:'sc-green',pending:'sc-pending',churn:'sc-churn'};
@@ -1794,7 +1800,7 @@ function filterImproved(btn){
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
-function searchClients(val){currentFilter.search=val;if(val){const count=clients.filter(c=>c.name.toLowerCase().includes(val.toLowerCase())).length;setTitle(`Busca: "${val}"`,count);}else setTitle('Todas as Contas',filteredClients().length);render();}
+function searchClients(val){currentFilter.search=val;if(val){const count=filteredClients().filter(c=>c.name.toLowerCase().includes(val.toLowerCase())).length;setTitle(`Busca: "${val}"`,count);}else setTitle('Todas as Contas',filteredClients().length);render();}
 function setView(v,btn){currentView=v;document.getElementById('list-view').style.display=v==='list'?'block':'none';document.getElementById('table-view').style.display=v==='table'?'block':'none';document.getElementById('view-list-btn').classList.toggle('active',v==='list');document.getElementById('view-table-btn').classList.toggle('active',v==='table');render();}
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
