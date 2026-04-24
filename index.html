@@ -383,12 +383,13 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     <div class="topbar-sep"></div>
     <div class="topbar-sub">ROCA · CS</div>
   </div>
-  <div class="topbar-right"><div class="user-badge" id="userBadge" onclick="showUserMenu()" style="display:none;"><div class="user-avatar" id="userAvatar">?</div><span id="userLabel">–</span></div>
+  <div class="topbar-right">
     <div class="week-badge" id="weekBadge"></div>
     <span id="syncStatus"></span>
     <button class="tbtn" onclick="spLoadAll().then(()=>render())" title="Recarregar">⟳</button>
     <button class="tbtn" id="btnNovaSmn" onclick="advanceWeek()" title="Arquivar e abrir nova semana">↻ Nova Semana</button>
     <button class="tbtn tbtn-primary" id="btnExportar" onclick="exportData()">↓ Exportar</button>
+    <div class="user-badge" id="userBadge" onclick="showUserMenu()" style="display:none;"><div class="user-avatar" id="userAvatar">?</div><span id="userLabel">–</span></div>
   </div>
 </div>
 
@@ -489,9 +490,9 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;margin-top:-6px;">
       <div class="summary-card" id="sc-pending" onclick="filterByCard('pending')" style="flex:1;max-width:220px;">
         <div class="summary-icon" style="background:var(--surface2);">⏳</div>
-        <div><div class="summary-num" id="s-pending" style="color:var(--muted)">0</div><div class="summary-lbl">PENDENTES (incompletos)</div></div>
+        <div><div class="summary-num" id="s-pending" style="color:var(--muted)">0</div><div class="summary-lbl">PENDENTES</div></div>
       </div>
-      <div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;">conta não preenchida ou preenchida parcialmente</div>
+
     </div>
 
     <!-- CONTRACT EXPIRY -->
@@ -556,15 +557,15 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
       <div class="view-actions">
         <div class="upload-zone" style="padding:8px 14px;border-style:dashed;border-width:1px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--accent2);font-weight:500;" onclick="document.getElementById('xlsxInput').click()">
           <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" onchange="importFile(this)" style="display:none;">
-          📥 Importar Excel
+          📥 Importar Clientes
         </div>
-        <button class="btn" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteAllClients()">🗑 Apagar Todos</button>
-        <button class="btn btn-primary" onclick="addClientRow()">+ Novo Cliente</button>
         <div style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);font-size:12.5px;font-weight:500;cursor:pointer;color:var(--ink2);transition:all .12s;" onclick="document.getElementById('contractXlsxInput').click()" onmouseover="this.style.borderColor='var(--accent3)';this.style.color='var(--accent2)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink2)'">
           <input type="file" id="contractXlsxInput" accept=".xlsx,.xls,.csv" onchange="importContracts(this)" style="display:none;">
-          📄 Upload de Contratos
+          📄 Importar Contratos
         </div>
+        <button class="btn btn-primary" onclick="addClientRow()">+ Novo Cliente</button>
         <button class="btn btn-primary" onclick="saveAdmin()">💾 Salvar Alterações</button>
+        <button class="btn" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteAllClients()">🗑 Apagar Todos</button>
       </div>
     </div>
 
