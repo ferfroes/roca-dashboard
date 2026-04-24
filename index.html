@@ -1255,11 +1255,15 @@ async function init(){
   if(!currentUser||currentUser.role==='admin'){document.getElementById('sc-all').classList.add('active');}
   const ok=await spLoadAll();
   if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');const sc2=localStorage.getItem('roca_contracts');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);if(sc2)contracts=JSON.parse(sc2);}
-  // Re-apply CS filter after data load (spLoadAll may have reset state)
+  // Reload authUsers to get fresh csName (may have been updated by admin after login)
+  await loadAuthUsers();
+  // Re-apply CS filter after data load with fresh authUsers
   if(currentUser&&currentUser.role==='cs'){
     const _u=authUsers.find(u=>u.email===currentUser.email);
     const _n=_u?.csName||_u?.name||currentUser.name;
     currentFilter.gs=_n;
+    // Debug — log what we found
+    console.log('[ROCA CS Filter] user:', currentUser.email, '→ csName:', _n, '| clients with that gs:', clients.filter(c=>c.gs.toLowerCase().trim()===(_n||'').toLowerCase().trim()).length);
   }
   render();
 }
