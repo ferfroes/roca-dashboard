@@ -647,16 +647,10 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
             <label>NOME DE EXIBIÇÃO</label>
             <input type="text" id="umName" placeholder="Nome Sobrenome">
           </div>
-          <div class="login-field" style="margin:0;" id="umCsNameField">
-            <label>NOME DO CS (deve ser idêntico ao cadastrado nos clientes)</label>
-            <select id="umCsName" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
-              <option value="">— selecione —</option>
-            </select>
-            <div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Define quais contas este CS vai ver ao fazer login.</div>
-          </div>
+
           <div class="login-field" style="margin:0;">
             <label>PERFIL</label>
-            <select id="umRole" onchange="toggleCsNameField()" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
+            <select id="umRole" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
               <option value="cs">CS (Customer Success)</option>
               <option value="admin">Admin</option>
             </select>
@@ -1274,6 +1268,7 @@ function switchMainTab(tab,btn){
   btn.classList.add('active');
   document.getElementById(`tab-${tab}`).classList.add('active');
   if(tab==='configuracoes'){loadAuditLog().then(()=>{renderAuditLog();renderUserMgmtList();});}
+  if(tab==='administrativa'){renderAdminList();renderContractAdminList();}
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -2257,18 +2252,7 @@ function showUserMenu() {
 // ── User management ──────────────────────────────────────────────────────────
 let editingUserId = null;
 
-function toggleCsNameField(){
-  const role=document.getElementById('umRole')?.value;
-  const field=document.getElementById('umCsNameField');
-  if(field)field.style.display=role==='cs'?'':'none';
-}
-function populateCsNameSelect(selectedName=''){
-  const sel=document.getElementById('umCsName');if(!sel)return;
-  // Get unique CS names from current clients list
-  const csNames=[...new Set(clients.map(c=>c.gs))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));
-  sel.innerHTML='<option value="">— selecione —</option>'+
-    csNames.map(n=>`<option value="${n}" ${n===selectedName?'selected':''}>${n}</option>`).join('');
-}
+// csName field functions removed
 function openNewUserModal() {
   editingUserId = null;
   document.getElementById('userModalTitle').textContent = 'Novo Usuário';
@@ -2278,8 +2262,6 @@ function openNewUserModal() {
   document.getElementById('umPassword').value = '';
   document.getElementById('umPwField').style.display = '';
   document.getElementById('userModalErr').textContent = '';
-  document.getElementById('umCsNameField').style.display = '';
-  populateCsNameSelect();
   document.getElementById('userModal').style.display = 'flex';
 }
 
@@ -2293,8 +2275,6 @@ function openEditUserModal(uid) {
   document.getElementById('umRole').value = user.role;
   document.getElementById('umPwField').style.display = 'none'; // edit doesn't change pw here
   document.getElementById('userModalErr').textContent = '';
-  document.getElementById('umCsNameField').style.display = user.role==='cs'?'':'none';
-  populateCsNameSelect(user.csName||user.name);
   document.getElementById('userModal').style.display = 'flex';
 }
 
@@ -2317,8 +2297,7 @@ async function saveUserModal() {
   if (editingUserId) {
     // Edit existing
     const user = authUsers.find(u => u.uid === editingUserId);
-    const csNameValE = role==='cs'?(document.getElementById('umCsName')?.value||user.csName||name):null;
-    const updated = {...user, email, name, role, csName:csNameValE};
+    const updated = {...user, email, name, role, csName: role==='cs' ? name : null};
     await saveAuthUser(editingUserId, updated);
     authUsers = authUsers.map(u => u.uid === editingUserId ? {uid: editingUserId, ...updated} : u);
     addAudit('user', `Usuário editado: ${email} (${role})`);
@@ -2328,12 +2307,11 @@ async function saveUserModal() {
     if (authUsers.find(u => u.email === email)) { errEl.textContent = 'E-mail já cadastrado.'; return; }
     const hash = await sha256(pw);
     const uid = 'user_' + Date.now();
-    const csNameVal = role==='cs'?(document.getElementById('umCsName')?.value||name):null;
     const newUser = {
       email, name, role,
       passwordHash: hash, active: true, mustChangePw: true,
       createdAt: Date.now(), lastAccess: null,
-      csName: csNameVal
+      csName: role==='cs' ? name : null
     };
     await saveAuthUser(uid, newUser);
     authUsers.push({uid, ...newUser});
