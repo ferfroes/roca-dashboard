@@ -1722,39 +1722,48 @@ function filterGS(gs,btn){
   document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   document.getElementById('sc-all').classList.add('active');render();
 }
+// Returns the correct gs filter value — CS always sees own carteira, admin sees all
+function getFilterGs(){ 
+  if(currentUser&&currentUser.role==='cs'){
+    const _u=authUsers.find(u=>u.email===currentUser.email);
+    return _u?.csName||_u?.name||currentUser.name;
+  }
+  return 'all';
+}
+
 function filterStatus(st,btn){
   const tog=currentFilter.status===st;
-  currentFilter={...currentFilter,status:tog?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,status:tog?null:st,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
   if(currentFilter.status){btn.classList.add('active');const l={V:'Problema Real',G:'Acompanhar e Manter',A:'Tomar Ação',pending:'Pendentes',partial:'Parciais'};const count=st==='pending'?clients.filter(c=>isPending(c.id)).length:st==='partial'?clients.filter(c=>isPartial(c.id)).length:clients.filter(c=>getEntryStatus(c.id)===st).length;setTitle(l[st]||st,count);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
+  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterChurn(btn){
-  currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:'all',bookPending:false,worsened:false,improved:false,vip:false,consec:false};
+  currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
-  if(currentFilter.churn){btn.classList.add('active');document.getElementById('sc-churn').classList.add('active');setTitle('⚠ Risco de Churn',clients.filter(c=>hasChurnRisk(c.id)).length);}
-  else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
+  if(currentFilter.churn){btn.classList.add('active');document.getElementById('sc-churn').classList.add('active');setTitle('⚠ Risco de Churn',filteredClients().filter(c=>hasChurnRisk(c.id)).length);}
+  else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterVIP(btn){
-  currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,consec:false};
+  currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
-  if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ Tier A',clients.filter(c=>c.vip||c.tier==='A').length);}
-  else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
+  if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ Tier A',filteredClients().filter(c=>c.vip||c.tier==='A').length);}
+  else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterBookPending(btn){
-  currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:'all',worsened:false,improved:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:getFilterGs(),worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
-  if(currentFilter.bookPending){btn.classList.add('active');setTitle('Book Pendente',clients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
+  if(currentFilter.bookPending){btn.classList.add('active');setTitle('Book Pendente',filteredClients().filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length);}
+  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterByCard(st){
   if(st==='churn'){filterChurn(document.getElementById('quick-churn'));return;}
   const tog=currentFilter.status===st&&st!=='all';
-  currentFilter={...currentFilter,status:(st==='all'||tog)?null:st,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false,search:'',consec:false};
+  currentFilter={...currentFilter,status:(st==='all'||tog)?null:st,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,search:'',consec:false};
   document.querySelector('.search-input').value='';resetAllQuickBtns();document.getElementById('gs-all').classList.add('active');
   const l={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar e Manter',pending:'⏳ Pendentes',churn:'⚠ Risco de Churn'};
   const as=currentFilter.status;const count=as?clients.filter(c=>getEntryStatus(c.id)===as).length:clients.length;
@@ -1765,27 +1774,27 @@ function filterByCard(st){
 }
 function filterConsecutiveCritical(btn){
   const isActive=currentFilter.consec;
-  currentFilter={...currentFilter,consec:!isActive,status:null,gs:'all',bookPending:false,worsened:false,improved:false,churn:false,vip:false};
+  currentFilter={...currentFilter,consec:!isActive,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
-  if(!isActive){btn.classList.add('active');const count=clients.filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;setTitle('🔁 Crítico Recorrente',count);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
+  if(!isActive){btn.classList.add('active');const count=filteredClients().filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;setTitle('🔁 Crítico Recorrente',count);}
+  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterWorsened(btn){
-  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:'all',bookPending:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
-  if(currentFilter.worsened){btn.classList.add('active');setTitle('↓ Pioraram',clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
+  if(currentFilter.worsened){btn.classList.add('active');setTitle('↓ Pioraram',filteredClients().filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length);}
+  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterImproved(btn){
-  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:'all',bookPending:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
-  if(currentFilter.improved){btn.classList.add('active');setTitle('↑ Melhoraram',clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',clients.length);}
+  if(currentFilter.improved){btn.classList.add('active');setTitle('↑ Melhoraram',filteredClients().filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length);}
+  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
-function searchClients(val){currentFilter.search=val;if(val){const count=clients.filter(c=>c.name.toLowerCase().includes(val.toLowerCase())).length;setTitle(`Busca: "${val}"`,count);}else setTitle('Todas as Contas',clients.length);render();}
+function searchClients(val){currentFilter.search=val;if(val){const count=clients.filter(c=>c.name.toLowerCase().includes(val.toLowerCase())).length;setTitle(`Busca: "${val}"`,count);}else setTitle('Todas as Contas',filteredClients().length);render();}
 function setView(v,btn){currentView=v;document.getElementById('list-view').style.display=v==='list'?'block':'none';document.getElementById('table-view').style.display=v==='table'?'block':'none';document.getElementById('view-list-btn').classList.toggle('active',v==='list');document.getElementById('view-table-btn').classList.toggle('active',v==='table');render();}
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
