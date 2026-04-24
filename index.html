@@ -1262,7 +1262,10 @@ async function init(){
     const _u=authUsers.find(u=>u.email===currentUser.email);
     const _n=_u?.csName||_u?.name||currentUser.name;
     currentFilter.gs=_n;
-    // Debug — log what we found
+    // Force filter — ensure no other filter overrides this
+    currentFilter.status=null;currentFilter.churn=false;currentFilter.vip=false;
+    currentFilter.bookPending=false;currentFilter.worsened=false;currentFilter.improved=false;
+    currentFilter.consec=false;currentFilter.contractDays=null;
     console.log('[ROCA CS Filter] user:', currentUser.email, '→ csName:', _n, '| clients with that gs:', clients.filter(c=>c.gs.toLowerCase().trim()===(_n||'').toLowerCase().trim()).length);
   }
   render();
@@ -1408,6 +1411,12 @@ function filterByContract(days){
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function filteredClients(){
+  // Hard enforcement: CS users can NEVER see accounts outside their carteira
+  if(currentUser&&currentUser.role==='cs'){
+    const _u=authUsers.find(u=>u.email===currentUser.email);
+    const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
+    return clients.filter(c=>c.gs.toLowerCase().trim()===_n);
+  }
   return clients.filter(c=>{
     if(currentFilter.gs!=='all'&&c.gs.toLowerCase().trim()!==currentFilter.gs.toLowerCase().trim())return false;
     if(currentFilter.search&&!c.name.toLowerCase().includes(currentFilter.search.toLowerCase()))return false;
