@@ -1293,7 +1293,7 @@ function buildSidebar(){
     const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const btn=document.createElement('button');
     btn.className='gs-btn gs-btn-person';btn.dataset.gsName=gs;
-    btn.innerHTML=`<div class="gs-avatar" style="background:${col.bg};color:${col.color};">${initials}</div>${gs.split(' ')[0]}<span class="gs-count">${count}</span>`;
+    btn.innerHTML=`<div class="gs-avatar" style="background:${col.bg};color:${col.color};">${initials}</div>${gs}<span class="gs-count">${count}</span>`;
     btn.onclick=()=>filterGS(gs,btn);list.appendChild(btn);
   });
 }
@@ -1312,7 +1312,7 @@ function renderGSHealthStrip(){
     const gsCol=gsColors[gs]||{bg:'#eee',color:'#444'};
     const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const card=document.createElement('div');card.className='gs-health-card';
-    card.innerHTML=`<div class="gs-health-name" style="display:flex;align-items:center;gap:6px;"><span style="width:20px;height:20px;border-radius:50%;background:${gsCol.bg};color:${gsCol.color};font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</span>${gs.split(' ')[0]}</div><div class="hs-bar-track"><div class="hs-bar-fill" style="width:${avg||0}%;background:${col.bar};"></div></div><div class="hs-score-row"><span class="hs-score-val" style="color:${col.fg};">${avg!==null?avg+'%':'–'}</span><span class="hs-score-accounts">${filled}/${gsCount}</span></div>`;
+    card.innerHTML=`<div class="gs-health-name" style="display:flex;align-items:center;gap:6px;"><span style="width:20px;height:20px;border-radius:50%;background:${gsCol.bg};color:${gsCol.color};font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</span>${gs}</div><div class="hs-bar-track"><div class="hs-bar-fill" style="width:${avg||0}%;background:${col.bar};"></div></div><div class="hs-score-row"><span class="hs-score-val" style="color:${col.fg};">${avg!==null?avg+'%':'–'}</span><span class="hs-score-accounts">${filled}/${gsCount}</span></div>`;
     card.onclick=()=>filterGS(gs,null);grid.appendChild(card);
   });
 }
@@ -1374,7 +1374,7 @@ function filterByContract(days){
           <div style="flex:1;min-width:0;">
             <div style="font-weight:700;font-size:13px;color:var(--ink);">${grp.name}${vip?' ⭐':''}</div>
             <div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;">
-              ${cl?`<span class="badge" style="background:${col.bg};color:${col.color};">${cl.gs.split(' ')[0]}</span>`:''}
+              ${cl?`<span class="badge" style="background:${col.bg};color:${col.color};">${cl.gs}</span>`:''}
               <span class="badge badge-tier-${tier.toLowerCase()}">Tier ${tier}</span>
               <span class="badge" style="background:var(--surface2);color:var(--muted);">${grp.contracts.length} contrato${grp.contracts.length>1?'s':''}</span>
             </div>
@@ -1439,7 +1439,7 @@ function render(){
 }
 
 function updateSummary(fc){
-  const gf=clients.filter(c=>(currentFilter.gs==='all'||c.gs.toLowerCase().trim()===currentFilter.gs.toLowerCase().trim())&&(!currentFilter.search||c.name.toLowerCase().includes(currentFilter.search.toLowerCase())));
+  const gf=fc; // use the already-filtered clients passed in — respects CS isolation
   document.getElementById('s-total').textContent=gf.length;
   document.getElementById('s-red').textContent=gf.filter(c=>getEntryStatus(c.id)==='V').length;
   document.getElementById('s-yellow').textContent=gf.filter(c=>getEntryStatus(c.id)==='A').length;
@@ -1531,7 +1531,7 @@ function renderList(fc){
     info.innerHTML=`
       <div style="font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}${c.vip?' ⭐':''}</div>
       <div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;">
-        <span class="badge" style="background:${col.bg};color:${col.color};">${c.gs.split(' ')[0]}</span>
+        <span class="badge" style="background:${col.bg};color:${col.color};">${c.gs}</span>
         <span class="badge badge-tier-${(c.tier||'c').toLowerCase()}">Tier ${c.tier||'C'}</span>
         ${c.book?'<span class="badge badge-book">BOOK</span>':''}
         ${hasChurnRisk(c.id)?'<span class="badge badge-churn">⚠ CHURN</span>':''}
@@ -1581,7 +1581,7 @@ function renderTable(fc){
     tr.innerHTML=`
       <td style="font-weight:600;font-size:12px;">${c.name}${c.vip?' ⭐':''}</td>
       <td><span class="badge badge-tier-${(c.tier||'c').toLowerCase()}">Tier ${c.tier||'C'}</span></td>
-      <td><span class="badge" style="background:${col.bg};color:${col.color};">${c.gs.split(' ')[0]}</span></td>
+      <td><span class="badge" style="background:${col.bg};color:${col.color};">${c.gs}</span></td>
       <td><div style="display:flex;align-items:center;gap:4px;cursor:pointer;" onclick="openHSDetail(${c.id})"><div style="width:36px;height:4px;background:var(--surface2);border-radius:4px;overflow:hidden;"><div style="width:${hs||0}%;height:100%;background:${hsc.bar};border-radius:4px;"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:${hsc.fg};">${hs!==null?hs+'%':'–'}</span></div></td>
       <td>${pill(e.R)}</td><td>${pill(e.O)}</td><td>${pill(e.C)}</td><td>${pill(e.A)}</td>
       <td>${stHtml}</td>
