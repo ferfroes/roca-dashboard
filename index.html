@@ -970,7 +970,8 @@ function calcHSDetail(id){
   if(e.pipelineStage&&e.pipelineStage!==''){factors.push({type:'positive',icon:'💼',label:`Pipeline: ${{identified:'Identificado',negotiating:'Em negociação',proposal:'Proposta enviada',closed:'Fechado'}[e.pipelineStage]}${e.pipelineValue?` (R$ ${parseInt(e.pipelineValue).toLocaleString('pt-BR')}/mês)`:''}`,val:'✓'});}
   else{checklist.push({done:false,text:'Identificar oportunidade de expansão / pipeline'});}
 
-  const final=Math.max(0,Math.min(100,Math.round(base-penalty)));
+  // Use calcHealthScore as single source of truth — avoids divergence between card and modal
+  const final = calcHealthScore(id);
   return{score:final,factors,checklist};
 }
 
