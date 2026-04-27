@@ -304,6 +304,81 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
   .gs-health-grid{grid-template-columns:1fr 1fr;}
   .admin-sections{grid-template-columns:1fr;}
 }
+
+/* ── DASHBOARD ── */
+.dash-shell{flex:1;padding:24px 28px;overflow-y:auto;background:var(--surface);}
+.dash-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.dash-title{font-weight:800;font-size:20px;color:var(--ink);}
+.dash-title span{font-size:13px;font-weight:400;color:var(--muted);margin-left:8px;}
+.dash-select{border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12.5px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);background:var(--card);cursor:pointer;outline:none;}
+.dash-week-badge{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:6px;}
+
+/* KPI strip */
+.dash-kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px;}
+.dash-kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden;}
+.dash-kpi-val{font-weight:800;font-size:28px;line-height:1;font-family:'JetBrains Mono',monospace;}
+.dash-kpi-lbl{font-size:10px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;}
+.dash-kpi-sub{font-size:10.5px;color:var(--muted);margin-top:6px;}
+.dash-kpi-bar{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 var(--radius) var(--radius);}
+
+/* Rows */
+.dash-row-2{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.dash-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.dash-row-4{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:14px;}
+
+.dash-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
+.dash-card-title{font-size:11.5px;font-weight:700;color:var(--ink2);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:8px;}
+
+/* ROCA pillars */
+.dash-roca-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;}
+.dash-roca-pillar{border:1px solid var(--border);border-radius:9px;padding:10px 12px;background:var(--surface);}
+.dash-roca-pillar-name{font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--ink2);margin-bottom:8px;text-transform:uppercase;}
+.dash-roca-bar-wrap{display:flex;flex-direction:column;gap:4px;}
+.dash-roca-bar-row{display:flex;align-items:center;gap:6px;font-size:10px;}
+.dash-roca-bar-label{width:20px;font-family:'JetBrains Mono',monospace;font-weight:600;flex-shrink:0;}
+.dash-roca-bar-track{flex:1;height:8px;background:var(--surface2);border-radius:20px;overflow:hidden;}
+.dash-roca-bar-fill{height:100%;border-radius:20px;transition:width .5s ease;}
+.dash-roca-bar-count{width:24px;text-align:right;color:var(--muted);font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+
+/* NPS */
+.dash-nps-row{display:flex;align-items:center;gap:10px;}
+.dash-nps-label{width:70px;font-size:11px;font-weight:600;}
+.dash-nps-track{flex:1;height:10px;background:var(--surface2);border-radius:20px;overflow:hidden;}
+.dash-nps-fill{height:100%;border-radius:20px;transition:width .5s ease;}
+.dash-nps-count{width:32px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--muted);}
+.dash-nps-pct{width:36px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+
+/* HS Buckets */
+.dash-hs-bucket{display:flex;align-items:center;gap:10px;}
+.dash-hs-bucket-label{width:72px;font-size:11px;font-weight:600;}
+.dash-hs-bucket-track{flex:1;height:10px;background:var(--surface2);border-radius:20px;overflow:hidden;}
+.dash-hs-bucket-fill{height:100%;border-radius:20px;transition:width .5s ease;}
+.dash-hs-bucket-count{width:28px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+
+/* Rankings */
+.dash-ranking{display:flex;flex-direction:column;gap:6px;flex:1;}
+.dash-rank-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all .12s;}
+.dash-rank-row:hover{border-color:var(--accent3);box-shadow:var(--shadow);}
+.dash-rank-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);width:18px;flex-shrink:0;}
+.dash-rank-name{flex:1;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-rank-meta{font-size:10px;color:var(--muted);}
+.dash-rank-score{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;flex-shrink:0;}
+.dash-rank-bar{height:3px;border-radius:20px;margin-top:3px;}
+
+/* Risk radar */
+.dash-risk-table{width:100%;border-collapse:collapse;}
+.dash-risk-table th{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;background:var(--surface);}
+.dash-risk-table td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;}
+.dash-risk-table tr:last-child td{border-bottom:none;}
+.dash-risk-table tbody tr{cursor:pointer;transition:background .1s;}
+.dash-risk-table tbody tr:hover{background:var(--surface);}
+
+/* Pipeline */
+.dash-pipe-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);}
+.dash-pipe-stage{font-size:9.5px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:20px;font-weight:600;flex-shrink:0;}
+.dash-pipe-name{flex:1;font-size:11.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-pipe-val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);font-weight:700;flex-shrink:0;}
+
 </style>
 </head>
 <body>
@@ -370,6 +445,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
   <div class="main-tabs">
     <button class="main-tab active" onclick="switchMainTab('gerencial',this)">📊 Gestão</button>
     <button class="main-tab" onclick="switchMainTab('administrativa',this)">⚙️ Administração</button>
+    <button class="main-tab" id="tab-btn-dashboard" onclick="switchMainTab('dashboard',this)" style="display:none;">📈 Dashboard</button>
     <button class="main-tab" id="tab-btn-config" onclick="switchMainTab('configuracoes',this)" style="display:none;">📋 Logs</button>
   </div>
 </div>
@@ -490,6 +566,70 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
           </thead>
           <tbody id="table-body"></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- TAB: DASHBOARD -->
+<div class="tab-content" id="tab-dashboard">
+  <div class="dash-shell">
+    <!-- TOOLBAR -->
+    <div class="dash-toolbar">
+      <div class="dash-title">Dashboard <span>Visão executiva do time CS</span></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <select id="dashCSFilter" onchange="renderDashboard()" class="dash-select">
+          <option value="all">Todos os CS</option>
+        </select>
+        <div class="dash-week-badge" id="dashWeekLabel"></div>
+      </div>
+    </div>
+
+    <!-- ROW 1: KPI STRIP -->
+    <div class="dash-kpi-strip" id="dashKPIStrip"></div>
+
+    <!-- ROW 2: ROCA PILLARS + NPS -->
+    <div class="dash-row-2">
+      <div class="dash-card dash-card-roca">
+        <div class="dash-card-title">Pilares ROCA — Distribuição do time</div>
+        <div class="dash-roca-grid" id="dashROCA"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-title">NPS — Classificação da carteira</div>
+        <div id="dashNPS" style="flex:1;display:flex;flex-direction:column;gap:10px;justify-content:center;"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-title">HS — Distribuição de saúde</div>
+        <div id="dashHSBuckets" style="flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center;"></div>
+      </div>
+    </div>
+
+    <!-- ROW 3: TOP PROMOTORES + TOP OFENSORES -->
+    <div class="dash-row-3">
+      <div class="dash-card">
+        <div class="dash-card-title">🏆 Top Contas — Melhores HS</div>
+        <div id="dashTopBest" class="dash-ranking"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-title">🚨 Top Contas — Maior Risco</div>
+        <div id="dashTopRisk" class="dash-ranking"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-title">📊 Performance por CS</div>
+        <div id="dashCSPerf" class="dash-ranking"></div>
+      </div>
+    </div>
+
+    <!-- ROW 4: CHURN PIPELINE + ALERTS -->
+    <div class="dash-row-4">
+      <div class="dash-card dash-card-wide">
+        <div class="dash-card-title">⚠ Radar de Risco — Contas em atenção imediata</div>
+        <div id="dashRiskRadar"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-title">📈 Pipeline de Expansão</div>
+        <div id="dashPipeline"></div>
       </div>
     </div>
   </div>
@@ -846,61 +986,98 @@ function calcHealthScore(id){
   const tier=c.tier||'C';
   const isVIP=c.vip||false;
 
-  // Base ROCA (R=30%,O=20%,C=30%,A=20%)
+  // ── BASE ROCA (R=30%, O=20%, C=30%, A=20%) ───────────────────────────────
+  // G=100 | A=40 (amarelo É problema — penaliza a base) | V=0
   const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
   let score=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
+  // Base máxima com tudo verde = 100. Com 1 amarelo ≈ 76. Com 2 amarelos ≈ 52.
 
   let penalty=0;
-
-  // Dimensões V
   const dims=[e.R,e.O,e.C,e.A];
   const cv=dims.filter(d=>d==='V').length;
-  if(cv>=2)penalty+=20;else if(cv===1)penalty+=10;
-  if(dims.filter(d=>d==='A').length>=3)penalty+=8;
+  const ca=dims.filter(d=>d==='A').length;
 
-  // Tier A/VIP: tolerância zero com risco
-  if((tier==='A'||isVIP)&&cv>=1)penalty+=15; // extra para tier A
-  // Tier A/VIP extra penalty — inline check (no hasChurnRisk call to avoid circular)
-  const rcRed=e.R==='V'||e.C==='V';
-  const manualChurnFlag=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
-  if((tier==='A'||isVIP)&&(rcRed||manualChurnFlag))penalty+=10;
+  // ── COMBINAÇÃO DE DIMENSÕES ───────────────────────────────────────────────
+  // Penalidade adicional sobre a base já degradada pelo valor 40
+  if(cv>=3)penalty+=20;
+  else if(cv===2)penalty+=12;
+  else if(cv===1)penalty+=8;
+  if(ca>=3)penalty+=10;
+  else if(ca===2)penalty+=5;
 
-  // Churn — auto if R or C red, or manually flagged by CS
+  // ── TIER A/VIP — tolerância zero ─────────────────────────────────────────
+  if((tier==='A'||isVIP)&&cv>=1)penalty+=15;
+  if((tier==='A'||isVIP)&&ca>=2)penalty+=8;
+
+  // ── CHURN RISK ────────────────────────────────────────────────────────────
   const autoChurn=e.R==='V'||e.C==='V';
   const manualChurn=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
-  if(autoChurn&&manualChurn)penalty+=30; // both signals = max risk
-  else if(autoChurn)penalty+=20;
-  else if(manualChurn){const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];const ar=r.filter(x=>x!=='none'&&x!=='');if(ar.length>=2)penalty+=25;else penalty+=15;}
+  if(autoChurn&&manualChurn)penalty+=30; // sinal duplo = risco máximo
+  else if(autoChurn)penalty+=20;         // R ou C vermelho = churn estrutural
+  else if(manualChurn){
+    const ar=(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!=='');
+    penalty+=ar.length>=2?25:15;
+  }
 
-  // Faturamento
-  if(e.billing==='down')penalty+=10;
+  // ── FATURAMENTO ───────────────────────────────────────────────────────────
+  if(e.billing==='down')penalty+=12;
+  else if(e.billing==='up')penalty-=3; // único bônus permitido — crescimento real
 
-  // Reunião online
-  const md=daysSince(e.lastMeeting);
-  if(md===null)penalty+=15;else if(md>30)penalty+=20;else if(md>21)penalty+=12;else if(md>14)penalty+=6;else if(md>7)penalty+=2;
+  // ── ENGAJAMENTO — Cadência de contato ─────────────────────────────────────
+  // Regras:
+  // Reunião online: limite D-15. Fora = sem cadência saudável.
+  // Visita presencial Tier A: limite D-30.
+  // Visita Tier B/C: limite D-60.
+  // Se a visita presencial estiver dentro de D-15, compensa a reunião online.
 
-  // Visita presencial — padrão mais rigoroso para A/VIP
-  const vd=daysSince(e.lastVisit);
-  const visitThreshold=tier==='A'?30:60;
-  const visitCritical=tier==='A'?60:90;
-  if(vd===null)penalty+=5;else if(vd>visitCritical)penalty+=10;else if(vd>visitThreshold)penalty+=5;
+  const md=daysSince(e.lastMeeting);  // dias desde última reunião online
+  const vd=daysSince(e.lastVisit);    // dias desde última visita presencial
 
+  // Determina se a visita compensa a reunião (apenas se dentro de D-15)
+  const visitCompensMeeting = vd!==null && vd<=15;
 
+  if(!visitCompensMeeting){
+    // Reunião online — limite D-15
+    if(md===null)penalty+=20;          // nunca registrada — sinal grave
+    else if(md>45)penalty+=25;         // mais de 45 dias = abandono
+    else if(md>30)penalty+=18;         // mais de 30 dias = crítico
+    else if(md>15)penalty+=10;         // D-15 ultrapassado = fora da cadência
+    // ≤15 dias: cadência saudável, sem penalidade
+  }else{
+    // Visita recente (≤15 dias) compensa reunião online
+    // Penalidade mínima só se reunião estiver há muito tempo
+    if(md!==null&&md>45)penalty+=10;
+  }
 
-  // NPS
+  // Visita presencial — critérios por tier
+  const vLimit = tier==='A'?30:60;     // D-30 para A, D-60 para B/C
+  const vCritical = tier==='A'?60:120;
+  if(vd===null){
+    penalty+= tier==='A'?15:8;         // Tier A sem visita = problema sério
+  } else if(vd>vCritical){
+    penalty+= tier==='A'?20:12;
+  } else if(vd>vLimit){
+    penalty+= tier==='A'?12:8;
+  }
+  // Bônus de visita já aplicado como compensação acima
+
+  // ── NPS — Promotor / Neutro / Detrator ───────────────────────────────────
+  // NPS real: Promotor 9-10 | Neutro 7-8 | Detrator 1-6
   const nps=e.npsScore?parseInt(e.npsScore):null;
-  const npsDate=e.npsDate?daysSince(e.npsDate):null;
-  if(nps===null)penalty+=8; // ausência de NPS = falta de engajamento
-  else if(nps<=5)penalty+=18;
-  else if(nps<=6)penalty+=10;
-  else if(nps<=7)penalty+=4;
-  // NPS desatualizado (>120 dias = mais de um trimestre)
-  if(npsDate!==null&&npsDate>120)penalty+=6;
+  const npsAge=e.npsDate?daysSince(e.npsDate):null;
+  if(nps===null)penalty+=8;            // ausência = falta de pulso do cliente
+  else if(nps<=6)penalty+=20;          // detrator — risco alto
+  else if(nps===7||nps===8)penalty+=6; // neutro — zona de perigo silencioso
+  else if(nps>=9)penalty-=3;           // promotor — bônus
+  if(npsAge!==null&&npsAge>90)penalty+=8; // NPS desatualizado (>90 dias = fora do trimestre)
 
-  // Need from Fróes sem ação
-  if(e.needFrom&&!e.actionTaken)penalty+=5;
-  // SLA: need from Fróes aberto há mais de 7 dias
-  if(e.needFrom&&e.needFromDate){const sla=daysSince(e.needFromDate);if(sla>7)penalty+=5;}
+  // ── ESCALADA SEM RESOLUÇÃO ────────────────────────────────────────────────
+  if(e.needFrom&&!e.actionTaken)penalty+=8;
+  if(e.needFrom&&e.needFromDate){
+    const sla=daysSince(e.needFromDate);
+    if(sla>14)penalty+=10;  // escalada aberta há mais de 2 semanas = negligência
+    else if(sla>7)penalty+=5;
+  }
 
   const final=Math.max(0,Math.min(100,Math.round(score-penalty)));
   return final;
@@ -914,7 +1091,7 @@ function calcHSDetail(id){
 
   if(!e.R){return{score:null,factors:[{type:'neutral',icon:'ℹ️',label:'Conta não preenchida esta semana',val:'–'}],checklist:[{done:false,text:'Preencher os 4 faróis ROCA'}]};}
 
-  const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
+  const dv=v=>v==='G'?100:v==='A'?60:v==='V'?0:60;
   const base=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
   factors.push({type:base>=75?'positive':base>=40?'warning':'negative',icon:'📊',label:`Base ROCA (R${e.R||'?'}/O${e.O||'?'}/C${e.C||'?'}/A${e.A||'?'})`,val:`${Math.round(base)}/100`});
 
@@ -942,30 +1119,91 @@ function calcHSDetail(id){
   else if(!e.billing){checklist.push({done:false,text:'Registrar variação de faturamento'});}
 
   const md=daysSince(e.lastMeeting);
-  if(md===null){penalty+=15;factors.push({type:'negative',icon:'📹',label:'Sem reunião online registrada',val:'-15'});checklist.push({done:false,text:'Registrar data da última reunião online'});}
-  else if(md>30){penalty+=20;factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias (>30)`,val:'-20'});checklist.push({done:false,text:'Realizar reunião online (>30 dias sem contato)'});}
-  else if(md>21){penalty+=12;factors.push({type:'warning',icon:'📹',label:`Última reunião há ${md} dias`,val:'-12'});}
-  else if(md>14){penalty+=6;factors.push({type:'warning',icon:'📹',label:`Última reunião há ${md} dias`,val:'-6'});}
-  else{factors.push({type:'positive',icon:'📹',label:`Reunião recente (${md} dias atrás)`,val:'✓'});}
+  const vd=daysSince(e.lastVisit);
+  const vLimit=tier==='A'?30:60;
+  const vCrit=tier==='A'?60:120;
+  const visitCompensMeeting=vd!==null&&vd<=15;
 
-  const vd=daysSince(e.lastVisit);const vThr=tier==='A'?30:60;const vCrit=tier==='A'?60:90;
-  if(vd===null){penalty+=5;factors.push({type:'warning',icon:'🤝',label:'Sem visita presencial registrada',val:'-5'});checklist.push({done:false,text:'Registrar data da última visita presencial'});}
-  else if(vd>vCrit){penalty+=10;factors.push({type:'negative',icon:'🤝',label:`Última visita há ${vd} dias (crítico para Tier ${tier})`,val:'-10'});checklist.push({done:false,text:`Realizar visita presencial (${vd} dias sem visita)`});}
-  else if(vd>vThr){penalty+=5;factors.push({type:'warning',icon:'🤝',label:`Última visita há ${vd} dias`,val:'-5'});}
-  else{factors.push({type:'positive',icon:'🤝',label:`Visita recente (${vd} dias atrás)`,val:'✓'});}
+  // Visita presencial
+  if(vd===null){
+    const vp=tier==='A'?15:8;penalty+=vp;
+    factors.push({type:'negative',icon:'🤝',label:'Sem visita presencial registrada',val:`-${vp}`});
+    checklist.push({done:false,text:'Registrar data da última visita presencial'});
+  }else if(vd>vCrit){
+    const vp=tier==='A'?20:12;penalty+=vp;
+    factors.push({type:'negative',icon:'🤝',label:`Última visita há ${vd} dias — crítico para Tier ${tier}`,val:`-${vp}`});
+    checklist.push({done:false,text:`Realizar visita presencial urgente (${vd} dias sem visita)`});
+  }else if(vd>vLimit){
+    const vp=tier==='A'?12:8;penalty+=vp;
+    factors.push({type:'warning',icon:'🤝',label:`Última visita há ${vd} dias (limite: D-${vLimit})`,val:`-${vp}`});
+    checklist.push({done:false,text:`Agendar visita presencial (fora da cadência D-${vLimit})`});
+  }else{
+    const msg=vd<=15?`Visita recente (${vd}d) — compensa reunião online`:`Visita dentro da cadência (${vd}d)`;
+    factors.push({type:'positive',icon:'🤝',label:msg,val:'✓'});
+  }
+
+  // Reunião online
+  if(!visitCompensMeeting){
+    if(md===null){
+      penalty+=20;
+      factors.push({type:'negative',icon:'📹',label:'Sem reunião online registrada',val:'-20'});
+      checklist.push({done:false,text:'Registrar data da última reunião online'});
+    }else if(md>45){
+      penalty+=25;
+      factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias — abandono de cadência`,val:'-25'});
+      checklist.push({done:false,text:'Retomar contato online imediatamente'});
+    }else if(md>30){
+      penalty+=18;
+      factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias (>30)`,val:'-18'});
+      checklist.push({done:false,text:'Agendar reunião online urgente'});
+    }else if(md>15){
+      penalty+=10;
+      factors.push({type:'warning',icon:'📹',label:`Última reunião há ${md} dias (limite: D-15)`,val:'-10'});
+      checklist.push({done:false,text:'Agendar reunião online — fora da cadência D-15'});
+    }else{
+      factors.push({type:'positive',icon:'📹',label:`Reunião recente (${md} dias atrás — dentro de D-15)`,val:'✓'});
+    }
+  }else{
+    // Visita compensou — mostrar o estado da reunião sem penalidade crítica
+    if(md===null){
+      factors.push({type:'warning',icon:'📹',label:'Reunião online não registrada (visita recente compensa)',val:'–'});
+    }else if(md>45){
+      penalty+=10;
+      factors.push({type:'warning',icon:'📹',label:`Reunião há ${md} dias (visita recente mitiga parcialmente)`,val:'-10'});
+    }else{
+      factors.push({type:'positive',icon:'📹',label:`Reunião registrada (${md}d) — visita presencial recente compensa`,val:'✓'});
+    }
+  }
 
 
 
   const nps=e.npsScore?parseInt(e.npsScore):null;const npsAge=e.npsDate?daysSince(e.npsDate):null;
-  if(nps===null){penalty+=8;factors.push({type:'warning',icon:'⭐',label:'NPS não registrado (falta de engajamento)',val:'-8'});checklist.push({done:false,text:'Registrar NPS do trimestre'});}
-  else if(nps<=5){penalty+=18;factors.push({type:'negative',icon:'⭐',label:`NPS ${nps}/10 — detrator`,val:'-18'});checklist.push({done:false,text:'Plano de ação para NPS detrator'});}
-  else if(nps<=6){penalty+=10;factors.push({type:'negative',icon:'⭐',label:`NPS ${nps}/10 — abaixo do esperado`,val:'-10'});}
-  else if(nps<=7){penalty+=4;factors.push({type:'warning',icon:'⭐',label:`NPS ${nps}/10 — neutro`,val:'-4'});}
-  else{factors.push({type:'positive',icon:'⭐',label:`NPS ${nps}/10 — promotor`,val:'✓'});}
-  if(npsAge!==null&&npsAge>120){penalty+=6;factors.push({type:'warning',icon:'📅',label:`NPS desatualizado (${npsAge} dias)`,val:'-6'});checklist.push({done:false,text:'Atualizar NPS (última medição há mais de um trimestre)'});}
+  if(nps===null){
+    penalty+=8;factors.push({type:'warning',icon:'⭐',label:'NPS não registrado',val:'-8'});
+    checklist.push({done:false,text:'Registrar NPS do trimestre'});
+  }else if(nps<=6){
+    penalty+=20;factors.push({type:'negative',icon:'⭐',label:`NPS ${nps}/10 — Detrator`,val:'-20'});
+    checklist.push({done:false,text:'Plano de ação imediato — cliente detrator'});
+  }else if(nps<=8){
+    penalty+=6;factors.push({type:'warning',icon:'⭐',label:`NPS ${nps}/10 — Neutro (zona de risco silencioso)`,val:'-6'});
+    checklist.push({done:false,text:'Aprofundar relacionamento — neutro pode virar detrator'});
+  }else{
+    penalty-=3;factors.push({type:'positive',icon:'⭐',label:`NPS ${nps}/10 — Promotor`,val:'+3'});
+  }
+  if(npsAge!==null&&npsAge>90){
+    penalty+=8;factors.push({type:'warning',icon:'📅',label:`NPS desatualizado (${npsAge} dias — mais de 1 trimestre)`,val:'-8'});
+    checklist.push({done:false,text:'Aplicar NPS — última medição há mais de 90 dias'});
+  }
 
-  if(e.needFrom&&!e.actionTaken){penalty+=5;factors.push({type:'warning',icon:'🙋',label:'Solicitou Fróes mas sem ação própria registrada',val:'-5'});checklist.push({done:false,text:'Registrar ação própria antes de escalar para Fróes'});}
-  if(e.needFrom&&e.needFromDate){const sla=daysSince(e.needFromDate);if(sla>7){penalty+=5;factors.push({type:'negative',icon:'⏱',label:`Solicitação a Fróes aberta há ${sla} dias`,val:'-5'});checklist.push({done:false,text:`Resolver pendência com Fróes (${sla} dias em aberto)`});}}
+  if(e.needFrom&&!e.actionTaken){
+    penalty+=8;factors.push({type:'warning',icon:'🙋',label:'Escalou sem registrar ação própria',val:'-8'});
+    checklist.push({done:false,text:'Registrar ação tomada antes de escalar'});
+  }
+  if(e.needFrom&&e.needFromDate){
+    const sla=daysSince(e.needFromDate);
+    if(sla>14){penalty+=10;factors.push({type:'negative',icon:'⏱',label:`Escalada aberta há ${sla} dias — sem resolução`,val:'-10'});checklist.push({done:false,text:`Resolver escalada urgente (${sla} dias em aberto)`});}
+    else if(sla>7){penalty+=5;factors.push({type:'warning',icon:'⏱',label:`Escalada aberta há ${sla} dias`,val:'-5'});}
+  }
 
   if(e.pipelineStage&&e.pipelineStage!==''){factors.push({type:'positive',icon:'💼',label:`Pipeline: ${{identified:'Identificado',negotiating:'Em negociação',proposal:'Proposta enviada',closed:'Fechado'}[e.pipelineStage]}${e.pipelineValue?` (R$ ${parseInt(e.pipelineValue).toLocaleString('pt-BR')}/mês)`:''}`,val:'✓'});}
   else{checklist.push({done:false,text:'Identificar oportunidade de expansão / pipeline'});}
@@ -981,7 +1219,7 @@ function calcHealthScore_from(e, id){
   if(!e||!e.R)return null;
   const c=clients.find(x=>x.id===id)||{};
   const tier=c.tier||'C';const isVIP=c.vip||false;
-  const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
+  const dv=v=>v==='G'?100:v==='A'?60:v==='V'?0:60;
   let score=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
   let penalty=0;
   const dims=[e.R,e.O,e.C,e.A];const cv=dims.filter(d=>d==='V').length;
@@ -1855,6 +2093,7 @@ function enterDashboard() {
   // Show/hide admin-only elements
   const isAdmin = currentUser.role === 'admin';
   document.getElementById('tab-btn-config').style.display = isAdmin ? '' : 'none';
+  document.getElementById('tab-btn-dashboard').style.display = isAdmin ? '' : 'none';
   if (!isAdmin) {
     document.querySelectorAll('.main-tab').forEach(btn => {
       if (btn.textContent.includes('Administração')) btn.style.display = 'none';
@@ -2086,6 +2325,323 @@ async function checkAuthAndInit() {
 // Called after saveEntry() runs
 function auditSaveEntry(clientName) {
   addAudit('edit', `Faróis atualizados: ${clientName}`);
+}
+
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+
+function npsClass(nps){
+  if(nps===null)return null;
+  if(nps>=9)return'promotor';
+  if(nps>=7)return'neutro';
+  return'detrator';
+}
+
+function getDashClients(){
+  const filter=document.getElementById('dashCSFilter')?.value||'all';
+  return filter==='all'?clients:clients.filter(c=>c.gs===filter);
+}
+
+function renderDashboard(){
+  const now=new Date();const dy=now.getDay();const mn=new Date(now);mn.setDate(now.getDate()+(dy===0?-6:1-dy));
+  const fr=new Date(mn);fr.setDate(mn.getDate()+4);
+  const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const wl=document.getElementById('dashWeekLabel');if(wl)wl.textContent=`Semana ${fmt(mn)} – ${fmt(fr)}`;
+
+  // Populate CS filter
+  const sel=document.getElementById('dashCSFilter');
+  if(sel){
+    const cur=sel.value;
+    const csNames=[...new Set(clients.map(c=>c.gs))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    sel.innerHTML='<option value="all">Todos os CS</option>'+csNames.map(n=>`<option value="${n}" ${n===cur?'selected':''}>${n}</option>`).join('');
+  }
+
+  const dc=getDashClients();
+  const filled=dc.filter(c=>{const e=entries[c.id];return e&&e.R&&e.O&&e.C&&e.A;});
+  const scores=filled.map(c=>({c,hs:calcHealthScore(c.id)})).filter(x=>x.hs!==null);
+
+  // ── KPI STRIP ──────────────────────────────────────────────────────────────
+  const total=dc.length;
+  const avgHS=scores.length?Math.round(scores.reduce((a,x)=>a+x.hs,0)/scores.length):null;
+  const atRisk=dc.filter(c=>hasChurnRisk(c.id)).length;
+  const belowHS=scores.filter(x=>x.hs<75).length;
+  const pendentes=dc.filter(c=>isPending(c.id)).length;
+  const filledPct=total?Math.round(filled.length/total*100):0;
+
+  // NPS breakdown
+  const withNPS=filled.filter(c=>{const e=entries[c.id];return e&&e.npsScore;});
+  const promotores=withNPS.filter(c=>parseInt(entries[c.id].npsScore)>=9).length;
+
+  const kpis=[
+    {val:total,lbl:'Total Contas',sub:`${filled.length} preenchidas`,color:'var(--accent)',bar:filledPct},
+    {val:avgHS!==null?avgHS+'%':'–',lbl:'HS Médio Geral',sub:avgHS>=85?'Saudável':avgHS>=70?'Atenção':'Crítico',color:avgHS===null?'var(--muted)':avgHS>=85?'var(--green)':avgHS>=70?'var(--yellow)':'var(--red)',bar:avgHS||0},
+    {val:atRisk,lbl:'Risco de Churn',sub:'contas em alerta',color:atRisk>0?'var(--red)':'var(--green)',bar:total?Math.round(atRisk/total*100):0},
+    {val:belowHS,lbl:'HS Abaixo 75%',sub:'requerem atenção',color:belowHS>0?'var(--yellow)':'var(--green)',bar:scores.length?Math.round(belowHS/scores.length*100):0},
+    {val:pendentes,lbl:'Sem Preenchimento',sub:'esta semana',color:pendentes>0?'var(--muted)':'var(--green)',bar:total?Math.round(pendentes/total*100):0},
+    {val:withNPS.length?Math.round(promotores/withNPS.length*100)+'%':'–',lbl:'Taxa Promotores',sub:`${promotores} de ${withNPS.length} c/ NPS`,color:'var(--green)',bar:withNPS.length?Math.round(promotores/withNPS.length*100):0},
+  ];
+  const strip=document.getElementById('dashKPIStrip');
+  if(strip)strip.innerHTML=kpis.map(k=>`
+    <div class="dash-kpi">
+      <div class="dash-kpi-val" style="color:${k.color};">${k.val}</div>
+      <div class="dash-kpi-lbl">${k.lbl}</div>
+      <div class="dash-kpi-sub">${k.sub}</div>
+      <div class="dash-kpi-bar" style="width:${k.bar}%;background:${k.color};opacity:.5;"></div>
+    </div>`).join('');
+
+  // ── ROCA PILLARS ───────────────────────────────────────────────────────────
+  const rocaEl=document.getElementById('dashROCA');
+  if(rocaEl){
+    const pillars=[
+      {key:'R',name:'Relacionamento',icon:'🤝'},
+      {key:'O',name:'Operação',icon:'⚙️'},
+      {key:'C',name:'Contrato',icon:'📄'},
+      {key:'A',name:'Avanço',icon:'🚀'},
+    ];
+    rocaEl.innerHTML=pillars.map(p=>{
+      const vals=filled.map(c=>entries[c.id][p.key]).filter(Boolean);
+      const g=vals.filter(v=>v==='G').length;
+      const a=vals.filter(v=>v==='A').length;
+      const v=vals.filter(v=>v==='V').length;
+      const tot=vals.length||1;
+      return `<div class="dash-roca-pillar">
+        <div class="dash-roca-pillar-name">${p.icon} ${p.name}</div>
+        <div class="dash-roca-bar-wrap">
+          <div class="dash-roca-bar-row">
+            <div class="dash-roca-bar-label" style="color:var(--green);">G</div>
+            <div class="dash-roca-bar-track"><div class="dash-roca-bar-fill" style="width:${Math.round(g/tot*100)}%;background:var(--green);"></div></div>
+            <div class="dash-roca-bar-count">${g}</div>
+          </div>
+          <div class="dash-roca-bar-row">
+            <div class="dash-roca-bar-label" style="color:var(--yellow);">A</div>
+            <div class="dash-roca-bar-track"><div class="dash-roca-bar-fill" style="width:${Math.round(a/tot*100)}%;background:#f59e0b;"></div></div>
+            <div class="dash-roca-bar-count">${a}</div>
+          </div>
+          <div class="dash-roca-bar-row">
+            <div class="dash-roca-bar-label" style="color:var(--red);">V</div>
+            <div class="dash-roca-bar-track"><div class="dash-roca-bar-fill" style="width:${Math.round(v/tot*100)}%;background:var(--red);"></div></div>
+            <div class="dash-roca-bar-count">${v}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── NPS CLASSIFICATION ─────────────────────────────────────────────────────
+  const npsEl=document.getElementById('dashNPS');
+  if(npsEl){
+    const all=filled.map(c=>{const e=entries[c.id];return e&&e.npsScore?parseInt(e.npsScore):null;}).filter(n=>n!==null);
+    const pr=all.filter(n=>n>=9).length;
+    const ne=all.filter(n=>n>=7&&n<=8).length;
+    const de=all.filter(n=>n<=6).length;
+    const sem=filled.length-all.length;
+    const tot=filled.length||1;
+    const rows=[
+      {lbl:'Promotor',desc:'NPS 9–10',count:pr,color:'var(--green)',pct:Math.round(pr/tot*100)},
+      {lbl:'Neutro',desc:'NPS 7–8',count:ne,color:'#f59e0b',pct:Math.round(ne/tot*100)},
+      {lbl:'Detrator',desc:'NPS 1–6',count:de,color:'var(--red)',pct:Math.round(de/tot*100)},
+      {lbl:'Sem NPS',desc:'não registrado',count:sem,color:'var(--muted)',pct:Math.round(sem/tot*100)},
+    ];
+    npsEl.innerHTML=rows.map(r=>`
+      <div class="dash-nps-row">
+        <div class="dash-nps-label" style="color:${r.color};font-size:11px;font-weight:700;">${r.lbl}<div style="font-size:9px;color:var(--muted);font-weight:400;">${r.desc}</div></div>
+        <div class="dash-nps-track"><div class="dash-nps-fill" style="width:${r.pct}%;background:${r.color};"></div></div>
+        <div class="dash-nps-count" style="color:${r.color};">${r.count}</div>
+        <div class="dash-nps-pct">${r.pct}%</div>
+      </div>`).join('');
+  }
+
+  // ── HS BUCKETS ─────────────────────────────────────────────────────────────
+  const hsBucketsEl=document.getElementById('dashHSBuckets');
+  if(hsBucketsEl){
+    const s=scores.map(x=>x.hs);
+    const tot=s.length||1;
+    const b=[
+      {lbl:'Saudável',range:'≥ 90%',count:s.filter(v=>v>=90).length,color:'var(--green)'},
+      {lbl:'Atenção',range:'75–89%',count:s.filter(v=>v>=75&&v<90).length,color:'#f59e0b'},
+      {lbl:'Risco',range:'50–74%',count:s.filter(v=>v>=50&&v<75).length,color:'var(--churn)'},
+      {lbl:'Crítico',range:'< 50%',count:s.filter(v=>v<50).length,color:'var(--red)'},
+      {lbl:'Sem dado',range:'sem preencher',count:dc.length-scores.length,color:'var(--muted)'},
+    ];
+    hsBucketsEl.innerHTML=b.map(r=>`
+      <div class="dash-hs-bucket">
+        <div class="dash-hs-bucket-label" style="color:${r.color};font-size:10.5px;font-weight:700;">${r.lbl}<div style="font-size:9px;color:var(--muted);font-weight:400;">${r.range}</div></div>
+        <div class="dash-hs-bucket-track"><div class="dash-hs-bucket-fill" style="width:${Math.round(r.count/tot*100)}%;background:${r.color};"></div></div>
+        <div class="dash-hs-bucket-count">${r.count}</div>
+      </div>`).join('');
+  }
+
+  // ── TOP BEST ───────────────────────────────────────────────────────────────
+  const bestEl=document.getElementById('dashTopBest');
+  if(bestEl){
+    const top=scores.sort((a,b)=>b.hs-a.hs).slice(0,7);
+    if(!top.length){bestEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;">Nenhum dado disponível</div>';return;}
+    bestEl.innerHTML=top.map((x,i)=>{
+      const col=gsColors[x.c.gs]||{bg:'#eee',color:'#444'};
+      const hsc=hsColor(x.hs);
+      const nps=entries[x.c.id]?.npsScore?parseInt(entries[x.c.id].npsScore):null;
+      const npsLabel=nps===null?'':`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:${nps>=9?'var(--green-bg)':nps>=7?'var(--yellow-bg)':'var(--red-bg)'};color:${nps>=9?'var(--green)':nps>=7?'var(--yellow)':'var(--red)'};">${nps>=9?'Promotor':nps>=7?'Neutro':'Detrator'}</span>`;
+      return `<div class="dash-rank-row" onclick="openHSDetail(${x.c.id})">
+        <div class="dash-rank-num">${i+1}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="dash-rank-name">${x.c.name}</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap;">
+            <span class="badge" style="background:${col.bg};color:${col.color};font-size:9px;">${x.c.gs}</span>
+            <span class="badge badge-tier-${(x.c.tier||'c').toLowerCase()}" style="font-size:9px;">Tier ${x.c.tier||'C'}</span>
+            ${npsLabel}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="dash-rank-score" style="color:${hsc.fg};">${x.hs}%</div>
+          <div class="dash-rank-bar" style="width:${x.hs}%;background:${hsc.bar};margin-left:auto;"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── TOP RISK ───────────────────────────────────────────────────────────────
+  const riskEl=document.getElementById('dashTopRisk');
+  if(riskEl){
+    // Risk score = low HS + churn flag + low NPS
+    const riskScored=dc.map(c=>{
+      const hs=calcHealthScore(c.id);
+      const churn=hasChurnRisk(c.id)?1:0;
+      const e=entries[c.id]||{};
+      const nps=e.npsScore?parseInt(e.npsScore):null;
+      const npsRisk=nps===null?0.5:nps<=6?1:nps<=8?0.3:0;
+      const hsRisk=hs===null?1:(100-hs)/100;
+      const riskScore=hsRisk*0.5+churn*0.35+npsRisk*0.15;
+      return{c,hs,riskScore,churn,nps};
+    }).filter(x=>x.riskScore>0.2||x.churn).sort((a,b)=>b.riskScore-a.riskScore).slice(0,7);
+
+    if(!riskScored.length){riskEl.innerHTML='<div style="color:var(--green);font-size:12px;padding:10px;">✓ Nenhuma conta em risco crítico</div>';}
+    else{
+      riskEl.innerHTML=riskScored.map((x,i)=>{
+        const col=gsColors[x.c.gs]||{bg:'#eee',color:'#444'};
+        const hsc=x.hs!==null?hsColor(x.hs):{fg:'var(--muted)',bar:'var(--muted)'};
+        const flags=[];
+        if(x.churn)flags.push('<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--red-bg);color:var(--red);font-weight:700;">⚠ Churn</span>');
+        if(x.hs!==null&&x.hs<75)flags.push(`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--yellow-bg);color:var(--yellow);">HS ${x.hs}%</span>`);
+        if(x.nps!==null&&x.nps<=6)flags.push('<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--red-bg);color:var(--red);">Detrator</span>');
+        if(x.hs===null)flags.push('<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--surface2);color:var(--muted);">Sem dado</span>');
+        return `<div class="dash-rank-row" onclick="openHSDetail(${x.c.id})">
+          <div class="dash-rank-num">${i+1}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="dash-rank-name">${x.c.name}</div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap;">
+              <span class="badge" style="background:${col.bg};color:${col.color};font-size:9px;">${x.c.gs}</span>
+              ${flags.join('')}
+            </div>
+          </div>
+          <div class="dash-rank-score" style="color:${hsc.fg};">${x.hs!==null?x.hs+'%':'–'}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── CS PERFORMANCE ─────────────────────────────────────────────────────────
+  const csPerfEl=document.getElementById('dashCSPerf');
+  if(csPerfEl){
+    const csNames=[...new Set(dc.map(c=>c.gs))].filter(Boolean);
+    const csPerfData=csNames.map(gs=>{
+      const csc=dc.filter(c=>c.gs===gs);
+      const csSc=csc.map(c=>calcHealthScore(c.id)).filter(s=>s!==null);
+      const avg=csSc.length?Math.round(csSc.reduce((a,b)=>a+b,0)/csSc.length):null;
+      const atRiskCS=csc.filter(c=>hasChurnRisk(c.id)).length;
+      const pendCS=csc.filter(c=>isPending(c.id)).length;
+      const fillRate=csc.length?Math.round((csc.length-pendCS)/csc.length*100):0;
+      return{gs,total:csc.length,avg,atRiskCS,fillRate};
+    }).sort((a,b)=>(b.avg||0)-(a.avg||0));
+
+    if(!csPerfData.length){csPerfEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;">Sem dados</div>';}
+    else{
+      csPerfEl.innerHTML=csPerfData.map((x,i)=>{
+        const col=gsColors[x.gs]||{bg:'#eee',color:'#444'};
+        const hsc=x.avg!==null?hsColor(x.avg):{fg:'var(--muted)',bar:'var(--border2)'};
+        const initials=x.gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        return `<div class="dash-rank-row" style="cursor:default;">
+          <div style="width:26px;height:26px;border-radius:50%;background:${col.bg};color:${col.color};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="dash-rank-name">${x.gs}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
+              <div style="flex:1;height:4px;background:var(--surface2);border-radius:20px;overflow:hidden;"><div style="width:${x.avg||0}%;height:100%;background:${hsc.bar};border-radius:20px;"></div></div>
+            </div>
+            <div style="font-size:9.5px;color:var(--muted);margin-top:2px;">${x.total} contas · ${x.fillRate}% preenchidas${x.atRiskCS>0?` · <span style="color:var(--red);">${x.atRiskCS} em risco</span>`:''}</div>
+          </div>
+          <div class="dash-rank-score" style="color:${hsc.fg};">${x.avg!==null?x.avg+'%':'–'}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── RISK RADAR ─────────────────────────────────────────────────────────────
+  const radarEl=document.getElementById('dashRiskRadar');
+  if(radarEl){
+    const riskAccounts=dc.map(c=>{
+      const hs=calcHealthScore(c.id);
+      const e=entries[c.id]||{};
+      const churn=hasChurnRisk(c.id);
+      const nps=e.npsScore?parseInt(e.npsScore):null;
+      const consec=consecutiveCriticalWeeks(c.id);
+      const flags=[];
+      if(churn)flags.push('Risco Churn');
+      if(hs!==null&&hs<75)flags.push(`HS ${hs}%`);
+      if(nps!==null&&nps<=6)flags.push('Detrator');
+      if(consec>=2)flags.push(`${consec}ª sem. crítica`);
+      if(isPending(c.id))flags.push('Sem dados');
+      return{c,hs,churn,nps,consec,flags,urgency:(churn?3:0)+(hs!==null&&hs<50?2:hs!==null&&hs<75?1:0)+(nps!==null&&nps<=6?1:0)+(consec>=2?2:0)};
+    }).filter(x=>x.flags.length>0).sort((a,b)=>b.urgency-a.urgency).slice(0,10);
+
+    if(!riskAccounts.length){
+      radarEl.innerHTML='<div style="padding:20px;text-align:center;color:var(--green);font-size:13px;">✓ Nenhuma conta em estado de alerta esta semana</div>';
+    }else{
+      const flagColor=f=>{
+        if(f.startsWith('Risco'))return{bg:'var(--red-bg)',c:'var(--red)'};
+        if(f.startsWith('HS'))return{bg:'var(--yellow-bg)',c:'var(--yellow)'};
+        if(f==='Detrator')return{bg:'var(--red-bg)',c:'var(--red)'};
+        if(f.includes('sem.'))return{bg:'var(--churn-bg)',c:'var(--churn)'};
+        return{bg:'var(--surface2)',c:'var(--muted)'};
+      };
+      radarEl.innerHTML=`<table class="dash-risk-table">
+        <thead><tr><th>Cliente</th><th>CS</th><th>Tier</th><th>HS</th><th>Alertas</th><th>Ação</th></tr></thead>
+        <tbody>${riskAccounts.map(x=>{
+          const col=gsColors[x.c.gs]||{bg:'#eee',color:'#444'};
+          const hsc=x.hs!==null?hsColor(x.hs):{fg:'var(--muted)',bar:'var(--muted)'};
+          const e=entries[x.c.id]||{};
+          return `<tr onclick="openFillModal(${x.c.id})">
+            <td style="font-weight:600;">${x.c.name}${x.c.vip?' ⭐':''}</td>
+            <td><span class="badge" style="background:${col.bg};color:${col.color};font-size:9px;">${x.c.gs}</span></td>
+            <td><span class="badge badge-tier-${(x.c.tier||'c').toLowerCase()}" style="font-size:9px;">Tier ${x.c.tier||'C'}</span></td>
+            <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${hsc.fg};">${x.hs!==null?x.hs+'%':'–'}</span></td>
+            <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${x.flags.map(f=>{const fc=flagColor(f);return`<span style="font-size:9.5px;padding:1px 6px;border-radius:10px;background:${fc.bg};color:${fc.c};font-weight:600;white-space:nowrap;">${f}</span>`;}).join('')}</div></td>
+            <td style="font-size:11px;color:var(--muted);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.actionTaken?'✅ '+e.actionTaken.slice(0,40):'<span style="color:var(--accent3);">▶ Preencher</span>'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    }
+  }
+
+  // ── PIPELINE ───────────────────────────────────────────────────────────────
+  const pipeEl=document.getElementById('dashPipeline');
+  if(pipeEl){
+    const stageMap={identified:{lbl:'Identificado',bg:'var(--surface2)',c:'var(--ink3)'},negotiating:{lbl:'Negociação',bg:'var(--yellow-bg)',c:'var(--yellow)'},proposal:{lbl:'Proposta',bg:'var(--accent-bg)',c:'var(--accent2)'},closed:{lbl:'Fechado',bg:'var(--green-bg)',c:'var(--green)'}};
+    const pipeAccounts=dc.filter(c=>{const e=entries[c.id];return e&&e.pipelineStage&&e.pipelineStage!=='';}).map(c=>({c,e:entries[c.id]})).sort((a,b)=>{const ord={closed:0,proposal:1,negotiating:2,identified:3};return(ord[a.e.pipelineStage]||9)-(ord[b.e.pipelineStage]||9);});
+    const totalPipeline=pipeAccounts.reduce((sum,x)=>sum+(x.e.pipelineValue?parseInt(x.e.pipelineValue):0),0);
+
+    if(!pipeAccounts.length){
+      pipeEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;">Nenhuma oportunidade de expansão mapeada.</div>';
+    }else{
+      pipeEl.innerHTML=`<div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:8px;font-family:'JetBrains Mono',monospace;">Total estimado: R$ ${totalPipeline.toLocaleString('pt-BR')}/mês</div>`+
+        pipeAccounts.map(x=>{
+          const st=stageMap[x.e.pipelineStage]||stageMap.identified;
+          return `<div class="dash-pipe-row">
+            <span class="dash-pipe-stage" style="background:${st.bg};color:${st.c};">${st.lbl}</span>
+            <div class="dash-pipe-name">${x.c.name}<div style="font-size:9.5px;color:var(--muted);font-weight:400;">${x.e.pipelineDesc||'–'}</div></div>
+            <div class="dash-pipe-val">${x.e.pipelineValue?'R$ '+parseInt(x.e.pipelineValue).toLocaleString('pt-BR'):''}</div>
+          </div>`;
+        }).join('');
+    }
+  }
 }
 
 checkAuthAndInit();
