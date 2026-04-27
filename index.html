@@ -2499,26 +2499,28 @@ function renderDashboard(){
     const top=scores.sort((a,b)=>b.hs-a.hs).slice(0,7);
     if(!top.length){bestEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;">Nenhum dado disponível</div>';}
     else{
-      const col=gsColors[x.c.gs]||{bg:'#eee',color:'#444'};
-      const hsc=hsColor(x.hs);
-      const nps=entries[x.c.id]?.npsScore?parseInt(entries[x.c.id].npsScore):null;
-      const npsLabel=nps===null?'':`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:${nps>=9?'var(--green-bg)':nps>=7?'var(--yellow-bg)':'var(--red-bg)'};color:${nps>=9?'var(--green)':nps>=7?'var(--yellow)':'var(--red)'};">${nps>=9?'Promotor':nps>=7?'Neutro':'Detrator'}</span>`;
-      return `<div class="dash-rank-row" onclick="openHSDetail(${x.c.id})">
-        <div class="dash-rank-num">${i+1}</div>
-        <div style="flex:1;min-width:0;">
-          <div class="dash-rank-name">${x.c.name}</div>
-          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap;">
-            <span class="badge" style="background:${col.bg};color:${col.color};font-size:9px;">${x.c.gs}</span>
-            <span class="badge badge-tier-${(x.c.tier||'c').toLowerCase()}" style="font-size:9px;">Tier ${x.c.tier||'C'}</span>
-            ${npsLabel}
+      bestEl.innerHTML=top.map((x,i)=>{
+        const col=gsColors[x.c.gs]||{bg:'#eee',color:'#444'};
+        const hsc=hsColor(x.hs);
+        const nps=entries[x.c.id]?.npsScore?parseInt(entries[x.c.id].npsScore):null;
+        const npsLabel=nps===null?'':`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:${nps>=9?'var(--green-bg)':nps>=7?'var(--yellow-bg)':'var(--red-bg)'};color:${nps>=9?'var(--green)':nps>=7?'var(--yellow)':'var(--red)'};">${nps>=9?'Promotor':nps>=7?'Neutro':'Detrator'}</span>`;
+        return `<div class="dash-rank-row" onclick="openHSDetail(${x.c.id})">
+          <div class="dash-rank-num">${i+1}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="dash-rank-name">${x.c.name}</div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap;">
+              <span class="badge" style="background:${col.bg};color:${col.color};font-size:9px;">${x.c.gs}</span>
+              <span class="badge badge-tier-${(x.c.tier||'c').toLowerCase()}" style="font-size:9px;">Tier ${x.c.tier||'C'}</span>
+              ${npsLabel}
+            </div>
           </div>
-        </div>
-        <div style="text-align:right;">
-          <div class="dash-rank-score" style="color:${hsc.fg};">${x.hs}%</div>
-          <div class="dash-rank-bar" style="width:${x.hs}%;background:${hsc.bar};margin-left:auto;"></div>
-        </div>
-      </div>`;
-    }).join('');
+          <div style="text-align:right;">
+            <div class="dash-rank-score" style="color:${hsc.fg};">${x.hs}%</div>
+            <div class="dash-rank-bar" style="width:${x.hs}%;background:${hsc.bar};margin-left:auto;"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
   }
 
   // ── TOP RISK ───────────────────────────────────────────────────────────────
