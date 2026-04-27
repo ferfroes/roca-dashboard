@@ -76,20 +76,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:
 .summary-num{font-weight:800;font-size:24px;line-height:1;}
 .summary-lbl{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em;}
 
-/* ── CONTRACT EXPIRY PANEL ── */
-.contract-panel{margin-bottom:20px;}
-.contract-panel-title{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.contract-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.contract-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:all .15s;}
-.contract-card:hover{box-shadow:var(--shadow);}
-.contract-card.active{box-shadow:0 0 0 2px var(--accent2);}
-.contract-card-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
-.contract-card-count{font-weight:800;font-size:28px;line-height:1;}
-.contract-card-sub{font-size:10.5px;color:var(--muted);margin-top:4px;}
-.cc-urgent{border-top:3px solid var(--red);}
-.cc-warn{border-top:3px solid #f59e0b;}
-.cc-ok{border-top:3px solid var(--accent3);}
-.cc-safe{border-top:3px solid var(--green);}
 
 /* ── GS HEALTH STRIP ── */
 .gs-health-strip{margin-bottom:16px;}
@@ -149,10 +135,6 @@ tbody td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12.5p
 tbody tr:last-child td{border-bottom:none;}
 tbody tr:hover{background:var(--surface);cursor:pointer;}
 
-/* ── CONTRACT LIST (detail view) ── */
-.contract-detail-list{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
-.contract-detail-row{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .15s;}
-.contract-detail-row:hover{box-shadow:var(--shadow);border-color:var(--border2);}
 
 /* ── ADMIN TAB CONTENT ── */
 .admin-full{flex:1;padding:24px 28px;overflow-y:auto;}
@@ -275,15 +257,6 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 .empty-title{font-weight:600;font-size:14px;color:var(--ink2);margin-bottom:5px;}
 
 
-/* ── CONTRACT ADMIN ── */
-.contract-admin-list{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;max-height:360px;overflow-y:auto;}
-.contract-admin-client{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 12px;font-weight:600;font-size:12px;color:var(--ink2);display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.03em;}
-.contract-admin-client:last-child{border-bottom:none;}
-.contract-admin-row{background:var(--card);border-bottom:1px solid var(--border);padding:6px 12px 6px 24px;display:grid;grid-template-columns:1fr 130px 28px;gap:8px;align-items:center;}
-.contract-admin-row:last-child{border-bottom:none;}
-.contract-admin-row input{border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px 7px;font-size:11.5px;font-family:'Plus Jakarta Sans',sans-serif;background:var(--card);color:var(--ink);width:100%;}
-.contract-admin-row input:focus{outline:none;border-color:var(--accent3);}
-.contract-sub-label{font-size:9.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;}
 
 
 /* ── AUTH ── */
@@ -327,8 +300,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 @media(max-width:900px){
   .sidebar{display:none;}
   .summary-strip{grid-template-columns:1fr 1fr;}
-  .contract-grid{grid-template-columns:1fr 1fr;}
-  .farol-grid,.field-grid-2,.field-grid-3,.field-grid-4{grid-template-columns:1fr;}
+    .farol-grid,.field-grid-2,.field-grid-3,.field-grid-4{grid-template-columns:1fr;}
   .gs-health-grid{grid-template-columns:1fr 1fr;}
   .admin-sections{grid-template-columns:1fr;}
 }
@@ -495,32 +467,6 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 
     </div>
 
-    <!-- CONTRACT EXPIRY -->
-    <div class="contract-panel">
-      <div class="contract-panel-title">📅 Vencimento de Contratos <div style="flex:1;height:1px;background:var(--border);"></div></div>
-      <div class="contract-grid">
-        <div class="contract-card cc-urgent" id="cc-30" onclick="filterByContract(30)" style="cursor:pointer;">
-          <div class="contract-card-label">Até 30 dias</div>
-          <div class="contract-card-count" id="cc-count-30" style="color:var(--red);">0</div>
-          <div class="contract-card-sub">Ação imediata</div>
-        </div>
-        <div class="contract-card cc-warn" id="cc-60" onclick="filterByContract(60)" style="cursor:pointer;">
-          <div class="contract-card-label">31 a 60 dias</div>
-          <div class="contract-card-count" id="cc-count-60" style="color:var(--yellow);">0</div>
-          <div class="contract-card-sub">Iniciar conversa</div>
-        </div>
-        <div class="contract-card cc-ok" id="cc-90" onclick="filterByContract(90)" style="cursor:pointer;">
-          <div class="contract-card-label">61 a 90 dias</div>
-          <div class="contract-card-count" id="cc-count-90" style="color:var(--accent2);">0</div>
-          <div class="contract-card-sub">Monitorar</div>
-        </div>
-        <div class="contract-card cc-safe" id="cc-over" onclick="filterByContract(999)" style="cursor:pointer;">
-          <div class="contract-card-label">Acima de 90 dias</div>
-          <div class="contract-card-count" id="cc-count-over" style="color:var(--green);">0</div>
-          <div class="contract-card-sub">Tranquilo</div>
-        </div>
-      </div>
-    </div>
 
     <!-- GS HEALTH STRIP -->
     <div class="gs-health-strip">
@@ -539,7 +485,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
             <tr>
               <th>Cliente</th><th>Tier</th><th>CS</th><th>HS</th>
               <th>R</th><th>O</th><th>C</th><th>A</th>
-              <th>Status</th><th>Churn</th><th>NPS</th><th>Venc.</th><th>Ação</th>
+              <th>Status</th><th>Churn</th><th>NPS</th><th>Ação</th>
             </tr>
           </thead>
           <tbody id="table-body"></tbody>
@@ -559,10 +505,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
           <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" onchange="importFile(this)" style="display:none;">
           📥 Importar Clientes
         </div>
-        <div style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card);font-size:12.5px;font-weight:500;cursor:pointer;color:var(--ink2);transition:all .12s;" onclick="document.getElementById('contractXlsxInput').click()" onmouseover="this.style.borderColor='var(--accent3)';this.style.color='var(--accent2)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink2)'">
-          <input type="file" id="contractXlsxInput" accept=".xlsx,.xls,.csv" onchange="importContracts(this)" style="display:none;">
-          📄 Importar Contratos
-        </div>
+
         <button class="btn btn-primary" onclick="addClientRow()">+ Novo Cliente</button>
         <button class="btn btn-primary" onclick="saveAdmin()">💾 Salvar Alterações</button>
         <button class="btn" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteAllClients()">🗑 Apagar Todos</button>
@@ -593,28 +536,11 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
               Col D: Tier (A / B / C)<br>
             </div>
           </div>
-          <div>
-            <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent2);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;">📄 Arquivo 2 — Contratos</div>
-            <div style="font-size:11px;color:var(--muted);line-height:1.9;font-family:'JetBrains Mono',monospace;">
-              Col A: Nome do Cliente<br>
-              Col B: Nome do Contrato<br>
-              Col C: Data de Vencimento<br>
-            </div>
-          </div>
+
         </div>
         <div style="margin-top:8px;font-size:10.5px;color:var(--accent2);font-family:'JetBrains Mono',monospace;">Linha 1 = cabeçalho (ignorada automaticamente)</div>
         <div id="import-preview" style="margin-top:10px;"></div>
-        <div id="contract-import-preview" style="margin-top:10px;"></div>
-      </div>
-    </div>
-
-    <!-- CONTRACTS ADMIN -->
-    <div style="margin-top:20px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div style="font-weight:700;font-size:13px;color:var(--ink);">📄 Contratos Cadastrados</div>
-        <button class="btn" onclick="addContractManual()" style="font-size:12px;">+ Adicionar Contrato</button>
-      </div>
-      <div class="contract-admin-list" id="contractAdminList"></div>
+              </div>
     </div>
 
     <!-- USERS MANAGEMENT -->
@@ -851,24 +777,6 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
   </div>
 </div>
 
-<!-- CONTRACT DETAIL MODAL -->
-<div class="modal-overlay" id="contractModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" id="contractModalTitle">Contratos</div>
-        <div class="modal-sub" id="contractModalSub"></div>
-      </div>
-      <button class="modal-close" onclick="closeModal('contractModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="contract-detail-list" id="contractDetailList"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" onclick="closeModal('contractModal')">Fechar</button>
-    </div>
-  </div>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -887,7 +795,7 @@ async function spLoadAll(){
       const re=data.entries||{};const fixed={};Object.keys(re).forEach(k=>{fixed[parseInt(k)]=re[k];});entries=fixed;
       const rh=data.history||{};weekHistory={};
       Object.keys(rh).forEach(wk=>{const ws={};Object.keys(rh[wk]).forEach(c=>{ws[parseInt(c)]=rh[wk][c];});weekHistory[wk]=ws;});
-      contracts=data.contracts||[];
+      
       // Load clients — handle both array and Firebase object format
       const rawC=data.clients
         ? (Array.isArray(data.clients) ? data.clients : Object.values(data.clients).filter(x=>x&&x.name))
@@ -900,7 +808,7 @@ async function spLoadAll(){
         : [];
       gsList = rawG.length > 0 ? rawG.sort((a,b)=>a.localeCompare(b,'pt-BR')) : [];
       localStorage.setItem('roca_gs',JSON.stringify(gsList));
-    }else{entries={};weekHistory={};contracts=[];}
+    }else{entries={};weekHistory={};}
     showSyncStatus('ok');return true;
   }catch(e){console.error('Firebase load failed:',e);showSyncStatus('offline');return false;}
 }
@@ -920,8 +828,8 @@ let clients=[];
 let gsList=[];
 const gsColors={"Alinne Carmo":{bg:"#FEF3C7",color:"#92400E"},"Daiane Queiroz":{bg:"#FCE7F3",color:"#9D174D"},"Douglas Romão":{bg:"#E0E7FF",color:"#3730A3"},"Fróes":{bg:"#0D2B4E",color:"#FFFFFF"},"Lucineia Guizardi":{bg:"#D1FAE5",color:"#065F46"},"Michelle Stefenson":{bg:"#FEE2E2",color:"#991B1B"},"Renata Gomes":{bg:"#ECFDF5",color:"#047857"},"Telma":{bg:"#F0FDF4",color:"#166534"}};
 
-let entries={},weekHistory={},contracts=[];
-let currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,contractDays:null,consec:false};
+let entries={},weekHistory={};
+let currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
 let currentView='list',editingClientId=null;
 let currentFarol={R:null,O:null,C:null,A:null},churnSelected=new Set(),currentBilling=null;
 
@@ -977,21 +885,7 @@ function calcHealthScore(id){
   const visitCritical=tier==='A'?60:90;
   if(vd===null)penalty+=5;else if(vd>visitCritical)penalty+=10;else if(vd>visitThreshold)penalty+=5;
 
-  // Contratos — penalidade por múltiplos contratos críticos (teto -30)
-  const cts=getContractsSorted(id);
-  if(cts.length>0){
-    let contractPenalty=0;
-    cts.forEach((ct,i)=>{
-      if(ct.days===null)return;
-      let p=0;
-      if(ct.days<=30)p=20;
-      else if(ct.days<=60)p=8;
-      // Contratos adicionais críticos acumulam com peso decrescente
-      if(i>0)p=Math.round(p*0.5);
-      contractPenalty+=p;
-    });
-    penalty+=Math.min(30,contractPenalty); // teto -30
-  }
+
 
   // NPS
   const nps=e.npsScore?parseInt(e.npsScore):null;
@@ -1060,23 +954,7 @@ function calcHSDetail(id){
   else if(vd>vThr){penalty+=5;factors.push({type:'warning',icon:'🤝',label:`Última visita há ${vd} dias`,val:'-5'});}
   else{factors.push({type:'positive',icon:'🤝',label:`Visita recente (${vd} dias atrás)`,val:'✓'});}
 
-  const cts=getContractsSorted(id);
-  if(cts.length===0){
-    checklist.push({done:false,text:'Cadastrar contratos do cliente (aba Administração)'});
-  }else{
-    let contractPenalty=0;
-    cts.forEach((ct,i)=>{
-      if(ct.days===null)return;
-      let p=0;let ftype='positive';let fval='✓';
-      if(ct.days<=30){p=i===0?20:10;ftype='negative';fval=`-${p}`;checklist.push({done:false,text:`Renovar: ${ct.contractName} (${ct.days} dias)`});}
-      else if(ct.days<=60){p=i===0?8:4;ftype='warning';fval=`-${p}`;checklist.push({done:false,text:`Iniciar conversa de renovação: ${ct.contractName} (${ct.days} dias)`});}
-      contractPenalty+=p;
-      const label=`${ct.contractName} — ${ct.days!==null?ct.days+'d':'sem data'}`;
-      factors.push({type:ftype,icon:'📄',label,val:fval});
-    });
-    penalty+=Math.min(30,contractPenalty);
-    if(contractPenalty===0)factors.push({type:'positive',icon:'✅',label:`${cts.length} contrato${cts.length>1?'s':''} em dia`,val:'✓'});
-  }
+
 
   const nps=e.npsScore?parseInt(e.npsScore):null;const npsAge=e.npsDate?daysSince(e.npsDate):null;
   if(nps===null){penalty+=8;factors.push({type:'warning',icon:'⭐',label:'NPS não registrado (falta de engajamento)',val:'-8'});checklist.push({done:false,text:'Registrar NPS do trimestre'});}
@@ -1125,19 +1003,7 @@ function calcHealthScore_from(e, id){
   if(e.npsDate&&daysSince(e.npsDate)>120)penalty+=6;
   if(e.needFrom&&!e.actionTaken)penalty+=5;
   if(e.needFrom&&e.needFromDate&&daysSince(e.needFromDate)>7)penalty+=5;
-  // Contract penalty (uses global contracts array)
-  if(typeof contracts!=='undefined'&&contracts.length){
-    const norm=s=>s.toLowerCase().trim();
-    const cl=clients.find(x=>x.id===id);
-    if(cl){
-      const cts=contracts.filter(ct=>norm(ct.clientName)===norm(cl.name))
-        .map(ct=>{const d=ct.endDate?Math.ceil((new Date(ct.endDate+'T12:00:00')-new Date())/86400000):null;return d;})
-        .filter(d=>d!==null).sort((a,b)=>a-b);
-      let cp=0;
-      cts.forEach((d,i)=>{let p=0;if(d<=30)p=i===0?20:10;else if(d<=60)p=i===0?8:4;cp+=p;});
-      penalty+=Math.min(30,cp);
-    }
-  }
+
   return Math.max(0,Math.min(100,Math.round(score-penalty)));
 }
 
@@ -1192,32 +1058,8 @@ function hasChurnRisk(id){
 
 // ── CONTRACT HELPERS ─────────────────────────────────────────────────────────
 // Returns all contracts for a client (normalised name match)
-function getClientContracts(id){
-  const cl=clients.find(x=>x.id===id);if(!cl)return[];
-  const norm=s=>s.toLowerCase().trim();
-  return contracts.filter(ct=>norm(ct.clientName)===norm(cl.name));
-}
 // Returns days until most urgent contract (smallest positive days)
-function getContractDaysLeft(id){
-  const cts=getClientContracts(id);
-  if(!cts.length)return null;
-  const days=cts.map(ct=>daysUntil(ct.endDate)).filter(d=>d!==null);
-  if(!days.length)return null;
-  return Math.min(...days);
-}
 // Returns ALL contracts with their days, sorted ascending
-function getContractsSorted(id){
-  return getClientContracts(id)
-    .map(ct=>({...ct,days:daysUntil(ct.endDate)}))
-    .sort((a,b)=>(a.days??9999)-(b.days??9999));
-}
-function contractBucket(days){
-  if(days===null)return null;
-  if(days<=30)return 30;
-  if(days<=60)return 60;
-  if(days<=90)return 90;
-  return 999;
-}
 
 
 function hsColor(score){
@@ -1240,11 +1082,11 @@ async function init(){
   document.getElementById('weekBadge').textContent=`Semana ${fmt(mn)} – ${fmt(fr)}`;
   buildSidebar();
   // Only show admin tabs if admin
-  if(currentUser&&currentUser.role==='admin'){renderAdminList();renderContractAdminList();}
+  if(currentUser&&currentUser.role==='admin'){renderAdminList();}
   // sc-all only active for admin; CS stays on their filter
   if(!currentUser||currentUser.role==='admin'){document.getElementById('sc-all').classList.add('active');}
   const ok=await spLoadAll();
-  if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');const sc2=localStorage.getItem('roca_contracts');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);if(sc2)contracts=JSON.parse(sc2);}
+  if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);}
   // Reload authUsers to get fresh csName (may have been updated by admin after login)
   await loadAuthUsers();
   // Re-apply CS filter after data load with fresh authUsers
@@ -1255,7 +1097,7 @@ async function init(){
     // Force filter — ensure no other filter overrides this
     currentFilter.status=null;currentFilter.churn=false;currentFilter.vip=false;
     currentFilter.bookPending=false;currentFilter.worsened=false;currentFilter.improved=false;
-    currentFilter.consec=false;currentFilter.contractDays=null;
+    currentFilter.consec=false;
     console.log('[ROCA CS Filter] user:', currentUser.email, '→ csName:', _n, '| clients with that gs:', clients.filter(c=>c.gs.toLowerCase().trim()===(_n||'').toLowerCase().trim()).length);
   }
   render();
@@ -1268,7 +1110,7 @@ function switchMainTab(tab,btn){
   btn.classList.add('active');
   document.getElementById(`tab-${tab}`).classList.add('active');
   if(tab==='configuracoes'){loadAuditLog().then(()=>{renderAuditLog();renderUserMgmtList();});}
-  if(tab==='administrativa'){renderAdminList();renderContractAdminList();}
+  if(tab==='administrativa'){renderAdminList();}
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -1309,96 +1151,7 @@ function renderGSHealthStrip(){
 }
 
 // ── CONTRACT PANEL ────────────────────────────────────────────────────────────
-function updateContractPanel(){
-  // Count individual contracts per bucket
-  const buckets={30:0,60:0,90:0,999:0};
-  contracts.forEach(ct=>{
-    const d=daysUntil(ct.endDate);if(d===null)return;
-    if(d<=30)buckets[30]++;
-    else if(d<=60)buckets[60]++;
-    else if(d<=90)buckets[90]++;
-    else buckets[999]++;
-  });
-  document.getElementById('cc-count-30').textContent=buckets[30];
-  document.getElementById('cc-count-60').textContent=buckets[60];
-  document.getElementById('cc-count-90').textContent=buckets[90];
-  document.getElementById('cc-count-over').textContent=buckets[999];
-}
 
-function filterByContract(days){
-  if(currentFilter.contractDays===days){currentFilter.contractDays=null;}
-  else{currentFilter.contractDays=days;}
-  document.querySelectorAll('.contract-card').forEach(c=>c.classList.remove('active'));
-  if(currentFilter.contractDays!==null){
-    document.getElementById(`cc-${days}`).classList.add('active');
-    // Filter contracts in bucket
-    const bucketContracts=contracts.filter(ct=>{
-      const d=daysUntil(ct.endDate);if(d===null)return false;
-      if(days===30)return d<=30;
-      if(days===60)return d>30&&d<=60;
-      if(days===90)return d>60&&d<=90;
-      return d>90;
-    }).sort((a,b)=>(daysUntil(a.endDate)||9999)-(daysUntil(b.endDate)||9999));
-    // Group by client
-    const byClient={};
-    bucketContracts.forEach(ct=>{
-      const norm=ct.clientName.toLowerCase().trim();
-      if(!byClient[norm])byClient[norm]={name:ct.clientName,contracts:[]};
-      byClient[norm].contracts.push({...ct,days:daysUntil(ct.endDate)});
-    });
-    const labels={30:'Vencendo em até 30 dias',60:'Vencendo em 31–60 dias',90:'Vencendo em 61–90 dias',999:'Vencendo em mais de 90 dias'};
-    document.getElementById('contractModalTitle').textContent=labels[days]||'Contratos';
-    document.getElementById('contractModalSub').textContent=`${bucketContracts.length} contrato${bucketContracts.length!==1?'s':''} · ${Object.keys(byClient).length} cliente${Object.keys(byClient).length!==1?'s':''}`;
-    const list=document.getElementById('contractDetailList');list.innerHTML='';
-    if(!bucketContracts.length){
-      list.innerHTML='<div class="empty"><div class="empty-icon">📄</div><div class="empty-title">Nenhum contrato nesta faixa</div></div>';
-    }else{
-      Object.values(byClient).forEach(grp=>{
-        const cl=clients.find(x=>x.name.toLowerCase().trim()===grp.name.toLowerCase().trim());
-        const col=cl?gsColors[cl.gs]||{bg:'#eee',color:'#444'}:{bg:'#eee',color:'#444'};
-        const tier=cl?cl.tier||'C':'C';const vip=cl?cl.vip:false;
-        // Client header row
-        const hdr=document.createElement('div');
-        hdr.className='contract-detail-row';
-        hdr.style.cssText='background:var(--surface);padding:10px 16px;cursor:pointer;';
-        hdr.innerHTML=`
-          <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:13px;color:var(--ink);">${grp.name}${vip?' ⭐':''}</div>
-            <div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;">
-              ${cl?`<span class="badge" style="background:${col.bg};color:${col.color};">${cl.gs}</span>`:''}
-              <span class="badge badge-tier-${tier.toLowerCase()}">Tier ${tier}</span>
-              <span class="badge" style="background:var(--surface2);color:var(--muted);">${grp.contracts.length} contrato${grp.contracts.length>1?'s':''}</span>
-            </div>
-          </div>
-        `;
-        if(cl)hdr.onclick=()=>{closeModal('contractModal');openFillModal(cl.id);};
-        list.appendChild(hdr);
-        // Sub-rows per contract
-        grp.contracts.forEach(ct=>{
-          const urgColor=ct.days<=30?'var(--red)':ct.days<=60?'var(--yellow)':'var(--accent2)';
-          const urgBg=ct.days<=30?'var(--red-bg)':ct.days<=60?'var(--yellow-bg)':'var(--accent-bg)';
-          const sub=document.createElement('div');
-          sub.className='contract-detail-row';
-          sub.style.cssText='padding:7px 16px 7px 28px;border-left:3px solid var(--border2);cursor:default;';
-          sub.innerHTML=`
-            <div style="flex:1;font-size:12px;color:var(--ink2);">
-              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-right:4px;">└</span>
-              ${ct.contractName}
-            </div>
-            <div style="text-align:right;flex-shrink:0;">
-              <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${urgColor};background:${urgBg};padding:2px 8px;border-radius:4px;">${ct.days}d</span>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px;">${new Date(ct.endDate+'T12:00:00').toLocaleDateString('pt-BR')}</div>
-            </div>
-          `;
-          list.appendChild(sub);
-        });
-      });
-    }
-    document.getElementById('contractModal').classList.add('open');
-    currentFilter.contractDays=null;
-    document.querySelectorAll('.contract-card').forEach(c=>c.classList.remove('active'));
-  }
-}
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function filteredClients(){
@@ -1425,7 +1178,7 @@ function filteredClients(){
 }
 
 function render(){
-  const fc=filteredClients();updateSummary(fc);renderGSHealthStrip();updateContractPanel();
+  const fc=filteredClients();updateSummary(fc);renderGSHealthStrip();
   // Always keep title count in sync with actual filtered results
   const titleEl=document.getElementById('mainTitle');
   if(titleEl&&titleEl.innerHTML.includes('Todas as Contas')){
@@ -1486,17 +1239,7 @@ function renderList(fc){
     if(md!==null){const c2=md>21?'var(--red)':md>14?'var(--yellow)':'var(--muted)';meetHtml=`<span class="badge" style="color:${c2};background:var(--surface);" title="Última reunião: ${e.lastMeeting}">📹 ${md}d</span>`;}
     if(vd!==null){const c2=vd>60?'var(--red)':vd>30?'var(--yellow)':'var(--muted)';visitHtml=`<span class="badge" style="color:${c2};background:var(--surface);" title="Última visita: ${e.lastVisit}">🤝 ${vd}d</span>`;}
 
-    // Contract expiry badge (most urgent + count if multiple critical)
-    const cts2=getContractsSorted(c.id);let contractHtml='';
-    const critCts=cts2.filter(ct=>ct.days!==null&&ct.days<=60);
-    if(critCts.length>0){
-      const cd=critCts[0].days;
-      const cc=cd<=30?'var(--red)':'var(--yellow)';
-      const cb=cd<=30?'var(--red-bg)':'var(--yellow-bg)';
-      const extra=critCts.length>1?` · ${critCts.length}c`:'';
-      const titles=critCts.map(ct=>`${ct.contractName}: ${ct.days}d`).join(' | ');
-      contractHtml=`<span class="badge" style="color:${cc};background:${cb};" title="${titles}">📄 ${cd}d${extra}</span>`;
-    }
+
 
     // NPS badge
     const nps=e.npsScore?parseInt(e.npsScore):null;let npsHtml='';
@@ -1533,7 +1276,7 @@ function renderList(fc){
         ${hasChurnRisk(c.id)?'<span class="badge badge-churn">⚠ CHURN</span>':''}
         ${consec>=2?consecHtml:''}
         ${e.needFrom?'<span class="badge badge-need">⚠ Escalar</span>':''}
-        ${billingHtml}${meetHtml}${visitHtml}${contractHtml}${npsHtml}
+        ${billingHtml}${meetHtml}${visitHtml}${npsHtml}
       </div>
     `;
 
@@ -1572,7 +1315,7 @@ function renderTable(fc){
     const hs=calcHealthScore(c.id);const hsc=hsColor(hs);
     const stHtml=isPartial(c.id)?'<span class="status-pill pending">◑ Parcial</span>':{V:'<span class="status-pill V">🔴 Prob. Real</span>',A:'<span class="status-pill A">🟡 Tomar Ação</span>',G:'<span class="status-pill G">🟢 Acompanhar</span>',pending:'<span class="status-pill pending">⏳ Pendente</span>'}[st];
     const cr=e.churnRisk?(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!==''):[];
-    const cd=getContractDaysLeft(c.id);const cts2=getContractsSorted(c.id);const nps=e.npsScore?parseInt(e.npsScore):null;
+    const nps=e.npsScore?parseInt(e.npsScore):null;
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td style="font-weight:600;font-size:12px;">${c.name}${c.vip?' ⭐':''}</td>
@@ -1583,7 +1326,7 @@ function renderTable(fc){
       <td>${stHtml}</td>
       <td style="font-size:11px;color:var(--churn);">${cr.length?cr.map(x=>x==='billing'?'📉':'❌').join(' '):'–'}</td>
       <td style="font-size:11px;">${nps!==null?nps+'/10':'–'}</td>
-      <td style="font-size:11px;">${cts2.length?cts2.slice(0,2).map(ct=>`<span style="color:${ct.days<=30?'var(--red)':ct.days<=60?'var(--yellow)':'var(--muted)'};">${ct.days}d</span>`).join(' ')+(cts2.length>2?'…':''):'–'}</td>
+
       <td style="font-size:11px;color:var(--muted);max-width:150px;">${e.actionTaken?(e.actionTaken.slice(0,45)+'…'):'–'}</td>
     `;
     tr.onclick=()=>openFillModal(c.id);tbody.appendChild(tr);
@@ -1696,7 +1439,7 @@ function saveEntry(){
     billing:currentBilling,billingObs:document.getElementById('billingObs').value,
     npsScore:document.getElementById('npsScore').value,npsDate:document.getElementById('npsDate').value,npsObs:document.getElementById('npsObs').value,
     pipelineDesc:document.getElementById('pipelineDesc').value,pipelineValue:document.getElementById('pipelineValue').value,pipelineStage:document.getElementById('pipelineStage').value,
-    bookSent:document.getElementById('bookSent').checked,bookDate:document.getElementById('bookDate').value,
+
     timestamp:new Date().toISOString()
   };
   entries[editingClientId]=e;localStorage.setItem('roca_entries',JSON.stringify(entries));
@@ -1795,13 +1538,18 @@ function searchClients(val){currentFilter.search=val;if(val){const count=filtere
 function setView(v,btn){currentView=v;document.getElementById('list-view').style.display=v==='list'?'block':'none';document.getElementById('table-view').style.display=v==='table'?'block':'none';document.getElementById('view-list-btn').classList.toggle('active',v==='list');document.getElementById('view-table-btn').classList.toggle('active',v==='table');render();}
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
+// Returns names of active CS users — used to populate CS dropdowns
+function getActiveCSNames(){
+  const csUsers = authUsers.filter(u => u.role === 'cs' && u.active !== false);
+  return csUsers.map(u => u.name).sort((a,b) => a.localeCompare(b,'pt-BR'));
+}
 function renderAdminList(){
   const list=document.getElementById('editClientList');list.innerHTML='';
   clients.forEach((c,i)=>{
     const row=document.createElement('div');row.className='client-edit-row';
     row.innerHTML=`
       <input type="text" value="${c.name}" data-idx="${i}" data-field="name" oninput="updateCF(this)">
-      <select data-idx="${i}" data-field="gs" onchange="updateCF(this)">${[...new Set(clients.map(x=>x.gs))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(g=>`<option${g===c.gs?' selected':''}>${g}</option>`).join('')}</select>
+      <select data-idx="${i}" data-field="gs" onchange="updateCF(this)">${getActiveCSNames().map(g=>`<option${g===c.gs?' selected':''}>${g}</option>`).join('')}</select>
       <select data-idx="${i}" data-field="book" onchange="updateCF(this)"><option value="false"${!c.book?' selected':''}>Não</option><option value="true"${c.book?' selected':''}>Sim</option></select>
       <select data-idx="${i}" data-field="tier" onchange="updateCF(this)"><option value="A"${c.tier==='A'?' selected':''}>A</option><option value="B"${(c.tier||'B')==='B'?' selected':''}>B</option><option value="C"${c.tier==='C'?' selected':''}>C</option></select>
 
@@ -1812,146 +1560,37 @@ function renderAdminList(){
 }
 function updateCF(el){const idx=+el.dataset.idx,f=el.dataset.field;if(f==='book'||f==='vip')clients[idx][f]=el.value==='true';else clients[idx][f]=el.value;}
 function deleteClient(idx){if(!confirm(`Remover "${clients[idx].name}"?`))return;clients.splice(idx,1);renderAdminList();}
-function addClientRow(){const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);const _gsOpts=[...new Set(clients.map(x=>x.gs))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));clients.push({id:maxId+1,name:'Novo Cliente',gs:_gsOpts[0]||'',book:false,tier:'C',vip:false});clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));renderAdminList();}
+function addClientRow(){const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);const _gsOpts=getActiveCSNames();clients.push({id:maxId+1,name:'Novo Cliente',gs:_gsOpts[0]||'',book:false,tier:'C',vip:false});clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));renderAdminList();}
 
 // CS list functions removed — CS names derived from clients
-function renderContractAdminList(){
-  const list=document.getElementById('contractAdminList');
-  if(!list)return;
-  list.innerHTML='';
-  if(!contracts.length){
-    list.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Nenhum contrato cadastrado. Use o botão "Upload de Contratos" ou "+ Adicionar Contrato".</div>';
-    return;
-  }
-  // Group by client
-  const byClient={};
-  contracts.forEach((ct,idx)=>{
-    const norm=ct.clientName.toLowerCase().trim();
-    if(!byClient[norm])byClient[norm]={name:ct.clientName,items:[]};
-    byClient[norm].items.push({...ct,_idx:idx});
-  });
-  Object.values(byClient).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).forEach(grp=>{
-    // Client header
-    const hdr=document.createElement('div');
-    hdr.className='contract-admin-client';
-    hdr.innerHTML=`<span>${grp.name}</span><span class="contract-sub-label">${grp.items.length} contrato${grp.items.length>1?'s':''}</span>`;
-    list.appendChild(hdr);
-    // Contract sub-rows
-    grp.items.forEach(ct=>{
-      const row=document.createElement('div');
-      row.className='contract-admin-row';
-      row.innerHTML=`
-        <input type="text" value="${ct.contractName}" placeholder="Nome do contrato" oninput="contracts[${ct._idx}].contractName=this.value">
-        <input type="date" value="${ct.endDate}" oninput="contracts[${ct._idx}].endDate=this.value" style="font-family:'JetBrains Mono',monospace;font-size:11px;">
-        <button class="del-btn" onclick="deleteContract(${ct._idx})">✕</button>
-      `;
-      list.appendChild(row);
-    });
-  });
-}
 
-function deleteContract(idx){
-  if(!confirm(`Remover contrato "${contracts[idx].contractName}"?`))return;
-  contracts.splice(idx,1);
-  saveContractsToStorage();
-  renderContractAdminList();
-  updateContractPanel();
-}
 
-function addContractManual(){
-  // Find first client to pre-fill, or empty
-  const defaultClient=clients.length?clients[0].name:'';
-  contracts.push({clientName:defaultClient,contractName:'Novo Contrato',endDate:''});
-  saveContractsToStorage();
-  renderContractAdminList();
-  // Scroll to bottom
-  const list=document.getElementById('contractAdminList');
-  if(list)list.scrollTop=list.scrollHeight;
-}
 
-function saveContractsToStorage(){
-  localStorage.setItem('roca_contracts',JSON.stringify(contracts));
-  fbPatch('roca',{contracts}).catch(e=>console.warn('Contract save failed:',e));
-}
 
-function importContracts(input){
-  const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    try{
-      const wb=XLSX.read(ev.target.result,{type:'binary'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      let start=0;if(data[0]&&typeof data[0][0]==='string'&&isNaN(data[0][0]))start=1;
-      const imported=[];
-      for(let i=start;i<data.length;i++){
-        const r=data[i];
-        const clientName=String(r[0]||'').trim();
-        const contractName=String(r[1]||'').trim();
-        const endDate=parseDate(r[2]);
-        if(!clientName||!contractName)continue;
-        imported.push({clientName,contractName,endDate});
-      }
-      const prev=document.getElementById('contract-import-preview');
-      if(!imported.length){if(prev)prev.innerHTML='<div style="color:var(--red);font-size:12px;padding:6px;">Nenhum contrato detectado. Verifique o formato.</div>';return;}
-      if(prev)prev.innerHTML=`
-        <div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:10px 12px;margin-bottom:8px;">
-          <strong style="color:var(--green);font-size:12px;">✓ ${imported.length} contrato${imported.length>1?'s':''} detectado${imported.length>1?'s':''}</strong>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Substituirá todos os contratos existentes.</div>
-        </div>
-        <div style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:7px;margin-bottom:8px;">
-          ${imported.slice(0,15).map(ct=>`<div style="padding:5px 10px;border-bottom:1px solid var(--border);font-size:11.5px;display:flex;justify-content:space-between;"><span><strong>${ct.clientName}</strong> · ${ct.contractName}</span><span style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10.5px;">${ct.endDate||'sem data'}</span></div>`).join('')}
-          ${imported.length>15?`<div style="padding:5px 10px;color:var(--muted);font-size:11px;">...e mais ${imported.length-15} contratos</div>`:''}
-        </div>
-        <button class="btn btn-primary" style="width:100%;font-size:12px;" onclick="confirmContractImport()">✓ Confirmar importação de contratos</button>
-      `;
-      window._importedContracts=imported;
-    }catch(err){
-      const prev=document.getElementById('contract-import-preview');
-      if(prev)prev.innerHTML=`<div style="color:var(--red);padding:8px;font-size:12px;">Erro: ${err.message}</div>`;
-    }
-  };
-  reader.readAsBinaryString(file);
-}
 
-function confirmContractImport(){
-  if(!window._importedContracts)return;
-  contracts=window._importedContracts;
-  saveContractsToStorage();
-  renderContractAdminList();
-  updateContractPanel();
-  addAudit('create',`${contracts.length} contratos importados via Excel`);
-  render();
-  const prev=document.getElementById('contract-import-preview');
-  if(prev)prev.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:7px;padding:8px 12px;font-size:12px;color:var(--green);">✓ ${contracts.length} contrato${contracts.length>1?'s':''} importado${contracts.length>1?'s':''} com sucesso.</div>`;
-  window._importedContracts=null;
-}
 
 function deleteAllClients(){
   if(!confirm('Apagar TUDO?\n\nSerão removidos:\n— Todos os clientes\n— Todos os CS\n— Todos os contratos\n— Todos os faróis da semana atual\n— Todo o histórico de semanas anteriores\n\nEsta ação é irreversível.\n\nConfirme para continuar.'))return;
-  clients=[];entries={};gsList=[];contracts=[];weekHistory={};
+  clients=[];entries={};weekHistory={};
   localStorage.setItem('roca_clients',JSON.stringify(clients));
   localStorage.setItem('roca_entries',JSON.stringify(entries));
   localStorage.setItem('roca_gs',JSON.stringify(gsList));
-  localStorage.setItem('roca_contracts',JSON.stringify(contracts));
   localStorage.setItem('roca_history',JSON.stringify({}));
   // Wipe only operational data — never touch users or auditLog
   Promise.all([
     fbSet('roca/clients',[]),
     fbSet('roca/entries',{}),
-    fbSet('roca/contracts',[]),
     fbSet('roca/history',{})
   ]).catch(e=>console.warn('Firebase wipe failed:',e));
-  buildSidebar();render();renderAdminList();renderContractAdminList();
+  buildSidebar();render();renderAdminList();
   showSyncStatus('saved');
   addAudit('delete','Reset completo — todos os dados apagados do Firebase');
 }
 function saveAdmin(){
   clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
   localStorage.setItem('roca_clients',JSON.stringify(clients));
-  saveContractsToStorage();
   fbSet('roca/clients',clients).catch(e=>console.warn('Save clients failed:',e));
-  buildSidebar();render();renderAdminList();renderContractAdminList();
+  buildSidebar();render();renderAdminList();
   addAudit('edit','Clientes atualizados na aba Administração');
   alert('✓ Alterações salvas com sucesso.');
 }
@@ -2020,7 +1659,7 @@ async function advanceWeek(){
 // ── EXPORT ────────────────────────────────────────────────────────────────────
 function exportData(){
   const bll={up:'Subiu',down:'Caiu',stable:'Estável'};const ps={identified:'Identificado',negotiating:'Em negociação',proposal:'Proposta enviada',closed:'Fechado'};
-  const rows=[['Cliente','Tier','VIP','CS','MRR (R$)','Venc. Contrato','Health Score','R','Just.R','O','Just.O','C','Just.C','A','Just.A','Status','Churn','Notas Churn','NPS','Data NPS','Fat.','Obs.Fat.','Últ.Reunião','Últ.Visita','Pipeline Desc.','Pipeline Valor','Pipeline Estágio','Ação Tomada','Escalada','Fróes Desde','Book Enviado','Data Book','Preenchido em']];
+  const rows=[['Cliente','Tier','VIP','CS','MRR (R$)','Health Score','R','Just.R','O','Just.O','C','Just.C','A','Just.A','Status','Churn','Notas Churn','NPS','Data NPS','Fat.','Obs.Fat.','Últ.Reunião','Últ.Visita','Pipeline Desc.','Pipeline Valor','Pipeline Estágio','Ação Tomada','Escalada','Fróes Desde','Book Enviado','Data Book','Preenchido em']];
   clients.forEach(c=>{
     const e=entries[c.id]||{};const st=getEntryStatus(c.id);const hs=calcHealthScore(c.id);
     const cr=e.churnRisk?(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!==''):[];
@@ -2202,7 +1841,7 @@ function enterDashboard() {
   document.getElementById('changePwModal').classList.add('hidden');
 
   // Reset all filters — clean slate on every login
-  currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,contractDays:null,consec:false};
+  currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
 
   // Show user badge in topbar
   const badge = document.getElementById('userBadge');
@@ -2231,8 +1870,7 @@ function enterDashboard() {
     localStorage.removeItem('roca_entries');
     localStorage.removeItem('roca_history');
     localStorage.removeItem('roca_clients');
-    localStorage.removeItem('roca_contracts');
-    localStorage.removeItem('roca_gs');
+        localStorage.removeItem('roca_gs');
     document.getElementById('gs-all').style.display = 'none';
     document.getElementById('gs-sidebar-list').style.pointerEvents = 'none';
     document.getElementById('gs-sidebar-list').style.opacity = '0.5';
@@ -2420,8 +2058,7 @@ async function checkAuthAndInit() {
   localStorage.removeItem('roca_entries');
   localStorage.removeItem('roca_history');
   localStorage.removeItem('roca_clients');
-  localStorage.removeItem('roca_contracts');
-  localStorage.removeItem('roca_gs');
+    localStorage.removeItem('roca_gs');
 
   await loadAuthUsers();
   await loadAuditLog();
