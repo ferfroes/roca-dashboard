@@ -940,7 +940,7 @@ async function spLoadAll(){
       const rawC=data.clients
         ? (Array.isArray(data.clients) ? data.clients : Object.values(data.clients).filter(x=>x&&x.name))
         : [];
-      clients = rawC.length > 0 ? rawC.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')) : [];
+      clients = rawC.length > 0 ? rawC.map(x=>({...x,book:x.book===true||x.book==='true'||x.book==='S',vip:x.vip===true||x.vip==='true'})).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')) : [];
       localStorage.setItem('roca_clients',JSON.stringify(clients));
 
       const rawG=data.gsList
@@ -1043,7 +1043,7 @@ function calcHealthScore(id){
   else if(vd>vLimit)penalty+=P(tier==='A'?12:8);
 
   // ── BOOK — entrega mensal obrigatória (dias 1–12 de cada mês) ─────────────
-  if(cl.book){
+  if(cl.book===true||cl.book==='true'||cl.book==='S'){
     const now=new Date();
     const curYear=now.getFullYear();const curMonth=now.getMonth();
     let bookOk=false;
@@ -1202,7 +1202,7 @@ function calcHSDetail(id){
   else{checklist.push({done:false,text:'Identificar oportunidade de expansão / pipeline'});}
 
   // ── BOOK ─────────────────────────────────────────────────────────────────
-  if(c.book){
+  if(c.book===true||c.book==='true'||c.book==='S'){
     const now=new Date();const curYear=now.getFullYear();const curMonth=now.getMonth();
     let bookOk=false;
     if(e.bookDate){
@@ -1370,6 +1370,7 @@ function switchMainTab(tab,btn){
   document.getElementById(`tab-${tab}`).classList.add('active');
   if(tab==='configuracoes'){loadAuditLog().then(()=>{renderAuditLog();renderUserMgmtList();});}
   if(tab==='administrativa'){renderAdminList();}
+  if(tab==='dashboard'){renderDashboard();}
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -2495,8 +2496,8 @@ function renderDashboard(){
   const bestEl=document.getElementById('dashTopBest');
   if(bestEl){
     const top=scores.sort((a,b)=>b.hs-a.hs).slice(0,7);
-    if(!top.length){bestEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;">Nenhum dado disponível</div>';return;}
-    bestEl.innerHTML=top.map((x,i)=>{
+    if(!top.length){bestEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;">Nenhum dado disponível</div>';}
+    else{
       const col=gsColors[x.c.gs]||{bg:'#eee',color:'#444'};
       const hsc=hsColor(x.hs);
       const nps=entries[x.c.id]?.npsScore?parseInt(entries[x.c.id].npsScore):null;
