@@ -2114,7 +2114,7 @@ function enterDashboard() {
   // Show/hide admin-only elements
   const isAdmin = currentUser.role === 'admin';
   document.getElementById('tab-btn-config').style.display = isAdmin ? '' : 'none';
-  document.getElementById('tab-btn-dashboard').style.display = isAdmin ? '' : 'none';
+  document.getElementById('tab-btn-dashboard').style.display = ''; // visible for all roles
   if (!isAdmin) {
     document.querySelectorAll('.main-tab').forEach(btn => {
       if (btn.textContent.includes('Administração')) btn.style.display = 'none';
@@ -2360,6 +2360,12 @@ function npsClass(nps){
 }
 
 function getDashClients(){
+  // CS always sees only their own carteira — regardless of dropdown
+  if(currentUser&&currentUser.role==='cs'){
+    const _u=authUsers.find(u=>u.email===currentUser.email);
+    const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
+    return clients.filter(c=>c.gs.toLowerCase().trim()===_n);
+  }
   const filter=document.getElementById('dashCSFilter')?.value||'all';
   return filter==='all'?clients:clients.filter(c=>c.gs===filter);
 }
@@ -2370,12 +2376,17 @@ function renderDashboard(){
   const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   const wl=document.getElementById('dashWeekLabel');if(wl)wl.textContent=`Semana ${fmt(mn)} – ${fmt(fr)}`;
 
-  // Populate CS filter
+  // Populate CS filter — hidden for CS users (they always see own carteira)
   const sel=document.getElementById('dashCSFilter');
   if(sel){
-    const cur=sel.value;
-    const csNames=[...new Set(clients.map(c=>c.gs))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));
-    sel.innerHTML='<option value="all">Todos os CS</option>'+csNames.map(n=>`<option value="${n}" ${n===cur?'selected':''}>${n}</option>`).join('');
+    if(currentUser&&currentUser.role==='cs'){
+      sel.style.display='none';
+    }else{
+      sel.style.display='';
+      const cur=sel.value;
+      const csNames=[...new Set(clients.map(c=>c.gs))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      sel.innerHTML='<option value="all">Todos os CS</option>'+csNames.map(n=>`<option value="${n}" ${n===cur?'selected':''}>${n}</option>`).join('');
+    }
   }
 
   const dc=getDashClients();
@@ -2563,9 +2574,11 @@ function renderDashboard(){
     }
   }
 
-  // ── CS PERFORMANCE ─────────────────────────────────────────────────────────
+  // ── CS PERFORMANCE — only for admin ─────────────────────────────────────
   const csPerfEl=document.getElementById('dashCSPerf');
-  if(csPerfEl){
+  if(csPerfEl&&currentUser&&currentUser.role==='cs'){
+    csPerfEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;text-align:center;">Disponível apenas para administradores.</div>';
+  }else if(csPerfEl){
     const csNames=[...new Set(dc.map(c=>c.gs))].filter(Boolean);
     const csPerfData=csNames.map(gs=>{
       const csc=dc.filter(c=>c.gs===gs);
