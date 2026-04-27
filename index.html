@@ -982,15 +982,19 @@ function getPrevEntry(id){const p=weekHistory[getWeekKey(-1)];return p?(p[id]||n
 // ── HEALTH SCORE ─────────────────────────────────────────────────────────────
 function calcHealthScore(id){
   const e=entries[id];if(!e||!e.R)return null;
-  const c=clients.find(x=>x.id===id)||{};
-  const tier=c.tier||'C';
-  const isVIP=c.vip||false;
+  const cl=clients.find(x=>x.id===id)||{};
+  const tier=cl.tier||'C';
+  const isVIP=cl.vip||false;
+  const isTierA=tier==='A'||isVIP;
+
+  // ── MULTIPLICADOR TIER A — penalidades +30% para contas estratégicas ──────
+  // Tier A não tem regras diferentes — tem tolerância reduzida em tudo
+  const P=p=>isTierA?Math.round(p*1.3):p;
 
   // ── BASE ROCA (R=30%, O=20%, C=30%, A=20%) ───────────────────────────────
-  // G=100 | A=40 (amarelo É problema — penaliza a base) | V=0
+  // G=100 | A=40 (amarelo É problema) | V=0
   const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
   let score=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
-  // Base máxima com tudo verde = 100. Com 1 amarelo ≈ 76. Com 2 amarelos ≈ 52.
 
   let penalty=0;
   const dims=[e.R,e.O,e.C,e.A];
@@ -998,85 +1002,74 @@ function calcHealthScore(id){
   const ca=dims.filter(d=>d==='A').length;
 
   // ── COMBINAÇÃO DE DIMENSÕES ───────────────────────────────────────────────
-  // Penalidade adicional sobre a base já degradada pelo valor 40
-  if(cv>=3)penalty+=20;
-  else if(cv===2)penalty+=12;
-  else if(cv===1)penalty+=8;
-  if(ca>=3)penalty+=10;
-  else if(ca===2)penalty+=5;
-
-  // ── TIER A/VIP — tolerância zero ─────────────────────────────────────────
-  if((tier==='A'||isVIP)&&cv>=1)penalty+=15;
-  if((tier==='A'||isVIP)&&ca>=2)penalty+=8;
+  if(cv>=3)penalty+=P(20);
+  else if(cv===2)penalty+=P(12);
+  else if(cv===1)penalty+=P(8);
+  if(ca>=3)penalty+=P(10);
+  else if(ca===2)penalty+=P(5);
 
   // ── CHURN RISK ────────────────────────────────────────────────────────────
   const autoChurn=e.R==='V'||e.C==='V';
   const manualChurn=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
-  if(autoChurn&&manualChurn)penalty+=30; // sinal duplo = risco máximo
-  else if(autoChurn)penalty+=20;         // R ou C vermelho = churn estrutural
+  if(autoChurn&&manualChurn)penalty+=P(30);
+  else if(autoChurn)penalty+=P(20);
   else if(manualChurn){
     const ar=(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!=='');
-    penalty+=ar.length>=2?25:15;
+    penalty+=P(ar.length>=2?25:15);
   }
 
   // ── FATURAMENTO ───────────────────────────────────────────────────────────
-  if(e.billing==='down')penalty+=12;
-  else if(e.billing==='up')penalty-=3; // único bônus permitido — crescimento real
+  if(e.billing==='down')penalty+=P(12);
+  else if(e.billing==='up')penalty-=3; // bônus não amplificado — crescimento é crescimento
 
   // ── ENGAJAMENTO — Cadência de contato ─────────────────────────────────────
-  // Regras:
-  // Reunião online: limite D-15. Fora = sem cadência saudável.
-  // Visita presencial Tier A: limite D-30.
-  // Visita Tier B/C: limite D-60.
-  // Se a visita presencial estiver dentro de D-15, compensa a reunião online.
-
-  const md=daysSince(e.lastMeeting);  // dias desde última reunião online
-  const vd=daysSince(e.lastVisit);    // dias desde última visita presencial
-
-  // Determina se a visita compensa a reunião (apenas se dentro de D-15)
-  const visitCompensMeeting = vd!==null && vd<=15;
+  const md=daysSince(e.lastMeeting);
+  const vd=daysSince(e.lastVisit);
+  const visitCompensMeeting=vd!==null&&vd<=15;
 
   if(!visitCompensMeeting){
-    // Reunião online — limite D-15
-    if(md===null)penalty+=20;          // nunca registrada — sinal grave
-    else if(md>45)penalty+=25;         // mais de 45 dias = abandono
-    else if(md>30)penalty+=18;         // mais de 30 dias = crítico
-    else if(md>15)penalty+=10;         // D-15 ultrapassado = fora da cadência
-    // ≤15 dias: cadência saudável, sem penalidade
+    if(md===null)penalty+=P(20);
+    else if(md>45)penalty+=P(25);
+    else if(md>30)penalty+=P(18);
+    else if(md>15)penalty+=P(10);
   }else{
-    // Visita recente (≤15 dias) compensa reunião online
-    // Penalidade mínima só se reunião estiver há muito tempo
-    if(md!==null&&md>45)penalty+=10;
+    if(md!==null&&md>45)penalty+=P(10);
   }
 
-  // Visita presencial — critérios por tier
-  const vLimit = tier==='A'?30:60;     // D-30 para A, D-60 para B/C
-  const vCritical = tier==='A'?60:120;
-  if(vd===null){
-    penalty+= tier==='A'?15:8;         // Tier A sem visita = problema sério
-  } else if(vd>vCritical){
-    penalty+= tier==='A'?20:12;
-  } else if(vd>vLimit){
-    penalty+= tier==='A'?12:8;
-  }
-  // Bônus de visita já aplicado como compensação acima
+  const vLimit=tier==='A'?30:60;
+  const vCritical=tier==='A'?60:120;
+  if(vd===null)penalty+=P(tier==='A'?15:8);
+  else if(vd>vCritical)penalty+=P(tier==='A'?20:12);
+  else if(vd>vLimit)penalty+=P(tier==='A'?12:8);
 
-  // ── NPS — Promotor / Neutro / Detrator ───────────────────────────────────
-  // NPS real: Promotor 9-10 | Neutro 7-8 | Detrator 1-6
+  // ── BOOK — entrega mensal obrigatória (dias 1–12 de cada mês) ─────────────
+  if(cl.book){
+    const now=new Date();
+    const curYear=now.getFullYear();const curMonth=now.getMonth();
+    let bookOk=false;
+    if(e.bookDate){
+      const bd=new Date(e.bookDate+'T12:00:00');
+      // Enviado no mês corrente, entre dias 1 e 12
+      bookOk=bd.getFullYear()===curYear&&bd.getMonth()===curMonth&&bd.getDate()<=12;
+    }
+    if(!bookOk)penalty+=P(20); // não enviado ou enviado fora do prazo
+  }
+
+  // ── NPS ───────────────────────────────────────────────────────────────────
   const nps=e.npsScore?parseInt(e.npsScore):null;
   const npsAge=e.npsDate?daysSince(e.npsDate):null;
-  if(nps===null)penalty+=8;            // ausência = falta de pulso do cliente
-  else if(nps<=6)penalty+=20;          // detrator — risco alto
-  else if(nps===7||nps===8)penalty+=6; // neutro — zona de perigo silencioso
-  else if(nps>=9)penalty-=3;           // promotor — bônus
-  if(npsAge!==null&&npsAge>90)penalty+=8; // NPS desatualizado (>90 dias = fora do trimestre)
+  if(nps===null)penalty+=P(8);
+  else if(nps<=6)penalty+=P(20);
+  else if(nps<=8)penalty+=P(6);
+  else if(nps>=9)penalty-=3; // bônus promotor não amplificado
+  if(npsAge!==null&&npsAge>90)penalty+=P(8);
 
   // ── ESCALADA SEM RESOLUÇÃO ────────────────────────────────────────────────
-  if(e.needFrom&&!e.actionTaken)penalty+=8;
+  if(e.needFrom&&!e.actionTaken)penalty+=P(8);
   if(e.needFrom&&e.needFromDate){
     const sla=daysSince(e.needFromDate);
-    if(sla>14)penalty+=10;  // escalada aberta há mais de 2 semanas = negligência
-    else if(sla>7)penalty+=5;
+    if(sla>14)penalty+=P(10);
+    else if(sla>7)penalty+=P(5);
   }
 
   const final=Math.max(0,Math.min(100,Math.round(score-penalty)));
@@ -1086,7 +1079,7 @@ function calcHealthScore(id){
 function calcHSDetail(id){
   // Returns {score, factors[], checklist[]}
   const e=entries[id]||{};const c=clients.find(x=>x.id===id)||{};
-  const tier=c.tier||'C';const isVIP=c.vip||false;
+  const tier=c.tier||'C';const isVIP=c.vip||false;const isTierA=tier==='A'||isVIP;
   const factors=[];const checklist=[];
 
   if(!e.R){return{score:null,factors:[{type:'neutral',icon:'ℹ️',label:'Conta não preenchida esta semana',val:'–'}],checklist:[{done:false,text:'Preencher os 4 faróis ROCA'}]};}
@@ -1207,6 +1200,33 @@ function calcHSDetail(id){
 
   if(e.pipelineStage&&e.pipelineStage!==''){factors.push({type:'positive',icon:'💼',label:`Pipeline: ${{identified:'Identificado',negotiating:'Em negociação',proposal:'Proposta enviada',closed:'Fechado'}[e.pipelineStage]}${e.pipelineValue?` (R$ ${parseInt(e.pipelineValue).toLocaleString('pt-BR')}/mês)`:''}`,val:'✓'});}
   else{checklist.push({done:false,text:'Identificar oportunidade de expansão / pipeline'});}
+
+  // ── BOOK ─────────────────────────────────────────────────────────────────
+  if(c.book){
+    const now=new Date();const curYear=now.getFullYear();const curMonth=now.getMonth();
+    let bookOk=false;
+    if(e.bookDate){
+      const bd=new Date(e.bookDate+'T12:00:00');
+      bookOk=bd.getFullYear()===curYear&&bd.getMonth()===curMonth&&bd.getDate()<=12;
+    }
+    const bookPenalty=isTierA?Math.round(20*1.3):20;
+    if(bookOk){
+      factors.push({type:'positive',icon:'📋',label:`Book enviado no prazo (${new Date(e.bookDate+'T12:00:00').toLocaleDateString('pt-BR')})`,val:'✓'});
+    }else if(e.bookDate){
+      const bd=new Date(e.bookDate+'T12:00:00');
+      const late=bd.getMonth()===curMonth&&bd.getDate()>12;
+      factors.push({type:'negative',icon:'📋',label:late?`Book enviado fora do prazo (dia ${bd.getDate()})  — deve ser até dia 12`:'Book não enviado no mês corrente',val:`-${bookPenalty}`});
+      checklist.push({done:false,text:'Enviar book entre os dias 1 e 12 do mês'});
+    }else{
+      factors.push({type:'negative',icon:'📋',label:'Book não enviado este mês (prazo: dia 1–12)',val:`-${bookPenalty}`});
+      checklist.push({done:false,text:'Enviar book entre os dias 1 e 12 do mês'});
+    }
+  }
+
+  // ── TIER A — nota sobre multiplicador ────────────────────────────────────
+  if(isTierA){
+    factors.push({type:'neutral',icon:'⭐',label:'Tier A — todas as penalidades com +30% de severidade',val:'×1.3'});
+  }
 
   // Use calcHealthScore as single source of truth — avoids divergence between card and modal
   const final = calcHealthScore(id);
