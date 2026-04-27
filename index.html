@@ -2351,7 +2351,6 @@ function auditSaveEntry(clientName) {
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
-} // end _renderDashboard
 
 function npsClass(nps){
   if(nps===null)return null;
@@ -2366,13 +2365,6 @@ function getDashClients(){
 }
 
 function renderDashboard(){
-  try{_renderDashboard();}catch(err){
-    console.error('Dashboard error:',err);
-    const strip=document.getElementById('dashKPIStrip');
-    if(strip)strip.innerHTML=`<div style="color:var(--red);padding:10px;font-size:12px;">Erro ao renderizar: ${err.message}</div>`;
-  }
-}
-function _renderDashboard(){
   const now=new Date();const dy=now.getDay();const mn=new Date(now);mn.setDate(now.getDate()+(dy===0?-6:1-dy));
   const fr=new Date(mn);fr.setDate(mn.getDate()+4);
   const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
