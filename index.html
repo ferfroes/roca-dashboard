@@ -306,7 +306,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 }
 
 /* ── DASHBOARD ── */
-.dash-shell{flex:1;padding:24px 28px;overflow-y:auto;background:var(--surface);}
+.dash-shell{flex:1;padding:24px 28px;overflow-y:auto;background:var(--surface);width:100%;min-width:0;}
 .dash-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
 .dash-title{font-weight:800;font-size:20px;color:var(--ink);}
 .dash-title span{font-size:13px;font-weight:400;color:var(--muted);margin-left:8px;}
@@ -2351,6 +2351,8 @@ function auditSaveEntry(clientName) {
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
+} // end _renderDashboard
+
 function npsClass(nps){
   if(nps===null)return null;
   if(nps>=9)return'promotor';
@@ -2364,6 +2366,13 @@ function getDashClients(){
 }
 
 function renderDashboard(){
+  try{_renderDashboard();}catch(err){
+    console.error('Dashboard error:',err);
+    const strip=document.getElementById('dashKPIStrip');
+    if(strip)strip.innerHTML=`<div style="color:var(--red);padding:10px;font-size:12px;">Erro ao renderizar: ${err.message}</div>`;
+  }
+}
+function _renderDashboard(){
   const now=new Date();const dy=now.getDay();const mn=new Date(now);mn.setDate(now.getDate()+(dy===0?-6:1-dy));
   const fr=new Date(mn);fr.setDate(mn.getDate()+4);
   const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
