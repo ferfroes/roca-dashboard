@@ -1853,22 +1853,23 @@ function addClientRow(){const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);co
 
 
 
-function deleteAllClients(){
-  if(!confirm('Apagar TUDO?\n\nSerão removidos:\n— Todos os clientes\n— Todos os CS\n— Todos os contratos\n— Todos os faróis da semana atual\n— Todo o histórico de semanas anteriores\n\nEsta ação é irreversível.\n\nConfirme para continuar.'))return;
-  clients=[];entries={};weekHistory={};
-  localStorage.setItem('roca_clients',JSON.stringify(clients));
-  localStorage.setItem('roca_entries',JSON.stringify(entries));
-  localStorage.setItem('roca_gs',JSON.stringify(gsList));
-  localStorage.setItem('roca_history',JSON.stringify({}));
-  // Wipe only operational data — never touch users or auditLog
-  Promise.all([
-    fbSet('roca/clients',[]),
-    fbSet('roca/entries',{}),
-    fbSet('roca/history',{})
-  ]).catch(e=>console.warn('Firebase wipe failed:',e));
-  buildSidebar();render();renderAdminList();
-  showSyncStatus('saved');
-  addAudit('delete','Reset completo — todos os dados apagados do Firebase');
+function resetTotal(){
+  const ok1=confirm('☢ RESET TOTAL\n\nEsta ação apagará PERMANENTEMENTE:\n\n— Todos os clientes e faróis\n— Todo o histórico de semanas\n— Todos os usuários\n— Todos os logs de auditoria\n\nO sistema voltará ao estado inicial.\nVocê precisará criar a conta admin novamente.\n\nDeseja continuar?');
+  if(!ok1)return;
+  const typed=prompt('Para confirmar, digite exatamente:  RESET');
+  if(typed!=='RESET'){alert('Reset cancelado.');return;}
+  // DELETE the entire roca node from Firebase
+  fetch(`${FB_URL}/roca.json`,{method:'DELETE'})
+    .then(()=>{
+      localStorage.clear();
+      alert('✓ Reset concluído. O sistema será recarregado.');
+      location.reload();
+    })
+    .catch(e=>{
+      alert('Erro Firebase: '+e.message+'\n\nApague o nó "roca" manualmente no Firebase Console.');
+      localStorage.clear();
+      location.reload();
+    });
 }
 function saveAdmin(){
   clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
