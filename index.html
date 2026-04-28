@@ -1897,12 +1897,21 @@ function importFile(input){
     try{
       const wb=XLSX.read(ev.target.result,{type:'binary'});const ws=wb.Sheets[wb.SheetNames[0]];
       const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      let start=0;if(data[0]&&typeof data[0][0]==='string'&&isNaN(data[0][0]))start=1;
+      // FIX 1: Header detection — always skip line 1 if it looks like a header
+      // Uses presence of known header keywords OR non-numeric first cell that isn't a client name pattern
+      const firstRow=data[0]||[];
+      const looksLikeHeader=firstRow.some(cell=>{
+        const s=String(cell||'').toLowerCase().trim();
+        return['nome','cliente','cs','book','tier','responsável','responsavel'].includes(s);
+      });
+      let start=looksLikeHeader?1:0;
+      // Fallback: if first cell contains typical header words
+      if(!looksLikeHeader&&firstRow[0]&&isNaN(String(firstRow[0]).charAt(0))&&String(firstRow[0]).toLowerCase().includes('nome'))start=1;
+
       const imported=[];
       // Build lookup of existing clients by normalised name → preserve ID for history continuity
       const existingById={};
       clients.forEach(c=>{existingById[c.name.toLowerCase().trim()]=c.id;});
-      // Also check all weekHistory for IDs (in case clients were cleared before reimport)
       const allHistoryIds={};
       Object.values(weekHistory).forEach(snap=>{
         Object.keys(snap).forEach(id=>{
@@ -1910,21 +1919,36 @@ function importFile(input){
         });
       });
       let maxId=Math.max(0,...clients.map(c=>c.id),...Object.values(existingById),...Object.values(allHistoryIds),0);
+
+      // FIX 3: Book accepts S, SIM, YES, X, TRUE (case-insensitive)
+      const isBook=v=>{const s=String(v||'').trim().toUpperCase();return['S','SIM','YES','X','TRUE','1'].includes(s);};
+      // FIX 4: Track CS names not matching any user — warn after import
+      const activeCSNames=getActiveCSNames().map(n=>n.toLowerCase().trim());
+      const unknownCS=new Set();
+
       for(let i=start;i<data.length;i++){
         const r=data[i];const name=String(r[0]||'').trim();if(!name)continue;
         const norm=name.toLowerCase().trim();
-        // Reuse existing ID if name matches (case-insensitive) — preserves history link
         const existingId=existingById[norm]||allHistoryIds[norm]||null;
         const id=existingId||++maxId;
+        // FIX 2: fallback gs — use first active CS name or empty string
+        const gsVal=String(r[1]||'').trim();
+        const _csOpts=getActiveCSNames();
+        const gs=gsVal||(_csOpts.length?_csOpts[0]:'');
+        if(gs&&!activeCSNames.includes(gs.toLowerCase().trim()))unknownCS.add(gs);
         imported.push({
-          id,name,
-          gs:String(r[1]||'').trim()||gsList[0],
-          book:String(r[2]||'').trim().toUpperCase()==='S',
+          id,name,gs,
+          book:isBook(r[2]),
           tier:(['A','B','C'].includes(String(r[3]||'').trim().toUpperCase())?String(r[3]).trim().toUpperCase():'C'),
         });
       }
+      // FIX 4: show warning if any CS name doesn't match a user
+      const csWarning=unknownCS.size>0
+        ?`<div style="background:var(--yellow-bg);border:1px solid var(--yellow-bd);border-radius:7px;padding:8px 12px;margin-bottom:8px;font-size:11.5px;color:var(--yellow);"><strong>⚠ Atenção:</strong> ${[...unknownCS].join(', ')} não correspond${unknownCS.size>1?'em':'e'} a nenhum usuário CS cadastrado. Verifique os nomes.</div>`
+        :'';
+
       const prev=document.getElementById('import-preview');
-      prev.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">Tier ${c.tier} · ${c.gs}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="confirmImport()">✓ Confirmar importação</button>`;
+      prev.innerHTML=`${csWarning}<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">Tier ${c.tier} · ${c.gs}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="confirmImport()">✓ Confirmar importação</button>`;
       window._importedClients=imported;
     }catch(err){document.getElementById('import-preview').innerHTML=`<div style="color:var(--red);padding:10px;">Erro: ${err.message}</div>`;}
   };
