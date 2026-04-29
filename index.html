@@ -1674,7 +1674,7 @@ async function init(){
   // Only show admin tabs if admin
   if(currentUser&&currentUser.role==='admin'){renderAdminList();}
   // sc-all only active for admin; CS stays on their filter
-  if(!currentUser||currentUser.role==='admin'){document.getElementById('sc-all').classList.add('active');}
+  if(!currentUser||currentUser.role==='admin'){const _sc=document.getElementById('sc-all');if(_sc)_sc.classList.add('active');}
   const ok=await spLoadAll();
   if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);}
   // Reload authUsers to get fresh csName (may have been updated by admin after login)
@@ -2158,7 +2158,7 @@ function filterGS(gs,btn){closeSidebar();
   const fc=filteredClients();
   setTitle(gs==='all'?'Todas as Contas':gs,fc.length);
   document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
-  document.getElementById('sc-all').classList.add('active');render();
+  const _sc=document.getElementById('sc-all');if(_sc)_sc.classList.add('active');render();
 }
 // Returns the correct gs filter value — CS always sees own carteira, admin sees all
 function getFilterGs(){ 
@@ -2198,14 +2198,14 @@ function filterChurn(btn){closeSidebar();
   currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   if(currentFilter.churn){btn.classList.add('active');document.getElementById('sc-churn').classList.add('active');setTitle('⚠ Risco de Churn',filteredClients().filter(c=>hasChurnRisk(c.id)).length);}
-  else{safeActivateAll();document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  else{safeActivateAll();const _sc=document.getElementById('sc-all');if(_sc)_sc.classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterVIP(btn){
   currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ Tier A',filteredClients().filter(c=>c.vip||c.tier==='A').length);}
-  else{safeActivateAll();document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  else{safeActivateAll();const _sc=document.getElementById('sc-all');if(_sc)_sc.classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterBookPending(btn){closeSidebar();
@@ -2216,43 +2216,60 @@ function filterBookPending(btn){closeSidebar();
   render();
 }
 function filterByCard(type){
-  // Open info drawer
-  const drawerType=type==='V'?'churn':type==='churn'?'churn':type==='A'?'below':type==='pending'?'pending':type==='all'?'total':'hs';
-  openKpiDrawer(drawerType);
-  // Filter the list
+  // Toggle: clicar no mesmo card ativo desativa
+  const isActive=(
+    (type==='V'&&currentFilter.status==='V')||
+    (type==='A'&&currentFilter.status==='A')||
+    (type==='G'&&currentFilter.status==='G')||
+    (type==='churn'&&currentFilter.churn)||
+    (type==='pending'&&currentFilter.status==='pending')
+  );
   resetAllQuickBtns();
   const base={gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:false,tier:null,search:''};
-  if(type==='all'){currentFilter={...base,status:null};setTitle('Todas as Contas',filteredClients().length);}
-  else if(type==='V'){currentFilter={...base,status:'V'};setTitle('Problema Real',filteredClients().length);}
-  else if(type==='A'){currentFilter={...base,status:'A'};setTitle('Tomar Ação',filteredClients().length);}
-  else if(type==='G'){currentFilter={...base,status:'G'};setTitle('Acompanhar',filteredClients().length);}
-  else if(type==='churn'){currentFilter={...base,churn:true};setTitle('Risco de Churn',filteredClients().length);}
-  else if(type==='pending'){currentFilter={...base,status:'pending'};setTitle('Pendentes',filteredClients().length);}
+  if(isActive||type==='all'){
+    currentFilter={...base,status:null};
+    safeActivateAll();
+    const sc=document.getElementById('sc-all');if(sc)sc.classList.add('active');
+    setTitle('Todas as Contas',filteredClients().length);
+    closeKpiDrawer();render();return;
+  }
+  // Set filter FIRST so drawer reads correct data
+  if(type==='V')         currentFilter={...base,status:'V'};
+  else if(type==='A')    currentFilter={...base,status:'A'};
+  else if(type==='G')    currentFilter={...base,status:'G'};
+  else if(type==='churn')currentFilter={...base,churn:true};
+  else if(type==='pending')currentFilter={...base,status:'pending'};
   // Highlight active card
-  const cardMap={all:'sc-all',V:'sc-red',churn:'sc-churn',A:'sc-yellow',G:'sc-green',pending:'sc-pending'};
+  const cardMap={V:'sc-red',churn:'sc-churn',A:'sc-yellow',G:'sc-green',pending:'sc-pending'};
   if(cardMap[type]){const el=document.getElementById(cardMap[type]);if(el)el.classList.add('active');}
+  // Title
+  const titleMap={V:'Problema Real',A:'Tomar Ação',G:'Acompanhar',churn:'Risco de Churn',pending:'Pendentes'};
+  setTitle(titleMap[type]||'',filteredClients().length);
+  // Open drawer AFTER filter is set
+  const drawerMap={V:'vermelho',A:'amarelo',G:'verde',churn:'churn',pending:'pending'};
+  openKpiDrawer(drawerMap[type]||'total');
   render();
 }
 function filterConsecutiveCritical(btn){
   const isActive=currentFilter.consec;
   currentFilter={...currentFilter,consec:!isActive,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,tier:null,renovacao:false};
-  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
-  if(!isActive){btn.classList.add('active');const count=filteredClients().length;setTitle('🔁 Crítico Recorrente',count);}
-  else{safeActivateAll();setTitle('Todas as Contas',filteredClients().length);}
+  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));safeActivateAll();
+  if(!isActive){btn.classList.add('active');setTitle('🔁 Crítico Recorrente',filteredClients().length);}
+  else{setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterWorsened(btn){
   currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
-  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
+  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));safeActivateAll();
   if(currentFilter.worsened){btn.classList.add('active');setTitle('↓ Pioraram',filteredClients().length);}
-  else{safeActivateAll();setTitle('Todas as Contas',filteredClients().length);}
+  else{setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterImproved(btn){
   currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
-  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
+  resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));safeActivateAll();
   if(currentFilter.improved){btn.classList.add('active');setTitle('↑ Melhoraram',filteredClients().length);}
-  else{safeActivateAll();setTitle('Todas as Contas',filteredClients().length);}
+  else{setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function searchClients(val){currentFilter.search=val;if(val){const count=filteredClients().filter(c=>c.name.toLowerCase().includes(val.toLowerCase())).length;setTitle(`Busca: "${val}"`,count);}else setTitle('Todas as Contas',filteredClients().length);render();}
@@ -3337,27 +3354,39 @@ function updateContractPanel(){
 
 function openKpiDrawer(type){
   const fc=filteredClients();
-  let title='',sub='',items=[];
+  let title='',items=[];
   const hsColor=hs=>hs>=90?'var(--green)':hs>=75?'#f59e0b':hs>=50?'var(--churn)':'var(--red)';
 
   if(type==='total'){
-    title='Todas as Contas';sub=`${fc.length} contas na carteira`;
-    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id),tag:''}));
-  }else if(type==='hs'){
-    title='Health Score';sub='Contas com HS calculado';
-    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null).sort((a,b)=>b.hs-a.hs);
+    title='Todas as Contas';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)}));
+  }else if(type==='vermelho'){
+    title='🔴 Problema Real';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)}));
+  }else if(type==='amarelo'){
+    title='🟡 Tomar Ação';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)}));
+  }else if(type==='verde'){
+    title='🟢 Acompanhar';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)}));
   }else if(type==='churn'){
-    title='Risco de Churn';sub='Contas com sinal de churn';
+    title='⚠ Risco de Churn';
     items=fc.filter(cl=>hasChurnRisk(cl.id)).map(cl=>({cl,hs:calcHealthScore(cl.id)}));
-  }else if(type==='below'){
-    title='HS Abaixo de 75%';sub='Contas que requerem atenção';
-    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs<75).sort((a,b)=>a.hs-b.hs);
   }else if(type==='pending'){
-    title='Sem Preenchimento';sub='Contas pendentes esta semana';
+    title='⏳ Pendentes';
     items=fc.filter(cl=>isPending(cl.id)).map(cl=>({cl,hs:null}));
+  }else if(type==='hs'){
+    title='Health Score';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null).sort((a,b)=>b.hs-a.hs);
+  }else if(type==='below'){
+    title='HS Abaixo de 75%';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs<75).sort((a,b)=>a.hs-b.hs);
   }else if(type==='promotores'){
-    title='Promotores NPS';sub='Clientes com NPS 9 ou 10';
+    title='Promotores NPS';
     items=fc.filter(cl=>{const e=entries[cl.id];return e&&e.npsScore&&parseInt(e.npsScore)>=9;}).map(cl=>({cl,hs:calcHealthScore(cl.id)}));
+  }else{
+    title='Contas';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)}));
   }
 
   document.getElementById('kpiDrawerTitle').textContent=title;
@@ -3371,11 +3400,13 @@ function openKpiDrawer(type){
       const col=gsColors[cl.gs]||{bg:'#eee',color:'#444'};
       const e=entries[cl.id]||{};
       const nps=e.npsScore?parseInt(e.npsScore):null;
+      const st=getEntryStatus(cl.id);
+      const stDot=st==='V'?'🔴':st==='A'?'🟡':st==='G'?'🟢':'⏳';
       const npsLabel=nps===null?'':`<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:${nps>=9?'var(--green-bg)':nps>=7?'var(--yellow-bg)':'var(--red-bg)'};color:${nps>=9?'var(--green)':nps>=7?'var(--yellow)':'var(--red)'};">${nps>=9?'Promotor':nps>=7?'Neutro':'Detrator'}</span>`;
-      const hsLabel=hs!==null?`<span style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:${hsColor(hs)};">${hs}%</span>`:`<span style="color:var(--muted);font-size:11px;">sem dado</span>`;
+      const hsLabel=hs!==null?`<span style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:${hsColor(hs)};">${hs}%</span>`:`<span style="color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;">–</span>`;
       return `<div onclick="openHSDetail(${cl.id})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all .12s;" onmouseover="this.style.borderColor='var(--accent3)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cl.name}${cl.renovacao?'  🔄':''}</div>
+          <div style="font-weight:700;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${stDot} ${cl.name}${cl.renovacao?'  🔄':''}</div>
           <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;align-items:center;">
             <span style="font-size:9px;padding:1px 6px;border-radius:6px;background:${col.bg};color:${col.color};font-weight:600;">${cl.gs}</span>
             <span style="font-size:9px;padding:1px 5px;border-radius:6px;background:var(--surface2);color:var(--muted);">Tier ${cl.tier||'C'}</span>
