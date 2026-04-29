@@ -612,7 +612,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 <div class="tab-content active" id="tab-gerencial">
   <div class="sidebar">
     <div class="sidebar-label">Customer Success</div>
-    <button class="gs-btn active" id="gs-all" onclick="filterGS('all',this)">
+    <button class="gs-btn active" id="gs-all" onclick="resetAllQuickBtns();filterGS('all',this)">
       <div class="gs-avatar" style="background:var(--accent);color:white;">A</div>
       Todos os CS
       <span class="gs-count" id="count-all">0</span>
@@ -710,7 +710,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 
 
     <!-- CONTRACTS PANEL -->
-    <div class="contracts-panel" id="contractsPanel" style="display:none;">
+    <div class="contracts-panel" id="contractsPanel">
       <div class="renov-panel-title">📄 Vencimento de Contratos <div style="flex:1;height:1px;background:var(--border);"></div>
         <label style="font-size:10px;color:var(--accent2);cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:600;">
           <input type="file" id="contractsXlsxInput" accept=".xlsx,.xls" onchange="importContracts(this)" style="display:none;">
@@ -883,6 +883,10 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 
         <button class="btn btn-primary" onclick="addClientRow()">+ Novo Cliente</button>
         <button class="btn btn-primary" onclick="saveAdmin()">💾 Salvar Alterações</button>
+        <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--accent3);background:var(--card);font-size:12.5px;font-weight:500;cursor:pointer;color:var(--accent2);transition:all .12s;" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background='var(--card)'">
+          <input type="file" id="contractsXlsxInput2" accept=".xlsx,.xls" onchange="importContracts(this)" style="display:none;">
+          📄 Importar Contratos
+        </label>
         <button class="btn" style="color:var(--red);border-color:var(--red-bd);font-weight:700;" onclick="resetTotal()">☢ Reset Total</button>
       </div>
     </div>
@@ -1813,16 +1817,12 @@ function updateSummary(fc){
   const visibleClients=currentUser&&currentUser.role==='cs'
     ?clients.filter(c=>c.gs.toLowerCase().trim()===(_csN||'').toLowerCase().trim())
     :clients;
-  document.getElementById('count-all').textContent=visibleClients.length;
-  document.getElementById('count-red').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='V').length;
-  document.getElementById('count-green').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='G').length;
-  document.getElementById('count-yellow').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='A').length;
+  // Sidebar counts (only IDs that exist in current sidebar HTML)
   document.getElementById('count-churn').textContent=visibleClients.filter(c=>hasChurnRisk(c.id)).length;
   const _cntRenov=document.getElementById('count-renov');if(_cntRenov)_cntRenov.textContent=visibleClients.filter(c=>c.renovacao===true||c.renovacao==='true').length;
   const _cntTA=document.getElementById('count-tierA');if(_cntTA)_cntTA.textContent=visibleClients.filter(c=>c.tier==='A').length;
   const _cntTB=document.getElementById('count-tierB');if(_cntTB)_cntTB.textContent=visibleClients.filter(c=>c.tier==='B').length;
   const _cntTC=document.getElementById('count-tierC');if(_cntTC)_cntTC.textContent=visibleClients.filter(c=>c.tier==='C').length;
-  document.getElementById('count-vip').textContent=visibleClients.filter(c=>c.vip||c.tier==='A').length;
   document.getElementById('count-pending').textContent=visibleClients.filter(c=>isPending(c.id)).length;
   document.getElementById('count-book').textContent=visibleClients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length;
   const partialEl=document.getElementById('count-partial');
@@ -2106,7 +2106,10 @@ function saveEntry(){
 }
 
 // ── FILTERS ───────────────────────────────────────────────────────────────────
-function resetAllQuickBtns(){document.querySelectorAll('.gs-btn:not(#view-list-btn):not(#view-table-btn)').forEach(b=>b.classList.remove('active'));}
+function resetAllQuickBtns(){
+  document.querySelectorAll('.gs-btn:not(#view-list-btn):not(#view-table-btn)').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.summary-card').forEach(b=>b.classList.remove('active'));
+}
 function setTitle(t,count){document.getElementById('mainTitle').innerHTML=`${t} <span>${count} conta${count!==1?'s':''}</span>`;}
 
 function filterGS(gs,btn){closeSidebar();
@@ -2168,7 +2171,22 @@ function filterBookPending(btn){closeSidebar();
   render();
 }
 function filterByCard(type){
-  openKpiDrawer(type==='V'?'churn':type==='churn'?'churn':type==='A'?'below':type==='pending'?'pending':type==='all'?'total':'hs');
+  // Open info drawer
+  const drawerType=type==='V'?'churn':type==='churn'?'churn':type==='A'?'below':type==='pending'?'pending':type==='all'?'total':'hs';
+  openKpiDrawer(drawerType);
+  // Also filter the list
+  resetAllQuickBtns();
+  const base={gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:false,tier:null,search:''};
+  if(type==='all'){currentFilter={...base,status:null};setTitle('Todas as Contas',filteredClients().length);}
+  else if(type==='V'){currentFilter={...base,status:'V'};setTitle('Problema Real',filteredClients().length);}
+  else if(type==='A'){currentFilter={...base,status:'A'};setTitle('Tomar Ação',filteredClients().length);}
+  else if(type==='G'){currentFilter={...base,status:'G'};setTitle('Acompanhar',filteredClients().length);}
+  else if(type==='churn'){currentFilter={...base,churn:true};setTitle('Risco de Churn',filteredClients().length);}
+  else if(type==='pending'){currentFilter={...base,status:'pending'};setTitle('Pendentes',filteredClients().length);}
+  // Highlight active card
+  const cardMap={all:'sc-all',V:'sc-red',churn:'sc-churn',A:'sc-yellow',G:'sc-green',pending:'sc-pending'};
+  if(cardMap[type]){const el=document.getElementById(cardMap[type]);if(el)el.classList.add('active');}
+  render();
 }
 function filterConsecutiveCritical(btn){
   const isActive=currentFilter.consec;
@@ -2266,6 +2284,7 @@ function parseDate(v){
 }
 function importFile(input){
   const file=input.files[0];if(!file)return;
+  input.value='';
   const reader=new FileReader();
   reader.onload=ev=>{
     try{
@@ -3166,6 +3185,7 @@ function getMostCriticalContract(clientName){
 
 function importContracts(input){
   const file=input.files[0];if(!file)return;
+  input.value='';
   const reader=new FileReader();
   reader.onload=e=>{
     const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
@@ -3248,8 +3268,7 @@ function toggleCtDrawer(bucket){
 }
 
 function showContractPanel(show){
-  const p=document.getElementById('contractsPanel');
-  if(p)p.style.display=show?'':'none';
+  // Panel is always visible — no-op kept for compatibility
 }
 
 function updateContractPanel(){
