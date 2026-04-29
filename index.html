@@ -1746,28 +1746,39 @@ function renderGSHealthStrip(){
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function filteredClients(){
-  // Hard enforcement: CS users can NEVER see accounts outside their carteira
+  // Step 1: base pool — CS always restricted to own carteira
+  let base;
   if(currentUser&&currentUser.role==='cs'){
     const _u=authUsers.find(u=>u.email===currentUser.email);
     const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
-    return clients.filter(c=>c.gs.toLowerCase().trim()===_n);
+    base=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
+  }else{
+    // Admin: apply GS filter first
+    base=currentFilter.gs==='all'
+      ?clients.slice()
+      :clients.filter(c=>c.gs.toLowerCase().trim()===currentFilter.gs.toLowerCase().trim());
   }
-  return clients.filter(c=>{
-    if(currentFilter.gs!=='all'&&c.gs.toLowerCase().trim()!==currentFilter.gs.toLowerCase().trim())return false;
-    if(currentFilter.search&&!c.name.toLowerCase().includes(currentFilter.search.toLowerCase()))return false;
-    if(currentFilter.churn)return hasChurnRisk(c.id);
-    if(currentFilter.consec)return consecutiveCriticalWeeks(c.id)>=2;
-    if(currentFilter.vip)return c.vip||c.tier==='A';
-    if(currentFilter.tier)return c.tier===currentFilter.tier;
-    if(currentFilter.renovacao===true)return c.renovacao===true||c.renovacao==='true';
-    if(currentFilter.status==='partial')return isPartial(c.id);
-    if(currentFilter.status==='pending')return isPending(c.id);
-    if(currentFilter.status)return getEntryStatus(c.id)===currentFilter.status;
-    if(currentFilter.bookPending){if(!c.book)return false;const e=entries[c.id];return!e||!e.bookSent;}
-    if(currentFilter.worsened){const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}
-    if(currentFilter.improved){const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}
-    return true;
-  }).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+
+  // Step 2: search
+  if(currentFilter.search){
+    const q=currentFilter.search.toLowerCase();
+    base=base.filter(c=>c.name.toLowerCase().includes(q));
+  }
+
+  // Step 3: exclusive quick filters (each one is standalone)
+  if(currentFilter.churn)      return base.filter(c=>hasChurnRisk(c.id)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.consec)     return base.filter(c=>consecutiveCriticalWeeks(c.id)>=2).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.vip)        return base.filter(c=>c.vip||c.tier==='A').sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.tier)       return base.filter(c=>c.tier===currentFilter.tier).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.renovacao===true) return base.filter(c=>c.renovacao===true||c.renovacao==='true').sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.bookPending) return base.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.worsened)   return base.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.improved)   return base.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.status==='partial') return base.filter(c=>isPartial(c.id)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.status==='pending') return base.filter(c=>isPending(c.id)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if(currentFilter.status)     return base.filter(c=>getEntryStatus(c.id)===currentFilter.status).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+
+  return base.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
 }
 
 function updateRenovPanel(fc){
@@ -1783,7 +1794,20 @@ function updateRenovPanel(fc){
 }
 
 function render(){
-  const fc=filteredClients();updateSummary(fc);renderGSHealthStrip();updateRenovPanel(fc);
+  const fc=filteredClients();
+  // updateSummary uses internal pool logic (not fc) — cards always reflect full GS pool
+  updateSummary(fc);
+  renderGSHealthStrip();
+  // Renovation panel: always show based on full pool (no status filter), same as summary
+  let renovPool;
+  if(currentUser&&currentUser.role==='cs'){
+    const _u=authUsers.find(u=>u.email===currentUser.email);
+    const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
+    renovPool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
+  }else{
+    renovPool=currentFilter.gs==='all'?clients.slice():clients.filter(c=>c.gs.toLowerCase().trim()===currentFilter.gs.toLowerCase().trim());
+  }
+  updateRenovPanel(renovPool);
   // Always keep title count in sync with actual filtered results
   const titleEl=document.getElementById('mainTitle');
   if(titleEl&&titleEl.innerHTML.includes('Todas as Contas')){
@@ -1805,19 +1829,28 @@ function render(){
 }
 
 function updateSummary(fc){
-  const gf=fc; // use the already-filtered clients passed in — respects CS isolation
-  document.getElementById('s-total').textContent=gf.length;
-  document.getElementById('s-red').textContent=gf.filter(c=>getEntryStatus(c.id)==='V').length;
-  document.getElementById('s-yellow').textContent=gf.filter(c=>getEntryStatus(c.id)==='A').length;
-  document.getElementById('s-green').textContent=gf.filter(c=>getEntryStatus(c.id)==='G').length;
-  document.getElementById('s-churn').textContent=gf.filter(c=>hasChurnRisk(c.id)).length;
-  document.getElementById('s-pending').textContent=gf.filter(c=>isPending(c.id)).length;
-  const _dbU=currentUser&&currentUser.role==='cs'?authUsers.find(u=>u.email===currentUser.email):null;
-  const _csN=_dbU?(_dbU.csName||_dbU.name||currentUser.name):null;
-  const visibleClients=currentUser&&currentUser.role==='cs'
-    ?clients.filter(c=>c.gs.toLowerCase().trim()===(_csN||'').toLowerCase().trim())
-    :clients;
-  // Sidebar counts (only IDs that exist in current sidebar HTML)
+  // Summary strip counts always reflect the FULL pool (current GS selection, no status filter)
+  // so that switching status filter doesn't zero out the other cards
+  let pool;
+  if(currentUser&&currentUser.role==='cs'){
+    const _u=authUsers.find(u=>u.email===currentUser.email);
+    const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
+    pool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
+  }else{
+    pool=currentFilter.gs==='all'?clients.slice():clients.filter(c=>c.gs.toLowerCase().trim()===currentFilter.gs.toLowerCase().trim());
+  }
+  if(currentFilter.search){const q=currentFilter.search.toLowerCase();pool=pool.filter(c=>c.name.toLowerCase().includes(q));}
+
+  document.getElementById('s-total').textContent=pool.length;
+  const cntAll=document.getElementById('count-all');if(cntAll)cntAll.textContent=clients.length;
+  document.getElementById('s-red').textContent=pool.filter(c=>getEntryStatus(c.id)==='V').length;
+  document.getElementById('s-yellow').textContent=pool.filter(c=>getEntryStatus(c.id)==='A').length;
+  document.getElementById('s-green').textContent=pool.filter(c=>getEntryStatus(c.id)==='G').length;
+  document.getElementById('s-churn').textContent=pool.filter(c=>hasChurnRisk(c.id)).length;
+  document.getElementById('s-pending').textContent=pool.filter(c=>isPending(c.id)).length;
+
+  // Sidebar quick-filter counts always use full visible pool (not filtered)
+  const visibleClients=currentUser&&currentUser.role==='cs'?pool:clients;
   document.getElementById('count-churn').textContent=visibleClients.filter(c=>hasChurnRisk(c.id)).length;
   const _cntRenov=document.getElementById('count-renov');if(_cntRenov)_cntRenov.textContent=visibleClients.filter(c=>c.renovacao===true||c.renovacao==='true').length;
   const _cntTA=document.getElementById('count-tierA');if(_cntTA)_cntTA.textContent=visibleClients.filter(c=>c.tier==='A').length;
@@ -1829,8 +1862,8 @@ function updateSummary(fc){
   if(partialEl)partialEl.textContent=visibleClients.filter(c=>isPartial(c.id)).length;
   const consecEl=document.getElementById('count-consec');
   if(consecEl)consecEl.textContent=visibleClients.filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;
-  document.getElementById('count-worsened').textContent=clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length;
-  document.getElementById('count-improved').textContent=clients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length;
+  document.getElementById('count-worsened').textContent=visibleClients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length;
+  document.getElementById('count-improved').textContent=visibleClients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length;
   document.querySelectorAll('.gs-btn-person').forEach(b=>{const gs=b.dataset.gsName;const cnt=b.querySelector('.gs-count');if(cnt&&gs)cnt.textContent=clients.filter(c=>c.gs===gs).length;});
 }
 
@@ -2110,15 +2143,20 @@ function resetAllQuickBtns(){
   document.querySelectorAll('.gs-btn:not(#view-list-btn):not(#view-table-btn)').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.summary-card').forEach(b=>b.classList.remove('active'));
 }
+function safeActivateAll(){
+  const el=document.getElementById('gs-all');
+  if(el)el.classList.add('active');
+}
 function setTitle(t,count){document.getElementById('mainTitle').innerHTML=`${t} <span>${count} conta${count!==1?'s':''}</span>`;}
 
 function filterGS(gs,btn){closeSidebar();
-  currentFilter={...currentFilter,gs,status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,gs,status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false,search:''};
   resetAllQuickBtns();
   if(btn)btn.classList.add('active');
   else document.querySelectorAll('.gs-btn-person').forEach(b=>{if(b.dataset.gsName===gs)b.classList.add('active');});
-  const count=gs==='all'?filteredClients().length:filteredClients().filter(c=>c.gs===gs).length;
-  setTitle(gs==='all'?'Todas as Contas':gs,count);
+  // For admin selecting a specific GS, title shows that GS name; 'all' shows total
+  const fc=filteredClients();
+  setTitle(gs==='all'?'Todas as Contas':gs,fc.length);
   document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   document.getElementById('sc-all').classList.add('active');render();
 }
@@ -2133,10 +2171,17 @@ function getFilterGs(){
 
 function filterStatus(st,btn){
   const tog=currentFilter.status===st;
-  currentFilter={...currentFilter,status:tog?null:st,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,status:tog?null:st,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
   resetAllQuickBtns();
-  if(currentFilter.status){btn.classList.add('active');const l={V:'Problema Real',G:'Acompanhar e Manter',A:'Tomar Ação',pending:'Pendentes',partial:'Parciais'};const fc2=filteredClients();const count=st==='pending'?fc2.filter(c=>isPending(c.id)).length:st==='partial'?fc2.filter(c=>isPartial(c.id)).length:fc2.filter(c=>getEntryStatus(c.id)===st).length;setTitle(l[st]||st,count);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  if(!tog){
+    btn.classList.add('active');
+    const fc2=filteredClients();
+    const l={V:'Problema Real',G:'Acompanhar',A:'Tomar Ação',pending:'Pendentes',partial:'Parciais'};
+    setTitle(l[st]||st,fc2.length);
+  }else{
+    safeActivateAll();
+    setTitle('Todas as Contas',filteredClients().length);
+  }
   render();
 }
 function filterTier(tier,btn){closeSidebar();
@@ -2153,28 +2198,28 @@ function filterChurn(btn){closeSidebar();
   currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   if(currentFilter.churn){btn.classList.add('active');document.getElementById('sc-churn').classList.add('active');setTitle('⚠ Risco de Churn',filteredClients().filter(c=>hasChurnRisk(c.id)).length);}
-  else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  else{safeActivateAll();document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterVIP(btn){
   currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ Tier A',filteredClients().filter(c=>c.vip||c.tier==='A').length);}
-  else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  else{safeActivateAll();document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterBookPending(btn){closeSidebar();
   currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:getFilterGs(),worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
   if(currentFilter.bookPending){btn.classList.add('active');setTitle('Book Pendente',filteredClients().filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  else{safeActivateAll();setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterByCard(type){
   // Open info drawer
   const drawerType=type==='V'?'churn':type==='churn'?'churn':type==='A'?'below':type==='pending'?'pending':type==='all'?'total':'hs';
   openKpiDrawer(drawerType);
-  // Also filter the list
+  // Filter the list
   resetAllQuickBtns();
   const base={gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:false,tier:null,search:''};
   if(type==='all'){currentFilter={...base,status:null};setTitle('Todas as Contas',filteredClients().length);}
@@ -2190,24 +2235,24 @@ function filterByCard(type){
 }
 function filterConsecutiveCritical(btn){
   const isActive=currentFilter.consec;
-  currentFilter={...currentFilter,consec:!isActive,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false};
+  currentFilter={...currentFilter,consec:!isActive,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,tier:null,renovacao:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
-  if(!isActive){btn.classList.add('active');const count=filteredClients().filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;setTitle('🔁 Crítico Recorrente',count);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  if(!isActive){btn.classList.add('active');const count=filteredClients().length;setTitle('🔁 Crítico Recorrente',count);}
+  else{safeActivateAll();setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterWorsened(btn){
-  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
-  if(currentFilter.worsened){btn.classList.add('active');setTitle('↓ Pioraram',filteredClients().filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  if(currentFilter.worsened){btn.classList.add('active');setTitle('↓ Pioraram',filteredClients().length);}
+  else{safeActivateAll();setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterImproved(btn){
-  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));document.getElementById('sc-all').classList.add('active');
-  if(currentFilter.improved){btn.classList.add('active');setTitle('↑ Melhoraram',filteredClients().filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length);}
-  else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  if(currentFilter.improved){btn.classList.add('active');setTitle('↑ Melhoraram',filteredClients().length);}
+  else{safeActivateAll();setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function searchClients(val){currentFilter.search=val;if(val){const count=filteredClients().filter(c=>c.name.toLowerCase().includes(val.toLowerCase())).length;setTitle(`Busca: "${val}"`,count);}else setTitle('Todas as Contas',filteredClients().length);render();}
