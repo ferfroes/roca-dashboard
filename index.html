@@ -305,6 +305,28 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
   .admin-sections{grid-template-columns:1fr;}
 }
 
+
+/* ── CONTRACTS PANEL ── */
+.contracts-panel{margin-bottom:20px;}
+.contracts-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:4px;}
+.ct-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:all .15s;}
+.ct-card:hover,.ct-card.active{box-shadow:0 0 0 2px var(--accent2);border-color:var(--accent2);}
+.ct-card-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+.ct-card-count{font-weight:800;font-size:24px;line-height:1;font-family:'JetBrains Mono',monospace;}
+.ct-card-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.ct-urgent{border-top:3px solid var(--red);}
+.ct-warn{border-top:3px solid #f59e0b;}
+.ct-soon{border-top:3px solid var(--accent3);}
+.ct-safe{border-top:3px solid var(--green);}
+.ct-expired{border-top:3px solid var(--muted);}
+
+/* Contracts drawer */
+.ct-drawer{display:none;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);overflow:hidden;margin-top:8px;max-height:280px;overflow-y:auto;}
+.ct-drawer.open{display:block;}
+.ct-drawer-row{display:grid;grid-template-columns:2fr 2fr 1fr 90px 80px;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border);font-size:11.5px;align-items:center;}
+.ct-drawer-row:last-child{border-bottom:none;}
+.ct-drawer-hdr{background:var(--surface);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+
 /* ── RENOVAÇÃO PANEL ── */
 .renov-panel{margin-bottom:20px;}
 .renov-panel-title{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
@@ -480,38 +502,36 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     </button>
     <div id="gs-sidebar-list"></div>
     <div class="sidebar-label">Filtros Rápidos</div>
-    <button class="gs-btn" onclick="filterStatus('V',this)" id="quick-red">
-      <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">🔴</div>Problema Real<span class="gs-count" id="count-red">0</span>
-    </button>
-    <button class="gs-btn" onclick="filterStatus('G',this)" id="quick-green">
-      <div class="gs-avatar" style="background:var(--green-bg);color:var(--green);">🟢</div>Acompanhar<span class="gs-count" id="count-green">0</span>
-    </button>
-    <button class="gs-btn" onclick="filterStatus('A',this)" id="quick-yellow">
-      <div class="gs-avatar" style="background:var(--yellow-bg);color:var(--yellow);">🟡</div>Tomar Ação<span class="gs-count" id="count-yellow">0</span>
-    </button>
     <button class="gs-btn" onclick="filterChurn(this)" id="quick-churn">
       <div class="gs-avatar" style="background:var(--churn-bg);color:var(--churn);">⚠</div>Risco de Churn<span class="gs-count" id="count-churn">0</span>
-    </button>
-    <button class="gs-btn" onclick="filterVIP(this)" id="quick-vip">
-      <div class="gs-avatar" style="background:var(--vip-bg);color:var(--vip);">⭐</div>Tier A<span class="gs-count" id="count-vip">0</span>
     </button>
     <button class="gs-btn" onclick="filterStatus('pending',this)" id="quick-pending">
       <div class="gs-avatar" style="background:var(--surface2);color:var(--muted);">⏳</div>Pendentes<span class="gs-count" id="count-pending">0</span>
     </button>
-    <button class="gs-btn" onclick="filterStatus('partial',this)" id="quick-partial">
-      <div class="gs-avatar" style="background:var(--surface2);color:var(--muted);">◑</div>Parciais<span class="gs-count" id="count-partial">0</span>
-    </button>
     <button class="gs-btn" onclick="filterBookPending(this)" id="quick-book">
       <div class="gs-avatar" style="background:var(--accent-bg);color:var(--accent2);">📋</div>Book Pendente<span class="gs-count" id="count-book">0</span>
     </button>
-    <button class="gs-btn" onclick="filterWorsened(this)" id="quick-worsened">
-      <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">↓</div>Pioraram<span class="gs-count" id="count-worsened">0</span>
+    <button class="gs-btn" onclick="filterRenov(this)" id="quick-renov">
+      <div class="gs-avatar" style="background:#fff7ed;color:#c2410c;">🔄</div>Renovação Próxima<span class="gs-count" id="count-renov">0</span>
     </button>
     <button class="gs-btn" onclick="filterConsecutiveCritical(this)" id="quick-consec">
       <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">🔁</div>Crítico Recorrente<span class="gs-count" id="count-consec">0</span>
     </button>
+    <button class="gs-btn" onclick="filterWorsened(this)" id="quick-worsened">
+      <div class="gs-avatar" style="background:var(--red-bg);color:var(--red);">↓</div>Pioraram<span class="gs-count" id="count-worsened">0</span>
+    </button>
     <button class="gs-btn" onclick="filterImproved(this)" id="quick-improved">
       <div class="gs-avatar" style="background:var(--green-bg);color:var(--green);">↑</div>Melhoraram<span class="gs-count" id="count-improved">0</span>
+    </button>
+    <div class="sidebar-label">Tier</div>
+    <button class="gs-btn" onclick="filterTier('A',this)" id="quick-tierA">
+      <div class="gs-avatar" style="background:var(--yellow-bg);color:var(--yellow);font-weight:800;font-size:11px;">A</div>Tier A<span class="gs-count" id="count-tierA">0</span>
+    </button>
+    <button class="gs-btn" onclick="filterTier('B',this)" id="quick-tierB">
+      <div class="gs-avatar" style="background:var(--accent-bg);color:var(--accent2);font-weight:800;font-size:11px;">B</div>Tier B<span class="gs-count" id="count-tierB">0</span>
+    </button>
+    <button class="gs-btn" onclick="filterTier('C',this)" id="quick-tierC">
+      <div class="gs-avatar" style="background:var(--surface2);color:var(--muted);font-weight:800;font-size:11px;">C</div>Tier C<span class="gs-count" id="count-tierC">0</span>
     </button>
     <div class="sidebar-label">Visualização</div>
     <button class="gs-btn active" id="view-list-btn" onclick="setView('list',this)">
@@ -572,9 +592,52 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     </div>
 
 
-    <!-- RENOVAÇÃO PANEL -->
+    <!-- CONTRACTS PANEL -->
+    <div class="contracts-panel" id="contractsPanel" style="display:none;">
+      <div class="renov-panel-title">📄 Vencimento de Contratos <div style="flex:1;height:1px;background:var(--border);"></div>
+        <label style="font-size:10px;color:var(--accent2);cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:600;">
+          <input type="file" id="contractsXlsxInput" accept=".xlsx,.xls" onchange="importContracts(this)" style="display:none;">
+          📥 Importar planilha
+        </label>
+      </div>
+      <div class="contracts-grid">
+        <div class="ct-card ct-urgent" onclick="toggleCtDrawer('urgent')">
+          <div class="ct-card-label">≤ 30 dias</div>
+          <div class="ct-card-count" id="ct-count-30" style="color:var(--red);">0</div>
+          <div class="ct-card-sub">ação imediata</div>
+        </div>
+        <div class="ct-card ct-warn" onclick="toggleCtDrawer('warn')">
+          <div class="ct-card-label">31 – 60 dias</div>
+          <div class="ct-card-count" id="ct-count-60" style="color:#d97706;">0</div>
+          <div class="ct-card-sub">iniciar conversa</div>
+        </div>
+        <div class="ct-card ct-soon" onclick="toggleCtDrawer('soon')">
+          <div class="ct-card-label">61 – 90 dias</div>
+          <div class="ct-card-count" id="ct-count-90" style="color:var(--accent2);">0</div>
+          <div class="ct-card-sub">no radar</div>
+        </div>
+        <div class="ct-card ct-safe" onclick="toggleCtDrawer('safe')">
+          <div class="ct-card-label">&gt; 90 dias</div>
+          <div class="ct-card-count" id="ct-count-safe" style="color:var(--green);">0</div>
+          <div class="ct-card-sub">tranquilo</div>
+        </div>
+        <div class="ct-card ct-expired" onclick="toggleCtDrawer('expired')">
+          <div class="ct-card-label">Vencidos</div>
+          <div class="ct-card-count" id="ct-count-exp" style="color:var(--muted);">0</div>
+          <div class="ct-card-sub">verificar situação</div>
+        </div>
+      </div>
+      <div class="ct-drawer" id="ct-drawer">
+        <div class="ct-drawer-row ct-drawer-hdr">
+          <span>Cliente</span><span>Projeto</span><span>Resp.</span><span>Vencimento</span><span>Status</span>
+        </div>
+        <div id="ct-drawer-body"></div>
+      </div>
+    </div>
+
+    <!-- RENOVAÇÃO FLAG PANEL (simple) -->
     <div class="renov-panel">
-      <div class="renov-panel-title">🔄 Renovações de Contrato <div style="flex:1;height:1px;background:var(--border);"></div></div>
+      <div class="renov-panel-title">🔄 Contas com Renovação Sinalizada <div style="flex:1;height:1px;background:var(--border);"></div></div>
       <div class="renov-grid" id="renovGrid">
         <div class="renov-card rc-urgent" id="rc-urgent">
           <div class="renov-card-label">Renovação próxima</div>
@@ -582,7 +645,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
           <div class="renov-card-sub">Ação imediata</div>
         </div>
         <div class="renov-card rc-safe" id="rc-ok">
-          <div class="renov-card-label">Sem renovação</div>
+          <div class="renov-card-label">Sem sinalização</div>
           <div class="renov-card-count" id="rc-count-ok" style="color:var(--green);">0</div>
           <div class="renov-card-sub">Situação tranquila</div>
         </div>
@@ -592,7 +655,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
           <div class="renov-card-sub">na carteira</div>
         </div>
         <div class="renov-card" id="rc-pct" style="border-top:3px solid var(--accent3);">
-          <div class="renov-card-label">% em renovação</div>
+          <div class="renov-card-label">% sinalizadas</div>
           <div class="renov-card-count" id="rc-count-pct" style="color:var(--accent2);">0%</div>
           <div class="renov-card-sub">do total</div>
         </div>
@@ -923,11 +986,11 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
         </div>
       </div>
 
-      <!-- COMENTÁRIO SEMANAL -->
-      <div class="section-title">Resumo da semana<div class="section-divider"></div></div>
-      <div class="field-group" style="margin-bottom:10px;">
-        <div class="field-label">💬 Comentário para o 1:1 com o gestor</div>
-        <textarea id="weeklyComment" rows="8" placeholder="Como foi sua semana com esta carteira? Principais avanços, preocupações, pedidos de suporte, contexto que o gestor precisa saber para o 1:1..." style="resize:vertical;"></textarea>
+      <!-- ATA 1:1 — admin only -->
+      <div class="section-title" id="ata1on1Section">Ata do 1:1<div class="section-divider"></div></div>
+      <div class="field-group" id="ata1on1Group" style="margin-bottom:10px;">
+        <div class="field-label">📋 Ata / Pauta do próximo 1:1 <span style="font-size:9px;color:var(--muted);font-weight:400;">(visível apenas para o gestor)</span></div>
+        <textarea id="weeklyComment" rows="8" placeholder="Registre aqui a ata do 1:1, pontos de acompanhamento e pauta para a próxima reunião..." style="resize:vertical;" readonly></textarea>
       </div>
 
       <!-- BOOK -->
@@ -1015,6 +1078,7 @@ async function spLoadAll(){
         ? (Array.isArray(data.clients) ? data.clients : Object.values(data.clients).filter(x=>x&&x.name))
         : [];
       clients = rawC.length > 0 ? rawC.map(x=>({...x,book:x.book===true||x.book==='true'||x.book==='S',vip:x.vip===true||x.vip==='true',renovacao:x.renovacao===true||x.renovacao==='true'||x.renovacao==='S'})).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')) : [];
+      contracts=data.contracts||[];showContractPanel(contracts.length>0);
       localStorage.setItem('roca_clients',JSON.stringify(clients));
 
       const rawG=data.gsList
@@ -1042,7 +1106,7 @@ let clients=[];
 let gsList=[];
 const gsColors={"Alinne Carmo":{bg:"#FEF3C7",color:"#92400E"},"Daiane Queiroz":{bg:"#FCE7F3",color:"#9D174D"},"Douglas Romão":{bg:"#E0E7FF",color:"#3730A3"},"Fróes":{bg:"#0D2B4E",color:"#FFFFFF"},"Lucineia Guizardi":{bg:"#D1FAE5",color:"#065F46"},"Michelle Stefenson":{bg:"#FEE2E2",color:"#991B1B"},"Renata Gomes":{bg:"#ECFDF5",color:"#047857"},"Telma":{bg:"#F0FDF4",color:"#166534"}};
 
-let entries={},weekHistory={};
+let entries={},weekHistory={},contracts=[];
 let currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
 let currentView='list',editingClientId=null;
 let currentFarol={R:null,O:null,C:null,A:null},churnSelected=new Set(),currentBilling=null;
@@ -1151,6 +1215,18 @@ function calcHealthScore(id){
 
   // ── RENOVAÇÃO PRÓXIMA ─────────────────────────────────────────────────────
   if(cl.renovacao===true||cl.renovacao==='true')penalty+=P(15);
+
+  // ── CONTRATOS — vencimento do mais crítico ────────────────────────────────
+  if(typeof getMostCriticalContract==='function'&&typeof contracts!=='undefined'&&contracts.length){
+    const mc=getMostCriticalContract(cl.name);
+    if(mc){const d=contractDaysLeft(mc.venc);if(d!==null){
+      if(d<0)penalty+=P(10);
+      else if(d<=15)penalty+=P(20);
+      else if(d<=30)penalty+=P(12);
+      else if(d<=60)penalty+=P(6);
+    }}
+  }
+
   const final=Math.max(0,Math.min(100,Math.round(score-penalty)));
   return final;
 }
@@ -1280,11 +1356,42 @@ function calcHSDetail(id){
   if(e.pipelineStage&&e.pipelineStage!==''){factors.push({type:'positive',icon:'💼',label:`Pipeline: ${{identified:'Identificado',negotiating:'Em negociação',proposal:'Proposta enviada',closed:'Fechado'}[e.pipelineStage]}${e.pipelineValue?` (R$ ${parseInt(e.pipelineValue).toLocaleString('pt-BR')}/mês)`:''}`,val:'✓'});}
   else{checklist.push({done:false,text:'Identificar oportunidade de expansão / pipeline'});}
 
-  // ── RENOVAÇÃO PRÓXIMA ─────────────────────────────────────────────────────
+  // ── RENOVAÇÃO PRÓXIMA (flag manual) ──────────────────────────────────────
   if(c.renovacao===true||c.renovacao==='true'){
     const renovPenalty=isTierA?Math.round(15*1.3):15;
-    factors.push({type:'negative',icon:'🔄',label:'Renovação de contrato próxima — ação necessária',val:`-${renovPenalty}`});
+    factors.push({type:'negative',icon:'🔄',label:'Renovação sinalizada pelo gestor',val:`-${renovPenalty}`});
     checklist.push({done:false,text:'Tratar renovação de contrato com o cliente'});
+  }
+
+  // ── CONTRATOS — vencimento ────────────────────────────────────────────────
+  if(typeof getMostCriticalContract==='function'&&typeof contracts!=='undefined'&&contracts.length){
+    const mc=getMostCriticalContract(c.name);
+    if(mc){
+      const d=contractDaysLeft(mc.venc);
+      const vencStr=mc.venc?new Date(mc.venc+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+      const allCts=getClientContracts(c.name);
+      const label=`${mc.project||'Contrato'} — vence ${vencStr}${allCts.length>1?` (+${allCts.length-1} outros)`:''}`;
+      if(d===null){
+        factors.push({type:'warning',icon:'📄',label:'Contrato sem data de vencimento',val:'–'});
+      }else if(d<0){
+        const p=isTierA?Math.round(10*1.3):10;penalty+=p;
+        factors.push({type:'negative',icon:'📄',label:`${label} — VENCIDO há ${Math.abs(d)} dias`,val:`-${p}`});
+        checklist.push({done:false,text:`Verificar situação do contrato vencido: ${mc.project||mc.clientName}`});
+      }else if(d<=15){
+        const p=isTierA?Math.round(20*1.3):20;penalty+=p;
+        factors.push({type:'negative',icon:'📄',label:`${label} — ${d} dias restantes`,val:`-${p}`});
+        checklist.push({done:false,text:`Urgente: renovar contrato em ${d} dias`});
+      }else if(d<=30){
+        const p=isTierA?Math.round(12*1.3):12;penalty+=p;
+        factors.push({type:'warning',icon:'📄',label:`${label} — ${d} dias restantes`,val:`-${p}`});
+        checklist.push({done:false,text:`Iniciar processo de renovação (${d} dias)`});
+      }else if(d<=60){
+        const p=isTierA?Math.round(6*1.3):6;penalty+=p;
+        factors.push({type:'warning',icon:'📄',label:`${label} — ${d} dias restantes`,val:`-${p}`});
+      }else{
+        factors.push({type:'positive',icon:'📄',label:`${label} — ${d} dias restantes`,val:'✓'});
+      }
+    }
   }
 
   // ── BOOK ─────────────────────────────────────────────────────────────────
@@ -1530,6 +1637,8 @@ function filteredClients(){
     if(currentFilter.churn)return hasChurnRisk(c.id);
     if(currentFilter.consec)return consecutiveCriticalWeeks(c.id)>=2;
     if(currentFilter.vip)return c.vip||c.tier==='A';
+    if(currentFilter.tier)return c.tier===currentFilter.tier;
+    if(currentFilter.renovacao===true)return c.renovacao===true||c.renovacao==='true';
     if(currentFilter.status==='partial')return isPartial(c.id);
     if(currentFilter.status==='pending')return isPending(c.id);
     if(currentFilter.status)return getEntryStatus(c.id)===currentFilter.status;
@@ -1560,6 +1669,7 @@ function render(){
     setTitle('Todas as Contas',fc.length);
   }
   if(currentView==='list')renderList(fc);else renderTable(fc);
+  updateContractPanel();
   // Feature 3: pending alert on Thu/Fri
   const banner=document.getElementById('pendingAlertBanner');
   if(banner){
@@ -1591,6 +1701,10 @@ function updateSummary(fc){
   document.getElementById('count-green').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='G').length;
   document.getElementById('count-yellow').textContent=visibleClients.filter(c=>getEntryStatus(c.id)==='A').length;
   document.getElementById('count-churn').textContent=visibleClients.filter(c=>hasChurnRisk(c.id)).length;
+  const _cntRenov=document.getElementById('count-renov');if(_cntRenov)_cntRenov.textContent=visibleClients.filter(c=>c.renovacao===true||c.renovacao==='true').length;
+  const _cntTA=document.getElementById('count-tierA');if(_cntTA)_cntTA.textContent=visibleClients.filter(c=>c.tier==='A').length;
+  const _cntTB=document.getElementById('count-tierB');if(_cntTB)_cntTB.textContent=visibleClients.filter(c=>c.tier==='B').length;
+  const _cntTC=document.getElementById('count-tierC');if(_cntTC)_cntTC.textContent=visibleClients.filter(c=>c.tier==='C').length;
   document.getElementById('count-vip').textContent=visibleClients.filter(c=>c.vip||c.tier==='A').length;
   document.getElementById('count-pending').textContent=visibleClients.filter(c=>isPending(c.id)).length;
   document.getElementById('count-book').textContent=visibleClients.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length;
@@ -1810,6 +1924,18 @@ function openFillModal(id){
     });
     histStrip.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:2px;"><div style="font-size:9.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-weight:700;align-self:center;margin-right:2px;">HISTÓRICO</div>${weeks.join('')}</div>`;
   }
+  // Ata 1:1 — editable only by admin
+  const ataTA = document.getElementById('weeklyComment');
+  const ataSection = document.getElementById('ata1on1Section');
+  const ataGroup = document.getElementById('ata1on1Group');
+  if(ataTA){
+    const isAdm = currentUser&&currentUser.role==='admin';
+    ataTA.readOnly = !isAdm;
+    ataTA.style.background = isAdm ? '' : 'var(--surface)';
+    ataTA.style.color = isAdm ? '' : 'var(--ink2)';
+    if(ataSection) ataSection.style.display = '';
+    if(ataGroup) ataGroup.style.display = '';
+  }
   document.getElementById('fillModal').classList.add('open');
 }
 
@@ -1893,6 +2019,16 @@ function filterStatus(st,btn){
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
+function filterTier(tier,btn){
+  currentFilter={...currentFilter,gs:getFilterGs(),status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:false,tier};
+  resetAllQuickBtns();if(btn)btn.classList.add('active');
+  setTitle(`Tier ${tier}`,filteredClients().length);render();
+}
+function filterRenov(btn){
+  currentFilter={...currentFilter,gs:getFilterGs(),status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:true,tier:null};
+  resetAllQuickBtns();if(btn)btn.classList.add('active');
+  setTitle('Renovação Próxima',filteredClients().length);render();
+}
 function filterChurn(btn){
   currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
@@ -1914,18 +2050,8 @@ function filterBookPending(btn){
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
-function filterByCard(st){
-  if(st==='churn'){filterChurn(document.getElementById('quick-churn'));return;}
-  const tog=currentFilter.status===st&&st!=='all';
-  currentFilter={...currentFilter,status:(st==='all'||tog)?null:st,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,search:'',consec:false};
-  document.querySelector('.search-input').value='';resetAllQuickBtns();document.getElementById('gs-all').classList.add('active');
-  const l={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar e Manter',pending:'⏳ Pendentes',churn:'⚠ Risco de Churn'};
-  const as=currentFilter.status;const fc2=filteredClients();
-  const count=as==='pending'?fc2.filter(c=>isPending(c.id)).length:as?fc2.filter(c=>getEntryStatus(c.id)===as).length:fc2.length;
-  setTitle(l[as]||'Todas as Contas',count);
-  document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
-  const cm={null:'sc-all',V:'sc-red',A:'sc-yellow',G:'sc-green',pending:'sc-pending',churn:'sc-churn'};
-  (document.getElementById(cm[as])||document.getElementById('sc-all')).classList.add('active');render();
+function filterByCard(type){
+  openKpiDrawer(type==='V'?'churn':type==='churn'?'churn':type==='A'?'below':type==='pending'?'pending':type==='all'?'total':'hs');
 }
 function filterConsecutiveCritical(btn){
   const isActive=currentFilter.consec;
@@ -2896,6 +3022,203 @@ function showToast(msg,duration=2500){
   t._timer=setTimeout(()=>t.classList.remove('show'),duration);
 }
 
+
+// ── CONTRACTS ──────────────────────────────────────────────────────────────────
+
+function contractDaysLeft(venc){
+  if(!venc)return null;
+  const d=new Date(venc);if(isNaN(d))return null;
+  return Math.ceil((d-new Date())/86400000);
+}
+
+function getClientContracts(clientName){
+  const norm=s=>String(s||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'');
+  return contracts.filter(ct=>norm(ct.clientName)===norm(clientName));
+}
+
+function getMostCriticalContract(clientName){
+  const cts=getClientContracts(clientName).filter(ct=>ct.venc);
+  if(!cts.length)return null;
+  // Most critical = soonest vencimento that hasn't expired, or least expired
+  return cts.sort((a,b)=>{
+    const da=contractDaysLeft(a.venc)||9999;
+    const db=contractDaysLeft(b.venc)||9999;
+    return da-db;
+  })[0];
+}
+
+function importContracts(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    // Detect header: Col1=Cliente, Col2=Projeto, Col3=Resp, Col4=Assinatura, Col5=Vencimento
+    let start=0;
+    if(data[0]&&String(data[0][0]||'').toLowerCase().includes('client'))start=1;
+    const imported=[];
+    for(let i=start;i<data.length;i++){
+      const r=data[i];
+      const clientName=String(r[0]||'').trim();if(!clientName)continue;
+      const project=String(r[1]||'').trim();
+      const resp=String(r[2]||'').trim();
+      let venc=r[4];
+      // Normalize date
+      if(venc instanceof Date){venc=venc.toISOString().slice(0,10);}
+      else if(typeof venc==='string'&&venc.includes('/')){
+        const parts=venc.split('/');
+        if(parts.length===3)venc=`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+      }else if(typeof venc==='number'){
+        // Excel serial date
+        const d=new Date((venc-25569)*86400000);venc=d.toISOString().slice(0,10);
+      }else{venc=null;}
+      // Skip if venc is invalid
+      if(venc==='0000-00-00'||venc==='NaN-aN-aN')venc=null;
+      imported.push({clientName,project,resp,venc});
+    }
+    contracts=imported;
+    fbSet('roca/contracts',contracts).catch(e=>console.warn('Contracts save:',e));
+    updateContractPanel();
+    showContractPanel(true);
+    showToast(`✓ ${contracts.length} contratos importados`);
+    addAudit('create',`${contracts.length} contratos importados`);
+  };
+  reader.readAsBinaryString(file);
+  input.value='';
+}
+
+let _ctDrawerBucket=null;
+function toggleCtDrawer(bucket){
+  const drawer=document.getElementById('ct-drawer');
+  const body=document.getElementById('ct-drawer-body');
+  if(!drawer||!body)return;
+  if(_ctDrawerBucket===bucket&&drawer.classList.contains('open')){
+    drawer.classList.remove('open');_ctDrawerBucket=null;return;
+  }
+  _ctDrawerBucket=bucket;
+  const today=new Date();
+  const filtered=contracts.filter(ct=>{
+    const d=contractDaysLeft(ct.venc);
+    if(bucket==='expired')return d!==null&&d<0;
+    if(bucket==='urgent')return d!==null&&d>=0&&d<=30;
+    if(bucket==='warn')return d!==null&&d>30&&d<=60;
+    if(bucket==='soon')return d!==null&&d>60&&d<=90;
+    if(bucket==='safe')return d!==null&&d>90;
+    return false;
+  }).sort((a,b)=>{
+    const da=contractDaysLeft(a.venc)||9999;
+    const db=contractDaysLeft(b.venc)||9999;
+    return da-db;
+  });
+  const colors={expired:'var(--muted)',urgent:'var(--red)',warn:'#d97706',soon:'var(--accent2)',safe:'var(--green)'};
+  body.innerHTML=filtered.length
+    ?filtered.map(ct=>{
+        const d=contractDaysLeft(ct.venc);
+        const col=colors[bucket]||'var(--ink)';
+        const dLabel=d===null?'—':d<0?`${Math.abs(d)}d atrás`:`${d}d`;
+        const vencStr=ct.venc?new Date(ct.venc+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+        return `<div class="ct-drawer-row">
+          <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${ct.clientName}">${ct.clientName}</span>
+          <span style="color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${ct.project}">${ct.project||'—'}</span>
+          <span style="color:var(--muted);font-size:10.5px;">${ct.resp||'—'}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;">${vencStr}</span>
+          <span style="color:${col};font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;">${dLabel}</span>
+        </div>`;
+      }).join('')
+    :'<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center;">Nenhum contrato nesta faixa</div>';
+  drawer.classList.add('open');
+}
+
+function showContractPanel(show){
+  const p=document.getElementById('contractsPanel');
+  if(p)p.style.display=show?'':'none';
+}
+
+function updateContractPanel(){
+  // Only show if contracts are loaded
+  if(!contracts.length){showContractPanel(false);return;}
+  showContractPanel(true);
+  // Get filtered client set
+  const fc=filteredClients();
+  const fcNames=new Set(fc.map(cl=>String(cl.name||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'')));
+  // Filter contracts to visible clients
+  const norm=s=>String(s||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'');
+  const visible=contracts.filter(ct=>fcNames.has(norm(ct.clientName)));
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('ct-count-30', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>=0&&d<=30;}).length);
+  set('ct-count-60', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>30&&d<=60;}).length);
+  set('ct-count-90', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>60&&d<=90;}).length);
+  set('ct-count-safe',visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>90;}).length);
+  set('ct-count-exp', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d<0;}).length);
+}
+
+
+function openKpiDrawer(type){
+  const fc=filteredClients();
+  let title='',sub='',items=[];
+  const hsColor=hs=>hs>=90?'var(--green)':hs>=75?'#f59e0b':hs>=50?'var(--churn)':'var(--red)';
+
+  if(type==='total'){
+    title='Todas as Contas';sub=`${fc.length} contas na carteira`;
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id),tag:''}));
+  }else if(type==='hs'){
+    title='Health Score';sub='Contas com HS calculado';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null).sort((a,b)=>b.hs-a.hs);
+  }else if(type==='churn'){
+    title='Risco de Churn';sub='Contas com sinal de churn';
+    items=fc.filter(cl=>hasChurnRisk(cl.id)).map(cl=>({cl,hs:calcHealthScore(cl.id)}));
+  }else if(type==='below'){
+    title='HS Abaixo de 75%';sub='Contas que requerem atenção';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs<75).sort((a,b)=>a.hs-b.hs);
+  }else if(type==='pending'){
+    title='Sem Preenchimento';sub='Contas pendentes esta semana';
+    items=fc.filter(cl=>isPending(cl.id)).map(cl=>({cl,hs:null}));
+  }else if(type==='promotores'){
+    title='Promotores NPS';sub='Clientes com NPS 9 ou 10';
+    items=fc.filter(cl=>{const e=entries[cl.id];return e&&e.npsScore&&parseInt(e.npsScore)>=9;}).map(cl=>({cl,hs:calcHealthScore(cl.id)}));
+  }
+
+  document.getElementById('kpiDrawerTitle').textContent=title;
+  document.getElementById('kpiDrawerSub').textContent=`${items.length} conta${items.length!==1?'s':''}`;
+
+  const body=document.getElementById('kpiDrawerBody');
+  if(!items.length){
+    body.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma conta nesta categoria</div>';
+  }else{
+    body.innerHTML=items.map(({cl,hs})=>{
+      const col=gsColors[cl.gs]||{bg:'#eee',color:'#444'};
+      const e=entries[cl.id]||{};
+      const nps=e.npsScore?parseInt(e.npsScore):null;
+      const npsLabel=nps===null?'':`<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:${nps>=9?'var(--green-bg)':nps>=7?'var(--yellow-bg)':'var(--red-bg)'};color:${nps>=9?'var(--green)':nps>=7?'var(--yellow)':'var(--red)'};">${nps>=9?'Promotor':nps>=7?'Neutro':'Detrator'}</span>`;
+      const hsLabel=hs!==null?`<span style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:${hsColor(hs)};">${hs}%</span>`:`<span style="color:var(--muted);font-size:11px;">sem dado</span>`;
+      return `<div onclick="openHSDetail(${cl.id})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all .12s;" onmouseover="this.style.borderColor='var(--accent3)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cl.name}${cl.renovacao?'  🔄':''}</div>
+          <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:9px;padding:1px 6px;border-radius:6px;background:${col.bg};color:${col.color};font-weight:600;">${cl.gs}</span>
+            <span style="font-size:9px;padding:1px 5px;border-radius:6px;background:var(--surface2);color:var(--muted);">Tier ${cl.tier||'C'}</span>
+            ${npsLabel}
+          </div>
+        </div>
+        ${hsLabel}
+      </div>`;
+    }).join('');
+  }
+
+  const drawer=document.getElementById('kpiDrawer');
+  const overlay=document.getElementById('kpiDrawerOverlay');
+  if(drawer){drawer.style.display='flex';setTimeout(()=>drawer.style.transform='translateX(0)',10);}
+  if(overlay)overlay.style.display='block';
+}
+
+function closeKpiDrawer(){
+  const drawer=document.getElementById('kpiDrawer');
+  const overlay=document.getElementById('kpiDrawerOverlay');
+  if(drawer){drawer.style.transform='translateX(100%)';setTimeout(()=>drawer.style.display='none',250);}
+  if(overlay)overlay.style.display='none';
+}
+
 checkAuthAndInit();
 </script>
 
@@ -2929,6 +3252,20 @@ checkAuthAndInit();
     </div>
   </div>
 </div>
+
+
+<!-- KPI DRAWER -->
+<div id="kpiDrawer" style="display:none;position:fixed;top:0;right:0;width:380px;height:100vh;background:var(--card);box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:900;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div id="kpiDrawerTitle" style="font-weight:800;font-size:15px;color:var(--ink);"></div>
+      <div id="kpiDrawerSub" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+    </div>
+    <button onclick="closeKpiDrawer()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:4px;">✕</button>
+  </div>
+  <div id="kpiDrawerBody" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:6px;"></div>
+</div>
+<div id="kpiDrawerOverlay" onclick="closeKpiDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:899;"></div>
 
 </body>
 </html>
