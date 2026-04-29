@@ -420,6 +420,123 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 /* ── TOAST ── */
 .toast{position:fixed;bottom:28px;right:28px;background:var(--accent);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);z-index:9999;opacity:0;transform:translateY(10px);transition:all .25s ease;pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Mobile & Tablet
+   ══════════════════════════════════════════════ */
+
+/* ── TABLET (≤1024px) ── */
+@media (max-width:1024px){
+  .dash-kpi-strip{grid-template-columns:repeat(3,1fr);}
+  .dash-row-2{grid-template-columns:1fr 1fr;}
+  .dash-row-3{grid-template-columns:1fr 1fr;}
+  .dash-row-4{grid-template-columns:1fr;}
+  .dash-card-roca{grid-column:1/-1;}
+  .contracts-grid{grid-template-columns:repeat(3,1fr);}
+  .renov-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ── MOBILE (≤768px) ── */
+@media (max-width:768px){
+
+  /* Topbar */
+  .topbar{padding:0 12px;gap:6px;flex-wrap:wrap;height:auto;min-height:52px;padding-top:6px;padding-bottom:6px;}
+  .topbar-brand{font-size:14px;}
+  .topbar-sub{display:none;}
+  .week-badge{font-size:10px;padding:3px 8px;}
+  .topbar-right{gap:6px;}
+  .topbar-btn{font-size:11px;padding:5px 10px;}
+  .avatar-btn{width:30px;height:30px;font-size:12px;}
+
+  /* Main nav tabs */
+  .main-tabs{padding:0 8px;gap:0;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;}
+  .main-tab{font-size:11px;padding:10px 10px;white-space:nowrap;flex-shrink:0;}
+
+  /* Layout: hide sidebar by default, show as overlay */
+  .layout{flex-direction:column;}
+  .sidebar{
+    position:fixed;left:0;top:0;height:100vh;z-index:800;
+    transform:translateX(-100%);transition:transform .25s ease;
+    width:240px;box-shadow:4px 0 20px rgba(0,0,0,.15);
+  }
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:799;}
+  .sidebar-overlay.open{display:block;}
+
+  /* Hamburger button */
+  .sidebar-hamburger{
+    display:flex;align-items:center;justify-content:center;
+    width:36px;height:36px;border-radius:8px;
+    border:1px solid var(--border);background:var(--card);
+    cursor:pointer;font-size:18px;flex-shrink:0;
+    margin-right:6px;
+  }
+
+  /* Main content — full width */
+  .main-content{padding:12px;width:100%;box-sizing:border-box;}
+
+  /* View header */
+  .view-header{flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .view-title{font-size:18px;}
+  .search-box{width:100%;max-width:100%;}
+
+  /* Summary strip */
+  .summary-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .summary-card{padding:10px 10px;}
+  .sc-val{font-size:22px;}
+  .sc-lbl{font-size:8.5px;}
+
+  /* Renov & contracts panels */
+  .renov-grid{grid-template-columns:repeat(2,1fr);}
+  .contracts-grid{grid-template-columns:repeat(2,1fr);}
+  .ct-drawer-row{grid-template-columns:1fr 80px;}
+  .ct-drawer-row span:nth-child(3),.ct-drawer-row span:nth-child(4){display:none;}
+
+  /* GS health strip */
+  .gs-health-strip{flex-wrap:wrap;gap:8px;}
+  .gs-health-card{min-width:130px;flex:1;}
+
+  /* Client list */
+  .client-row{flex-wrap:wrap;gap:6px;padding:10px 12px;}
+  .client-row-right{flex-wrap:wrap;gap:4px;}
+  .roca-dots{gap:3px;}
+
+  /* Fill modal */
+  .modal-card{width:100%;max-width:100%;height:100vh;border-radius:0;margin:0;}
+  .field-grid-2,.field-grid-3,.field-grid-4{grid-template-columns:1fr;}
+  .farol-grid{grid-template-columns:1fr 1fr;}
+
+  /* HS modal */
+  .hs-modal-inner{width:100%;max-width:100%;height:100vh;border-radius:0;margin:0;}
+
+  /* Admin */
+  .admin-toolbar{flex-wrap:wrap;gap:8px;}
+  .admin-sections{grid-template-columns:1fr;}
+  .client-edit-row{grid-template-columns:1fr;gap:4px;}
+
+  /* Dashboard */
+  .dash-shell{padding:12px;}
+  .dash-toolbar{flex-direction:column;align-items:flex-start;gap:8px;}
+  .dash-kpi-strip{grid-template-columns:repeat(2,1fr);}
+  .dash-row-2,.dash-row-3,.dash-row-4{grid-template-columns:1fr;}
+  .dash-roca-grid{grid-template-columns:1fr 1fr;}
+
+  /* KPI Drawer */
+  #kpiDrawer{width:100%;border-radius:0;}
+
+  /* Table view */
+  .data-table{font-size:11px;}
+  .data-table th,.data-table td{padding:6px 8px;}
+}
+
+/* ── VERY SMALL (≤480px) ── */
+@media (max-width:480px){
+  .summary-strip{grid-template-columns:repeat(2,1fr);}
+  .dash-kpi-strip{grid-template-columns:1fr 1fr;}
+  .renov-grid{grid-template-columns:1fr 1fr;}
+  .farol-grid{grid-template-columns:1fr;}
+}
+
 </style>
 </head>
 <body>
@@ -485,8 +602,8 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 <div style="background:var(--accent);border-bottom:1px solid rgba(255,255,255,.1);">
   <div class="main-tabs">
     <button class="main-tab active" onclick="switchMainTab('gerencial',this)">📊 Gestão</button>
-    <button class="main-tab" onclick="switchMainTab('administrativa',this)">⚙️ Administração</button>
     <button class="main-tab" id="tab-btn-dashboard" onclick="switchMainTab('dashboard',this)" style="display:none;">📈 Dashboard</button>
+    <button class="main-tab" onclick="switchMainTab('administrativa',this)">⚙️ Administração</button>
     <button class="main-tab" id="tab-btn-config" onclick="switchMainTab('configuracoes',this)" style="display:none;">📋 Logs</button>
   </div>
 </div>
@@ -1992,7 +2109,7 @@ function saveEntry(){
 function resetAllQuickBtns(){document.querySelectorAll('.gs-btn:not(#view-list-btn):not(#view-table-btn)').forEach(b=>b.classList.remove('active'));}
 function setTitle(t,count){document.getElementById('mainTitle').innerHTML=`${t} <span>${count} conta${count!==1?'s':''}</span>`;}
 
-function filterGS(gs,btn){
+function filterGS(gs,btn){closeSidebar();
   currentFilter={...currentFilter,gs,status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
   if(btn)btn.classList.add('active');
@@ -2019,17 +2136,17 @@ function filterStatus(st,btn){
   else{document.getElementById('gs-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
-function filterTier(tier,btn){
+function filterTier(tier,btn){closeSidebar();
   currentFilter={...currentFilter,gs:getFilterGs(),status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:false,tier};
   resetAllQuickBtns();if(btn)btn.classList.add('active');
   setTitle(`Tier ${tier}`,filteredClients().length);render();
 }
-function filterRenov(btn){
+function filterRenov(btn){closeSidebar();
   currentFilter={...currentFilter,gs:getFilterGs(),status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:true,tier:null};
   resetAllQuickBtns();if(btn)btn.classList.add('active');
   setTitle('Renovação Próxima',filteredClients().length);render();
 }
-function filterChurn(btn){
+function filterChurn(btn){closeSidebar();
   currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,vip:false,consec:false};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
   if(currentFilter.churn){btn.classList.add('active');document.getElementById('sc-churn').classList.add('active');setTitle('⚠ Risco de Churn',filteredClients().filter(c=>hasChurnRisk(c.id)).length);}
@@ -2043,7 +2160,7 @@ function filterVIP(btn){
   else{document.getElementById('gs-all').classList.add('active');document.getElementById('sc-all').classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
-function filterBookPending(btn){
+function filterBookPending(btn){closeSidebar();
   currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:getFilterGs(),worsened:false,improved:false,churn:false,vip:false,consec:false};
   resetAllQuickBtns();
   if(currentFilter.bookPending){btn.classList.add('active');setTitle('Book Pendente',filteredClients().filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length);}
@@ -2731,16 +2848,16 @@ function renderDashboard(){
   };
 
   const kpis=[
-    {val:total,lbl:'Total Contas',sub:`${filled.length} preenchidas`,color:'var(--accent)',bar:filledPct,delta:''},
-    {val:avgHS!==null?avgHS+'%':'–',lbl:'HS Médio Geral',sub:avgHS!==null?(avgHS>=85?'Saudável':avgHS>=70?'Atenção':'Crítico'):'sem dados',color:avgHS===null?'var(--muted)':avgHS>=85?'var(--green)':avgHS>=70?'var(--yellow)':'var(--red)',bar:avgHS||0,delta:delta(avgHS,prevAvgHS,'%')},
-    {val:atRisk,lbl:'Risco de Churn',sub:'contas em alerta',color:atRisk>0?'var(--red)':'var(--green)',bar:total?Math.round(atRisk/total*100):0,delta:delta(atRisk,prevAtRisk,'',true)},
-    {val:belowHS,lbl:'HS Abaixo 75%',sub:'requerem atenção',color:belowHS>0?'var(--yellow)':'var(--green)',bar:scores.length?Math.round(belowHS/scores.length*100):0,delta:''},
-    {val:pendentes,lbl:'Sem Preenchimento',sub:'esta semana',color:pendentes>0?'var(--yellow)':'var(--green)',bar:total?Math.round(pendentes/total*100):0,delta:''},
-    {val:withNPS.length?Math.round(promotores/withNPS.length*100)+'%':'–',lbl:'Taxa Promotores',sub:`${promotores} de ${withNPS.length} c/ NPS`,color:'var(--green)',bar:withNPS.length?Math.round(promotores/withNPS.length*100):0,delta:''},
+    {val:total,lbl:'Total Contas',sub:`${filled.length} preenchidas`,color:'var(--accent)',bar:filledPct,delta:'',drawer:'total'},
+    {val:avgHS!==null?avgHS+'%':'–',lbl:'HS Médio Geral',sub:avgHS!==null?(avgHS>=85?'Saudável':avgHS>=70?'Atenção':'Crítico'):'sem dados',color:avgHS===null?'var(--muted)':avgHS>=85?'var(--green)':avgHS>=70?'var(--yellow)':'var(--red)',bar:avgHS||0,delta:delta(avgHS,prevAvgHS,'%'),drawer:'hs'},
+    {val:atRisk,lbl:'Risco de Churn',sub:'contas em alerta',color:atRisk>0?'var(--red)':'var(--green)',bar:total?Math.round(atRisk/total*100):0,delta:delta(atRisk,prevAtRisk,'',true),drawer:'churn'},
+    {val:belowHS,lbl:'HS Abaixo 75%',sub:'requerem atenção',color:belowHS>0?'var(--yellow)':'var(--green)',bar:scores.length?Math.round(belowHS/scores.length*100):0,delta:'',drawer:'below'},
+    {val:pendentes,lbl:'Sem Preenchimento',sub:'esta semana',color:pendentes>0?'var(--yellow)':'var(--green)',bar:total?Math.round(pendentes/total*100):0,delta:'',drawer:'pending'},
+    {val:withNPS.length?Math.round(promotores/withNPS.length*100)+'%':'–',lbl:'Taxa Promotores',sub:`${promotores} de ${withNPS.length} c/ NPS`,color:'var(--green)',bar:withNPS.length?Math.round(promotores/withNPS.length*100):0,delta:'',drawer:'promotores'},
   ];
   const strip=document.getElementById('dashKPIStrip');
   if(strip)strip.innerHTML=kpis.map(k=>`
-    <div class="dash-kpi">
+    <div class="dash-kpi" onclick="${k.drawer?`openKpiDrawer('${k.drawer}')`:'void(0)'}" style="${k.drawer?'cursor:pointer;':''}" onmouseover="${k.drawer?"this.style.boxShadow='var(--shadow)';this.style.borderColor='var(--accent3)'":''}" onmouseout="${k.drawer?"this.style.boxShadow='';this.style.borderColor='var(--border)'":""}">
       <div class="dash-kpi-val" style="color:${k.color};">${k.val}</div>
       <div class="dash-kpi-lbl">${k.lbl}</div>
       <div class="dash-kpi-sub">${k.sub}</div>
@@ -3218,6 +3335,40 @@ function closeKpiDrawer(){
   if(drawer){drawer.style.transform='translateX(100%)';setTimeout(()=>drawer.style.display='none',250);}
   if(overlay)overlay.style.display='none';
 }
+
+
+// ── RESPONSIVE SIDEBAR ────────────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=document.getElementById('mainSidebar');
+  const ov=document.getElementById('sidebarOverlay');
+  if(!sb||!ov)return;
+  const isOpen=sb.classList.contains('open');
+  if(isOpen){closeSidebar();}else{
+    sb.classList.add('open');
+    ov.classList.add('open');
+  }
+}
+function closeSidebar(){
+  const sb=document.getElementById('mainSidebar');
+  const ov=document.getElementById('sidebarOverlay');
+  if(sb)sb.classList.remove('open');
+  if(ov)ov.classList.remove('open');
+}
+function handleResize(){
+  const burger=document.getElementById('sidebarHamburger');
+  const sb=document.getElementById('mainSidebar');
+  if(!burger||!sb)return;
+  if(window.innerWidth<=768){
+    burger.style.display='flex';
+  }else{
+    burger.style.display='none';
+    sb.classList.remove('open');
+    document.getElementById('sidebarOverlay')?.classList.remove('open');
+  }
+}
+window.addEventListener('resize',handleResize);
+// Run on load
+document.addEventListener('DOMContentLoaded',()=>{ handleResize(); });
 
 checkAuthAndInit();
 </script>
