@@ -2593,10 +2593,12 @@ async function doLogin() {
   errEl.textContent = 'Verificando...';
   await loadAuthUsers();
 
-  // Bootstrap: if no users exist, auto-create admin
+  // Bootstrap: if no users exist, only ADMIN_EMAIL can create the first account
   if (authUsers.length === 0) {
-    // No users at all — bootstrap admin account
-    if (!email.includes('safirast.com')) { errEl.textContent = 'Use seu email @safirast.com.'; return; }
+    if (email !== ADMIN_EMAIL) {
+      errEl.textContent = 'Sistema não inicializado. Contate o administrador.';
+      return;
+    }
     await bootstrapAdmin(email, pw);
     return;
   }
