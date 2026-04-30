@@ -668,7 +668,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     </div>
 
     <!-- ALERT BANNER -->
-    <div id="pendingAlertBanner" style="display:none;background:var(--yellow-bg);border:1px solid var(--yellow-bd);border-radius:var(--radius);padding:10px 16px;margin-bottom:14px;display:none;align-items:center;gap:10px;">
+    <div id="pendingAlertBanner" style="display:none;background:var(--yellow-bg);border:1px solid var(--yellow-bd);border-radius:var(--radius);padding:10px 16px;margin-bottom:14px;align-items:center;gap:10px;">
       <span style="font-size:16px;">⚠</span>
       <div style="flex:1;">
         <span style="font-weight:700;color:var(--yellow);font-size:13px;">Atenção: contas pendentes de preenchimento</span>
@@ -1199,7 +1199,10 @@ async function spLoadAll(){
         ? (Array.isArray(data.clients) ? data.clients : Object.values(data.clients).filter(x=>x&&x.name))
         : [];
       clients = rawC.length > 0 ? rawC.map(x=>({...x,book:x.book===true||x.book==='true'||x.book==='S',vip:x.vip===true||x.vip==='true',renovacao:x.renovacao===true||x.renovacao==='true'||x.renovacao==='S'})).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')) : [];
-      contracts=data.contracts||[];showContractPanel(contracts.length>0);
+      contracts=data.contracts
+        ? (Array.isArray(data.contracts) ? data.contracts : Object.values(data.contracts).filter(x=>x&&x.clientName))
+        : [];
+      showContractPanel(contracts.length>0);
       localStorage.setItem('roca_clients',JSON.stringify(clients));
 
       const rawG=data.gsList
@@ -1228,7 +1231,7 @@ let gsList=[];
 const gsColors={"Alinne Carmo":{bg:"#FEF3C7",color:"#92400E"},"Daiane Queiroz":{bg:"#FCE7F3",color:"#9D174D"},"Douglas Romão":{bg:"#E0E7FF",color:"#3730A3"},"Fróes":{bg:"#0D2B4E",color:"#FFFFFF"},"Lucineia Guizardi":{bg:"#D1FAE5",color:"#065F46"},"Michelle Stefenson":{bg:"#FEE2E2",color:"#991B1B"},"Renata Gomes":{bg:"#ECFDF5",color:"#047857"},"Telma":{bg:"#F0FDF4",color:"#166534"}};
 
 let entries={},weekHistory={},contracts=[];
-let currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
+let currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
 let currentView='list',editingClientId=null;
 let currentFarol={R:null,O:null,C:null,A:null},churnSelected=new Set(),currentBilling=null;
 
@@ -1360,18 +1363,23 @@ function calcHSDetail(id){
 
   if(!e.R){return{score:null,factors:[{type:'neutral',icon:'ℹ️',label:'Conta não preenchida esta semana',val:'–'}],checklist:[{done:false,text:'Preencher os 4 faróis ROCA'}]};}
 
-  const dv=v=>v==='G'?100:v==='A'?60:v==='V'?0:60;
+  const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40; // mesma lógica de calcHealthScore
   const base=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
   factors.push({type:base>=75?'positive':base>=40?'warning':'negative',icon:'📊',label:`Base ROCA (R${e.R||'?'}/O${e.O||'?'}/C${e.C||'?'}/A${e.A||'?'})`,val:`${Math.round(base)}/100`});
 
   let penalty=0;
-  const dims=[e.R,e.O,e.C,e.A];const cv=dims.filter(d=>d==='V').length;
-  if(cv>=2){penalty+=20;factors.push({type:'negative',icon:'🔴',label:'2+ dimensões em vermelho',val:'-20'});}
-  else if(cv===1){penalty+=10;factors.push({type:'negative',icon:'🔴',label:'1 dimensão em vermelho',val:'-10'});}
-  else{checklist.push({done:true,text:'Nenhuma dimensão em vermelho'});}
-  if(dims.filter(d=>d==='A').length>=3){penalty+=8;factors.push({type:'warning',icon:'🟡',label:'3+ dimensões em amarelo',val:'-8'});}
+  const P=p=>isTierA?Math.round(p*1.3):p;
+  const dims=[e.R,e.O,e.C,e.A];const cv=dims.filter(d=>d==='V').length;const ca=dims.filter(d=>d==='A').length;
 
-  if((tier==='A'||isVIP)&&cv>=1){penalty+=15;factors.push({type:'negative',icon:'⭐',label:'Tier A/VIP com dimensão em risco',val:'-15'});}
+  // Dims vermelhas — espelha exatamente calcHealthScore
+  if(cv>=3){const p=P(20);penalty+=p;factors.push({type:'negative',icon:'🔴',label:'3 ou mais dimensões em vermelho',val:`-${p}`});}
+  else if(cv===2){const p=P(12);penalty+=p;factors.push({type:'negative',icon:'🔴',label:'2 dimensões em vermelho',val:`-${p}`});}
+  else if(cv===1){const p=P(8);penalty+=p;factors.push({type:'negative',icon:'🔴',label:'1 dimensão em vermelho',val:`-${p}`});}
+  else{checklist.push({done:true,text:'Nenhuma dimensão em vermelho'});}
+
+  // Dims amarelas
+  if(ca>=3){const p=P(10);penalty+=p;factors.push({type:'warning',icon:'🟡',label:'3 ou mais dimensões em amarelo',val:`-${p}`});}
+  else if(ca===2){const p=P(5);penalty+=p;factors.push({type:'warning',icon:'🟡',label:'2 dimensões em amarelo',val:`-${p}`});}
 
   const autoChurnD=e.R==='V'||e.C==='V';
   const manualChurnD=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
@@ -1383,7 +1391,7 @@ function calcHSDetail(id){
     penalty+=cp;
   }else{checklist.push({done:true,text:'Sem risco de churn'});}
 
-  if(e.billing==='down'){penalty+=10;factors.push({type:'negative',icon:'📉',label:'Faturamento em queda',val:'-10'});}
+  if(e.billing==='down'){const p=P(12);penalty+=p;factors.push({type:'negative',icon:'📉',label:'Faturamento em queda',val:`-${p}`});}
   else if(e.billing==='up'){factors.push({type:'positive',icon:'📈',label:'Faturamento subindo',val:'✓'});}
   else if(!e.billing){checklist.push({done:false,text:'Registrar variação de faturamento'});}
 
@@ -1688,7 +1696,7 @@ async function init(){
     currentFilter.status=null;currentFilter.churn=false;currentFilter.vip=false;
     currentFilter.bookPending=false;currentFilter.worsened=false;currentFilter.improved=false;
     currentFilter.consec=false;
-    console.log('[ROCA CS Filter] user:', currentUser.email, '→ csName:', _n, '| clients with that gs:', clients.filter(c=>c.gs.toLowerCase().trim()===(_n||'').toLowerCase().trim()).length);
+
   }
   render();
 }
@@ -1709,9 +1717,9 @@ function buildSidebar(){
   const list=document.getElementById('gs-sidebar-list');list.innerHTML='';
   const isCS=currentUser&&currentUser.role==='cs';
   const dbU=isCS?authUsers.find(u=>u.email===currentUser.email):null;
-  const csName=isCS?(dbU?.csName||dbU?.name||currentUser.name):null;
+  const csName=isCS?((dbU?.csName||dbU?.name||currentUser.name||'').toLowerCase().trim()):null;
   [...new Set(clients.map(c=>c.gs))].sort().forEach(gs=>{
-    if(isCS&&gs.toLowerCase().trim()!==csName.toLowerCase().trim())return;
+    if(isCS&&csName&&gs.toLowerCase().trim()!==csName)return;
     const count=clients.filter(c=>c.gs===gs).length;
     const col=gsColors[gs]||{bg:'#f0f0f5',color:'#444'};
     const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1727,9 +1735,9 @@ function renderGSHealthStrip(){
   const grid=document.getElementById('gsHealthGrid');grid.innerHTML='';
   const isCS=currentUser&&currentUser.role==='cs';
   const dbU2=isCS?authUsers.find(u=>u.email===currentUser.email):null;
-  const csName=isCS?(dbU2?.csName||dbU2?.name||currentUser.name):null;
+  const csName=isCS?((dbU2?.csName||dbU2?.name||currentUser.name||'').toLowerCase().trim()):null;
   [...new Set(clients.map(c=>c.gs))].sort().forEach(gs=>{
-    if(isCS&&gs.toLowerCase().trim()!==csName.toLowerCase().trim())return;
+    if(isCS&&csName&&gs.toLowerCase().trim()!==csName)return;
     const avg=calcGSHealthAvg(gs);const col=hsColor(avg);
     const gsCount=clients.filter(c=>c.gs===gs).length;
     const filled=clients.filter(c=>c.gs===gs&&entries[c.id]&&entries[c.id].R).length;
@@ -1754,9 +1762,10 @@ function filteredClients(){
     base=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
   }else{
     // Admin: apply GS filter first
-    base=currentFilter.gs==='all'
+    const gsF=currentFilter.gs||'all';
+    base=gsF==='all'
       ?clients.slice()
-      :clients.filter(c=>c.gs.toLowerCase().trim()===currentFilter.gs.toLowerCase().trim());
+      :clients.filter(c=>c.gs.toLowerCase().trim()===gsF.toLowerCase().trim());
   }
 
   // Step 2: search
@@ -1805,7 +1814,9 @@ function render(){
     const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
     renovPool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
   }else{
-    renovPool=currentFilter.gs==='all'?clients.slice():clients.filter(c=>c.gs.toLowerCase().trim()===currentFilter.gs.toLowerCase().trim());
+    renovPool=( (currentFilter.gs||'all')==='all' )
+      ?clients.slice()
+      :clients.filter(c=>c.gs.toLowerCase().trim()===(currentFilter.gs||'').toLowerCase().trim());
   }
   updateRenovPanel(renovPool);
   // Always keep title count in sync with actual filtered results
@@ -1837,7 +1848,9 @@ function updateSummary(fc){
     const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
     pool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
   }else{
-    pool=currentFilter.gs==='all'?clients.slice():clients.filter(c=>c.gs.toLowerCase().trim()===currentFilter.gs.toLowerCase().trim());
+    pool=( (currentFilter.gs||'all')==='all' )
+      ?clients.slice()
+      :clients.filter(c=>c.gs.toLowerCase().trim()===(currentFilter.gs||'').toLowerCase().trim());
   }
   if(currentFilter.search){const q=currentFilter.search.toLowerCase();pool=pool.filter(c=>c.name.toLowerCase().includes(q));}
 
@@ -2110,6 +2123,11 @@ function clearEntry(){if(!editingClientId)return;if(!confirm('Limpar todos os da
 
 function saveEntry(){
   if(!editingClientId)return;
+  // Aviso se faróis incompletos (não bloqueia — entrada parcial é permitida)
+  const missingDims=['R','O','C','A'].filter(d=>!currentFarol[d]);
+  if(missingDims.length>0&&missingDims.length<4){
+    if(!confirm(`⚠ Atenção: ${missingDims.length} farol(is) sem preenchimento (${missingDims.join(', ')}).\nDeseja salvar assim mesmo?`))return;
+  }
   const wk=getWeekKey();if(!weekHistory[wk])weekHistory[wk]={};
   if(entries[editingClientId]){weekHistory[wk][editingClientId]=JSON.parse(JSON.stringify(entries[editingClientId]));localStorage.setItem('roca_history',JSON.stringify(weekHistory));}
   const prev=entries[editingClientId]||{};
@@ -2128,7 +2146,8 @@ function saveEntry(){
     pipelineDesc:document.getElementById('pipelineDesc').value,pipelineValue:document.getElementById('pipelineValue').value,pipelineStage:document.getElementById('pipelineStage').value,
     nextAction:document.getElementById('nextAction').value,nextActionDate:document.getElementById('nextActionDate').value,
     weeklyComment:document.getElementById('weeklyComment').value,
-    bookSent:document.getElementById('bookSent').checked,bookDate:document.getElementById('bookDate').value,
+    bookSent:clients.find(x=>x.id===editingClientId)?.book ? document.getElementById('bookSent').checked : false,
+    bookDate:clients.find(x=>x.id===editingClientId)?.book ? document.getElementById('bookDate').value : '',
     timestamp:new Date().toISOString()
   };
   entries[editingClientId]=e;localStorage.setItem('roca_entries',JSON.stringify(entries));
@@ -2164,14 +2183,16 @@ function filterGS(gs,btn){closeSidebar();
 function getFilterGs(){ 
   if(currentUser&&currentUser.role==='cs'){
     const _u=authUsers.find(u=>u.email===currentUser.email);
-    return _u?.csName||_u?.name||currentUser.name;
+    return _u?.csName||_u?.name||currentUser.name||'';
   }
-  return 'all';
+  return currentFilter.gs||'all';
 }
 
 function filterStatus(st,btn){
   const tog=currentFilter.status===st;
-  currentFilter={...currentFilter,status:tog?null:st,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
+  // Preserve current GS filter (admin may have a CS selected)
+  const gsToKeep=currentFilter.gs;
+  currentFilter={...currentFilter,status:tog?null:st,gs:gsToKeep,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
   resetAllQuickBtns();
   if(!tog){
     btn.classList.add('active');
@@ -2184,36 +2205,36 @@ function filterStatus(st,btn){
   }
   render();
 }
-function filterTier(tier,btn){closeSidebar();
-  currentFilter={...currentFilter,gs:getFilterGs(),status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:false,tier};
-  resetAllQuickBtns();if(btn)btn.classList.add('active');
-  setTitle(`Tier ${tier}`,filteredClients().length);render();
-}
-function filterRenov(btn){closeSidebar();
-  currentFilter={...currentFilter,gs:getFilterGs(),status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:true,tier:null};
-  resetAllQuickBtns();if(btn)btn.classList.add('active');
-  setTitle('Renovação Próxima',filteredClients().length);render();
-}
 function filterChurn(btn){closeSidebar();
-  currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,vip:false,consec:false};
+  currentFilter={...currentFilter,churn:!currentFilter.churn,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,vip:false,consec:false,tier:null,renovacao:false,search:''};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
-  if(currentFilter.churn){btn.classList.add('active');document.getElementById('sc-churn').classList.add('active');setTitle('⚠ Risco de Churn',filteredClients().filter(c=>hasChurnRisk(c.id)).length);}
-  else{safeActivateAll();const _sc=document.getElementById('sc-all');if(_sc)_sc.classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  if(currentFilter.churn){btn.classList.add('active');const sc=document.getElementById('sc-churn');if(sc)sc.classList.add('active');setTitle('⚠ Risco de Churn',filteredClients().length);}
+  else{safeActivateAll();const sc=document.getElementById('sc-all');if(sc)sc.classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterVIP(btn){
-  currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,consec:false};
+  currentFilter={...currentFilter,vip:!currentFilter.vip,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,consec:false,tier:null,renovacao:false,search:''};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));
-  if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ Tier A',filteredClients().filter(c=>c.vip||c.tier==='A').length);}
-  else{safeActivateAll();const _sc=document.getElementById('sc-all');if(_sc)_sc.classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
+  if(currentFilter.vip){btn.classList.add('active');setTitle('⭐ Tier A',filteredClients().length);}
+  else{safeActivateAll();const sc=document.getElementById('sc-all');if(sc)sc.classList.add('active');setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterBookPending(btn){closeSidebar();
-  currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:getFilterGs(),worsened:false,improved:false,churn:false,vip:false,consec:false};
+  currentFilter={...currentFilter,bookPending:!currentFilter.bookPending,status:null,gs:getFilterGs(),worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false,search:''};
   resetAllQuickBtns();
-  if(currentFilter.bookPending){btn.classList.add('active');setTitle('Book Pendente',filteredClients().filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent)).length);}
+  if(currentFilter.bookPending){btn.classList.add('active');setTitle('Book Pendente',filteredClients().length);}
   else{safeActivateAll();setTitle('Todas as Contas',filteredClients().length);}
   render();
+}
+function filterRenov(btn){closeSidebar();
+  currentFilter={...currentFilter,gs:getFilterGs(),status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:true,tier:null,search:''};
+  resetAllQuickBtns();if(btn)btn.classList.add('active');
+  setTitle('Renovação Próxima',filteredClients().length);render();
+}
+function filterTier(tier,btn){closeSidebar();
+  currentFilter={...currentFilter,gs:getFilterGs(),status:null,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,renovacao:false,tier,search:''};
+  resetAllQuickBtns();if(btn)btn.classList.add('active');
+  setTitle(`Tier ${tier}`,filteredClients().length);render();
 }
 function filterByCard(type){
   // Toggle: clicar no mesmo card ativo desativa
@@ -2252,7 +2273,7 @@ function filterByCard(type){
 }
 function filterConsecutiveCritical(btn){
   const isActive=currentFilter.consec;
-  currentFilter={...currentFilter,consec:!isActive,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,tier:null,renovacao:false};
+  currentFilter={...currentFilter,consec:!isActive,status:null,gs:getFilterGs(),bookPending:false,worsened:false,improved:false,churn:false,vip:false,tier:null,renovacao:false,search:''};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));safeActivateAll();
   if(!isActive){btn.classList.add('active');setTitle('🔁 Crítico Recorrente',filteredClients().length);}
   else{setTitle('Todas as Contas',filteredClients().length);}
@@ -2272,7 +2293,21 @@ function filterImproved(btn){
   else{setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
-function searchClients(val){currentFilter.search=val;if(val){const count=filteredClients().filter(c=>c.name.toLowerCase().includes(val.toLowerCase())).length;setTitle(`Busca: "${val}"`,count);}else setTitle('Todas as Contas',filteredClients().length);render();}
+function searchClients(val){
+  currentFilter.search=val;
+  if(val){
+    // Busca reseta filtros de status/quick para evitar combinação silenciosa
+    currentFilter.status=null;currentFilter.churn=false;currentFilter.bookPending=false;
+    currentFilter.worsened=false;currentFilter.improved=false;currentFilter.consec=false;
+    currentFilter.vip=false;currentFilter.tier=null;currentFilter.renovacao=false;
+    resetAllQuickBtns();safeActivateAll();
+    const sc=document.getElementById('sc-all');if(sc)sc.classList.add('active');
+    setTitle(`Busca: "${val}"`,filteredClients().length);
+  }else{
+    setTitle('Todas as Contas',filteredClients().length);
+  }
+  render();
+}
 function setView(v,btn){currentView=v;document.getElementById('list-view').style.display=v==='list'?'block':'none';document.getElementById('table-view').style.display=v==='table'?'block':'none';document.getElementById('view-list-btn').classList.toggle('active',v==='list');document.getElementById('view-table-btn').classList.toggle('active',v==='table');render();}
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
@@ -2379,6 +2414,7 @@ function importFile(input){
       const isBook=v=>{const s=String(v||'').trim().toUpperCase();return['S','SIM','YES','X','TRUE','1'].includes(s);};
       // FIX 4: Track CS names not matching any user — warn after import
       const activeCSNames=getActiveCSNames().map(n=>n.toLowerCase().trim());
+      const _csOpts=getActiveCSNames();
       const unknownCS=new Set();
 
       for(let i=start;i<data.length;i++){
@@ -2386,9 +2422,7 @@ function importFile(input){
         const norm=name.toLowerCase().trim();
         const existingId=existingById[norm]||allHistoryIds[norm]||null;
         const id=existingId||++maxId;
-        // FIX 2: fallback gs — use first active CS name or empty string
         const gsVal=String(r[1]||'').trim();
-        const _csOpts=getActiveCSNames();
         const gs=gsVal||(_csOpts.length?_csOpts[0]:'');
         if(gs&&!activeCSNames.includes(gs.toLowerCase().trim()))unknownCS.add(gs);
         const renovacaoVal=String(r[4]||'').trim().toUpperCase();
@@ -2411,19 +2445,45 @@ function importFile(input){
   };
   reader.readAsBinaryString(file);
 }
-function confirmImport(){if(!window._importedClients)return;clients=window._importedClients;clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));localStorage.setItem('roca_clients',JSON.stringify(clients));fbSet('roca/clients',clients).catch(e=>console.warn('Import save failed:',e));buildSidebar();render();renderAdminList();addAudit('create',`${clients.length} clientes importados via Excel`);alert(`✓ ${clients.length} clientes importados com sucesso.`);}
+function confirmImport(){
+  if(!window._importedClients)return;
+  const newClients=window._importedClients;
+  window._importedClients=null; // limpa para evitar duplo clique
+  // Remover entries órfãos de clientes que foram removidos
+  const newIds=new Set(newClients.map(c=>c.id));
+  const orphanIds=Object.keys(entries).map(Number).filter(id=>!newIds.has(id));
+  orphanIds.forEach(id=>{
+    delete entries[id];
+    spDelete(getWeekKey(),id).catch(()=>{});
+  });
+  clients=newClients;
+  clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  localStorage.setItem('roca_clients',JSON.stringify(clients));
+  localStorage.setItem('roca_entries',JSON.stringify(entries));
+  fbSet('roca/clients',clients).catch(e=>console.warn('Import save failed:',e));
+  buildSidebar();render();renderAdminList();
+  addAudit('create',`${clients.length} clientes importados via Excel${orphanIds.length?` (${orphanIds.length} entradas órfãs removidas)`:''}`);
+  alert(`✓ ${clients.length} clientes importados com sucesso.${orphanIds.length?`\n${orphanIds.length} entrada(s) de clientes removidos foram limpas.`:''}`);
+}
 
 // ── ADVANCE WEEK ──────────────────────────────────────────────────────────────
 async function advanceWeek(){
   if(!confirm('Arquivar semana atual e iniciar nova semana em branco?\nOs dados ficam salvos no histórico.'))return;
-  archiveCurrentWeek();showSyncStatus('saving');
+  showSyncStatus('saving');
   try{
+    archiveCurrentWeek();
     await fbSet('roca/entries',{});
     entries={};
     localStorage.setItem('roca_entries',JSON.stringify(entries));
-    await spLoadAll(); // reloads clients, entries, history from Firebase
+    await spLoadAll();
     showSyncStatus('saved');
-  }catch(e){console.error(e);showSyncStatus('error');}
+    showToast('✓ Semana arquivada. Nova semana iniciada.');
+  }catch(e){
+    console.error('advanceWeek error:',e);
+    showSyncStatus('error');
+    showToast('✕ Erro ao avançar semana — tente novamente.');
+    return;
+  }
   render();
 }
 
@@ -2434,7 +2494,7 @@ function exportData(){
   clients.forEach(c=>{
     const e=entries[c.id]||{};const st=getEntryStatus(c.id);const hs=calcHealthScore(c.id);
     const cr=e.churnRisk?(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!==''):[];
-    rows.push([c.name,c.tier||'C',c.gs,hs!==null?hs+'%':'–',e.R||'',e.justR||'',e.O||'',e.justO||'',e.C||'',e.justC||'',e.A||'',e.justA||'',st==='V'?'VERMELHO':st==='A'?'AMARELO':st==='G'?'VERDE':'PENDENTE',cr.map(x=>x==='billing'?'Queda faturamento':'Risco cancelamento').join(', ')||'–',e.churnNotes||'',e.npsScore||'',e.npsDate||'',bll[e.billing]||'',e.billingObs||'',e.lastMeeting||'',e.lastVisit||'',e.pipelineDesc||'',e.pipelineValue||'',ps[e.pipelineStage]||'',e.actionTaken||'',e.needFrom||'',e.needFromDate||'',e.bookSent?'Sim':'',e.bookDate||'',e.timestamp?new Date(e.timestamp).toLocaleString('pt-BR'):''
+    rows.push([c.name,c.tier||'C',c.gs,hs!==null?hs+'%':'–',e.R||'',e.justR||'',e.O||'',e.justO||'',e.C||'',e.justC||'',e.A||'',e.justA||'',st==='V'?'VERMELHO':st==='A'?'AMARELO':st==='G'?'VERDE':'PENDENTE',cr.map(x=>x==='billing'?'Queda faturamento':'Risco cancelamento').join(', ')||'–',e.churnNotes||'',e.npsScore||'',e.npsDate||'',bll[e.billing]||'',e.billingObs||'',e.lastMeeting||'',e.lastVisit||'',e.pipelineDesc||'',e.pipelineValue||'',ps[e.pipelineStage]||'',e.actionTaken||'',e.needFrom||'',e.needFromDate||'',c.book?(e.bookSent?'Sim':'Não'):'N/A',e.bookDate||'',e.timestamp?new Date(e.timestamp).toLocaleString('pt-BR'):''
     ]);
   });
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
@@ -2612,7 +2672,7 @@ function enterDashboard() {
   document.getElementById('changePwModal').classList.add('hidden');
 
   // Reset all filters — clean slate on every login
-  currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false};
+  currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
 
   // Show user badge in topbar
   const badge = document.getElementById('userBadge');
@@ -2643,9 +2703,9 @@ function enterDashboard() {
     localStorage.removeItem('roca_history');
     localStorage.removeItem('roca_clients');
         localStorage.removeItem('roca_gs');
-    document.getElementById('gs-all').style.display = 'none';
-    document.getElementById('gs-sidebar-list').style.pointerEvents = 'none';
-    document.getElementById('gs-sidebar-list').style.opacity = '0.5';
+    const _gsAll=document.getElementById('gs-all');if(_gsAll)_gsAll.style.display='none';
+    const _gsSbl=document.getElementById('gs-sidebar-list');
+    if(_gsSbl){_gsSbl.style.pointerEvents='none';_gsSbl.style.opacity='0.5';}
   }
 
   init();
@@ -2797,17 +2857,17 @@ function renderAuditLog() {
   const filterType = document.getElementById('auditFilterType')?.value || '';
   const filterUser = document.getElementById('auditFilterUser')?.value || '';
 
-  let entries = auditLog;
-  if (filterType) entries = entries.filter(e => e.type === filterType);
-  if (filterUser) entries = entries.filter(e => e.email === filterUser);
+  let auditEntries = auditLog;
+  if (filterType) auditEntries = auditEntries.filter(e => e.type === filterType);
+  if (filterUser) auditEntries = auditEntries.filter(e => e.email === filterUser);
 
-  if (!entries.length) {
+  if (!auditEntries.length) {
     list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Nenhum registro encontrado.</div>';
     return;
   }
 
   const typeLabel = { auth:'auth', create:'create', edit:'edit', delete:'delete', user:'user' };
-  list.innerHTML = entries.slice(0, 200).map(e => {
+  list.innerHTML = auditEntries.slice(0, 200).map(e => {
     const dt = new Date(e.ts);
     const dtStr = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const cls = {auth:'audit-auth',create:'audit-create',edit:'audit-edit',delete:'audit-delete',user:'audit-auth'}[e.type] || 'audit-edit';
@@ -3225,7 +3285,7 @@ function showToast(msg,duration=2500){
 
 function contractDaysLeft(venc){
   if(!venc)return null;
-  const d=new Date(venc);if(isNaN(d))return null;
+  const d=new Date(venc+'T12:00:00');if(isNaN(d))return null;
   return Math.ceil((d-new Date())/86400000);
 }
 
@@ -3237,10 +3297,9 @@ function getClientContracts(clientName){
 function getMostCriticalContract(clientName){
   const cts=getClientContracts(clientName).filter(ct=>ct.venc);
   if(!cts.length)return null;
-  // Most critical = soonest vencimento that hasn't expired, or least expired
   return cts.sort((a,b)=>{
-    const da=contractDaysLeft(a.venc)||9999;
-    const db=contractDaysLeft(b.venc)||9999;
+    const da=contractDaysLeft(a.venc)??9999;
+    const db=contractDaysLeft(b.venc)??9999;
     return da-db;
   })[0];
 }
@@ -3250,41 +3309,48 @@ function importContracts(input){
   input.value='';
   const reader=new FileReader();
   reader.onload=e=>{
-    const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    // Detect header: Col1=Cliente, Col2=Projeto, Col3=Resp, Col4=Assinatura, Col5=Vencimento
-    let start=0;
-    if(data[0]&&String(data[0][0]||'').toLowerCase().includes('client'))start=1;
-    const imported=[];
-    for(let i=start;i<data.length;i++){
-      const r=data[i];
-      const clientName=String(r[0]||'').trim();if(!clientName)continue;
-      const project=String(r[1]||'').trim();
-      const resp=String(r[2]||'').trim();
-      let venc=r[4];
-      // Normalize date
-      if(venc instanceof Date){venc=venc.toISOString().slice(0,10);}
-      else if(typeof venc==='string'&&venc.includes('/')){
-        const parts=venc.split('/');
-        if(parts.length===3)venc=`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-      }else if(typeof venc==='number'){
-        // Excel serial date
-        const d=new Date((venc-25569)*86400000);venc=d.toISOString().slice(0,10);
-      }else{venc=null;}
-      // Skip if venc is invalid
-      if(venc==='0000-00-00'||venc==='NaN-aN-aN')venc=null;
-      imported.push({clientName,project,resp,venc});
+    try{
+      // cellDates:true é incompatível com type:'binary' no SheetJS — usar apenas numeric fallback
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      // Detect header: any first row cell matching known header words
+      const _hdr=data[0]||[];
+      const _hdrStr=_hdr.map(c=>String(c||'').toLowerCase().trim()).join(' ');
+      const looksLikeHeader=['client','nome','empresa','projeto','venc','resp'].some(w=>_hdrStr.includes(w));
+      let start=looksLikeHeader?1:0;
+      const imported=[];
+      for(let i=start;i<data.length;i++){
+        const r=data[i];
+        const clientName=String(r[0]||'').trim();if(!clientName)continue;
+        const project=String(r[1]||'').trim();
+        const resp=String(r[2]||'').trim();
+        const assinatura=String(r[3]||'').trim();
+        let venc=r[4];
+        // Normalize date — handle string dd/mm/yyyy, ISO, or Excel serial number
+        if(typeof venc==='number'&&venc>40000){
+          const d=new Date(Math.round((venc-25569)*86400000));venc=d.toISOString().slice(0,10);
+        }else if(typeof venc==='string'&&venc.includes('/')){
+          const parts=venc.split('/');
+          if(parts.length===3)venc=`${parts[2].trim()}-${parts[1].trim().padStart(2,'0')}-${parts[0].trim().padStart(2,'0')}`;
+        }else if(venc instanceof Date){
+          venc=venc.toISOString().slice(0,10);
+        }else{venc=null;}
+        if(venc==='0000-00-00'||venc==='NaN-aN-aN'||venc==='Invalid date')venc=null;
+        imported.push({clientName,project,resp,assinatura,venc});
+      }
+      contracts=imported;
+      fbSet('roca/contracts',contracts).catch(e=>console.warn('Contracts save:',e));
+      updateContractPanel();
+      showContractPanel(true);
+      showToast(`✓ ${contracts.length} contratos importados`);
+      addAudit('create',`${contracts.length} contratos importados`);
+    }catch(err){
+      showToast(`✕ Erro ao importar contratos: ${err.message}`);
+      console.error('importContracts error:',err);
     }
-    contracts=imported;
-    fbSet('roca/contracts',contracts).catch(e=>console.warn('Contracts save:',e));
-    updateContractPanel();
-    showContractPanel(true);
-    showToast(`✓ ${contracts.length} contratos importados`);
-    addAudit('create',`${contracts.length} contratos importados`);
   };
   reader.readAsBinaryString(file);
-  input.value='';
 }
 
 let _ctDrawerBucket=null;
@@ -3306,8 +3372,8 @@ function toggleCtDrawer(bucket){
     if(bucket==='safe')return d!==null&&d>90;
     return false;
   }).sort((a,b)=>{
-    const da=contractDaysLeft(a.venc)||9999;
-    const db=contractDaysLeft(b.venc)||9999;
+    const da=contractDaysLeft(a.venc)??9999;
+    const db=contractDaysLeft(b.venc)??9999;
     return da-db;
   });
   const colors={expired:'var(--muted)',urgent:'var(--red)',warn:'#d97706',soon:'var(--accent2)',safe:'var(--green)'};
@@ -3373,7 +3439,8 @@ function openKpiDrawer(type){
     title='⚠ Risco de Churn';
     items=fc.filter(cl=>hasChurnRisk(cl.id)).map(cl=>({cl,hs:calcHealthScore(cl.id)}));
   }else if(type==='pending'){
-    title='⏳ Pendentes';
+    title='⏳ Sem Preenchimento';
+    // isPending é idempotente: se fc já é só pendentes, retorna fc; se fc é tudo, filtra corretamente
     items=fc.filter(cl=>isPending(cl.id)).map(cl=>({cl,hs:null}));
   }else if(type==='hs'){
     title='Health Score';
