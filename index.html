@@ -2998,7 +2998,7 @@ function renderDashboard(){
   ];
   const strip=document.getElementById('dashKPIStrip');
   if(strip)strip.innerHTML=kpis.map(k=>`
-    <div class="dash-kpi" onclick="${k.drawer?`openKpiDrawer('${k.drawer}')`:'void(0)'}" style="${k.drawer?'cursor:pointer;':''}" onmouseover="${k.drawer?"this.style.boxShadow='var(--shadow)';this.style.borderColor='var(--accent3)'":''}" onmouseout="${k.drawer?"this.style.boxShadow='';this.style.borderColor='var(--border)'":""}">
+    <div class="dash-kpi" onclick="${k.drawer?`openKpiDrawerDash('${k.drawer}')`:'void(0)'}" style="${k.drawer?'cursor:pointer;':''}" onmouseover="${k.drawer?"this.style.boxShadow='var(--shadow)';this.style.borderColor='var(--accent3)'":''}" onmouseout="${k.drawer?"this.style.boxShadow='';this.style.borderColor='var(--border)'":""}">
       <div class="dash-kpi-val" style="color:${k.color};">${k.val}</div>
       <div class="dash-kpi-lbl">${k.lbl}</div>
       <div class="dash-kpi-sub">${k.sub}</div>
@@ -3418,8 +3418,13 @@ function updateContractPanel(){
 }
 
 
-function openKpiDrawer(type){
-  const fc=filteredClients();
+function openKpiDrawerDash(type){
+  // Dashboard drawer sempre usa getDashClients() — independe do filtro da aba Gestão
+  openKpiDrawer(type, getDashClients());
+}
+
+function openKpiDrawer(type, pool){
+  const fc = pool || filteredClients();
   let title='',items=[];
   const hsColor=hs=>hs>=90?'var(--green)':hs>=75?'#f59e0b':hs>=50?'var(--churn)':'var(--red)';
 
