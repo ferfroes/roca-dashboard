@@ -3417,19 +3417,9 @@ function showContractPanel(show){
 function updateContractPanel(){
   if(!contracts.length){showContractPanel(false);return;}
   showContractPanel(true);
-  // Usa pool base (sem filtro de status) — igual ao updateSummary
-  let basePool;
-  if(currentUser&&currentUser.role==='cs'){
-    const _u=authUsers.find(u=>u.email===currentUser.email);
-    const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
-    basePool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
-  }else{
-    const gsF=currentFilter.gs||'all';
-    basePool=gsF==='all'?clients.slice():clients.filter(c=>c.gs.toLowerCase().trim()===gsF.toLowerCase().trim());
-  }
-  const fcNames=new Set(basePool.map(cl=>String(cl.name||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'')));
-  const norm=s=>String(s||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'');
-  const visible=contracts.filter(ct=>fcNames.has(norm(ct.clientName)));
+  // Cards mostram TODOS os contratos importados — sem cruzar com clientes cadastrados
+  // (nomes podem não bater exatamente; o drawer já filtra corretamente)
+  const visible=contracts;
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   set('ct-count-30', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>=0&&d<=30;}).length);
   set('ct-count-60', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>30&&d<=60;}).length);
