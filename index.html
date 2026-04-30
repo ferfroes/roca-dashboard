@@ -1906,7 +1906,7 @@ function renderList(fc){
 
     // NPS badge
     const nps=e.npsScore?parseInt(e.npsScore):null;let npsHtml='';
-    if(nps!==null){const nc=nps<=5?'var(--red)':nps<=7?'var(--yellow)':'var(--green)';const nb=nps<=5?'var(--red-bg)':nps<=7?'var(--yellow-bg)':'var(--green-bg)';npsHtml=`<span class="badge" style="color:${nc};background:${nb};" title="NPS: ${nps}/10">NPS ${nps}</span>`;}
+    if(nps!==null){const nc=nps<=6?'var(--red)':nps<=8?'var(--yellow)':'var(--green)';const nb=nps<=6?'var(--red-bg)':nps<=8?'var(--yellow-bg)':'var(--green-bg)';npsHtml=`<span class="badge" style="color:${nc};background:${nb};" title="NPS: ${nps}/10">NPS ${nps}</span>`;}
 
     // Consecutive critical badge
     const consec=consecutiveCriticalWeeks(c.id);
@@ -2151,9 +2151,11 @@ function saveEntry(){
     timestamp:new Date().toISOString()
   };
   entries[editingClientId]=e;localStorage.setItem('roca_entries',JSON.stringify(entries));
+  const _auditName=clients.find(x=>x.id===editingClientId)?.name||editingClientId;
   closeModal('fillModal');render();
   showSyncStatus('saving');
   showToast('✓ Faróis salvos com sucesso');
+  auditSaveEntry(_auditName);
   spUpsert(getWeekKey(),editingClientId,JSON.stringify(e)).then(()=>showSyncStatus('saved')).catch(()=>showSyncStatus('error'));
 }
 
@@ -2332,7 +2334,18 @@ function renderAdminList(){
   });
 }
 function updateCF(el){const idx=+el.dataset.idx,f=el.dataset.field;if(f==='book'||f==='vip'||f==='renovacao')clients[idx][f]=el.value==='true';else clients[idx][f]=el.value;}
-function deleteClient(idx){if(!confirm(`Remover "${clients[idx].name}"?`))return;clients.splice(idx,1);renderAdminList();}
+function deleteClient(idx){
+  if(!confirm(`Remover "${clients[idx].name}"?`))return;
+  const removedId=clients[idx].id;
+  clients.splice(idx,1);
+  // Remove entry órfão
+  if(entries[removedId]){
+    delete entries[removedId];
+    localStorage.setItem('roca_entries',JSON.stringify(entries));
+    spDelete(getWeekKey(),removedId).catch(()=>{});
+  }
+  renderAdminList();
+}
 function addClientRow(){const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);const _gsOpts=getActiveCSNames();clients.push({id:maxId+1,name:'Novo Cliente',gs:_gsOpts[0]||'',book:false,tier:'C',vip:false,renovacao:false});clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));renderAdminList();}
 
 // CS list functions removed — CS names derived from clients
@@ -2883,7 +2896,7 @@ function renderAuditLog() {
 }
 
 // ── Hook audit into key operations ──────────────────────────────────────────
-const _origSaveEntry = typeof saveEntry !== 'undefined' ? saveEntry : null;
+// auditSaveEntry is called by saveEntry after saving
 
 // ── Check session on load ─────────────────────────────────────────────────────
 async function checkAuthAndInit() {
@@ -3402,13 +3415,19 @@ function showContractPanel(show){
 }
 
 function updateContractPanel(){
-  // Only show if contracts are loaded
   if(!contracts.length){showContractPanel(false);return;}
   showContractPanel(true);
-  // Get filtered client set
-  const fc=filteredClients();
-  const fcNames=new Set(fc.map(cl=>String(cl.name||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'')));
-  // Filter contracts to visible clients
+  // Usa pool base (sem filtro de status) — igual ao updateSummary
+  let basePool;
+  if(currentUser&&currentUser.role==='cs'){
+    const _u=authUsers.find(u=>u.email===currentUser.email);
+    const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
+    basePool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
+  }else{
+    const gsF=currentFilter.gs||'all';
+    basePool=gsF==='all'?clients.slice():clients.filter(c=>c.gs.toLowerCase().trim()===gsF.toLowerCase().trim());
+  }
+  const fcNames=new Set(basePool.map(cl=>String(cl.name||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'')));
   const norm=s=>String(s||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'');
   const visible=contracts.filter(ct=>fcNames.has(norm(ct.clientName)));
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
@@ -3575,7 +3594,7 @@ checkAuthAndInit();
 
 
 <!-- KPI DRAWER -->
-<div id="kpiDrawer" style="display:none;position:fixed;top:0;right:0;width:380px;height:100vh;background:var(--card);box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:900;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
+<div id="kpiDrawer" style="display:none;position:fixed;top:0;right:0;width:380px;height:100vh;background:var(--card);box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:900;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;">
   <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
     <div>
       <div id="kpiDrawerTitle" style="font-weight:800;font-size:15px;color:var(--ink);"></div>
