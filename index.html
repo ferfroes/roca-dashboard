@@ -610,7 +610,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 
 <!-- TAB: GERENCIAL -->
 <div class="tab-content active" id="tab-gerencial">
-  <div class="sidebar">
+  <div class="sidebar" id="mainSidebar">
     <div class="sidebar-label">Customer Success</div>
     <button class="gs-btn active" id="gs-all" onclick="resetAllQuickBtns();filterGS('all',this)">
       <div class="gs-avatar" style="background:var(--accent);color:white;">A</div>
@@ -661,7 +661,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
 
   <div class="main">
     <div class="view-header">
-      <div class="view-title" id="mainTitle">Todas as Contas <span id="mainSubtitle"></span></div>
+      <div class="view-title" id="mainTitle">Todas as Contas</div>
       <div class="view-actions">
         <input class="search-input" type="text" placeholder="🔍 Buscar cliente..." oninput="searchClients(this.value)"/>
       </div>
@@ -712,10 +712,6 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     <!-- CONTRACTS PANEL -->
     <div class="contracts-panel" id="contractsPanel">
       <div class="renov-panel-title">📄 Vencimento de Contratos <div style="flex:1;height:1px;background:var(--border);"></div>
-        <label style="font-size:10px;color:var(--accent2);cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:600;">
-          <input type="file" id="contractsXlsxInput" accept=".xlsx,.xls" onchange="importContracts(this)" style="display:none;">
-          📥 Importar planilha
-        </label>
       </div>
       <div class="contracts-grid">
         <div class="ct-card ct-urgent" onclick="toggleCtDrawer('urgent')">
@@ -880,13 +876,13 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
           <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" onchange="importFile(this)" style="display:none;">
           📥 Importar Clientes
         </div>
+        <div class="upload-zone" style="padding:8px 14px;border-style:dashed;border-width:1px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--accent2);font-weight:500;" onclick="document.getElementById('contractsXlsxInput2').click()">
+          <input type="file" id="contractsXlsxInput2" accept=".xlsx,.xls" onchange="importContracts(this)" style="display:none;">
+          📄 Importar Contratos
+        </div>
 
         <button class="btn btn-primary" onclick="addClientRow()">+ Novo Cliente</button>
         <button class="btn btn-primary" onclick="saveAdmin()">💾 Salvar Alterações</button>
-        <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--accent3);background:var(--card);font-size:12.5px;font-weight:500;cursor:pointer;color:var(--accent2);transition:all .12s;" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background='var(--card)'">
-          <input type="file" id="contractsXlsxInput2" accept=".xlsx,.xls" onchange="importContracts(this)" style="display:none;">
-          📄 Importar Contratos
-        </label>
         <button class="btn" style="color:var(--red);border-color:var(--red-bd);font-weight:700;" onclick="resetTotal()">☢ Reset Total</button>
       </div>
     </div>
@@ -938,7 +934,7 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     </div>
 
     <!-- NEW / EDIT USER MODAL -->
-    <div id="userModal" class="modal-overlay hidden" style="display:none;">
+    <div id="userModal" class="modal-overlay" style="display:none;">
       <div class="modal" style="max-width:420px;">
         <div class="modal-header">
           <div class="modal-title" id="userModalTitle">Novo Usuário</div>
@@ -1237,8 +1233,19 @@ let currentFarol={R:null,O:null,C:null,A:null},churnSelected=new Set(),currentBi
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 const daysSince=d=>d?Math.floor((new Date()-new Date(d))/86400000):null;
-const daysUntil=d=>d?Math.ceil((new Date(d)-new Date())/86400000):null;
-function getWeekKey(off=0){const n=new Date();n.setDate(n.getDate()+off*7);const dy=n.getDay();const mn=new Date(n);mn.setDate(n.getDate()+(dy===0?-6:1-dy));mn.setHours(0,0,0,0);return mn.toISOString().slice(0,10);}
+function getWeekKey(off=0){
+  const n=new Date();
+  n.setDate(n.getDate()+off*7);
+  const dy=n.getDay();
+  const mn=new Date(n);
+  mn.setDate(n.getDate()+(dy===0?-6:1-dy));
+  mn.setHours(0,0,0,0);
+  // Usar data local (não UTC) para evitar erro de timezone no Brasil (UTC-3)
+  const y=mn.getFullYear();
+  const m=String(mn.getMonth()+1).padStart(2,'0');
+  const d=String(mn.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
 function getPrevEntry(id){const p=weekHistory[getWeekKey(-1)];return p?(p[id]||null):null;}
 
 // ── HEALTH SCORE ─────────────────────────────────────────────────────────────
@@ -1385,9 +1392,9 @@ function calcHSDetail(id){
   const manualChurnD=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
   if(autoChurnD||manualChurnD){
     let cp=0;
-    if(autoChurnD&&manualChurnD){cp=30;factors.push({type:'negative',icon:'⚠️',label:'R ou C vermelho + churn sinalizado pelo CS',val:'-30'});}
-    else if(autoChurnD){cp=20;const dims=[];if(e.R==='V')dims.push('R');if(e.C==='V')dims.push('C');factors.push({type:'negative',icon:'⚠️',label:`Risco de churn automático (${dims.join(' e ')} vermelhos)`,val:'-20'});checklist.push({done:false,text:`Recuperar dimensão ${dims.join('/')} — risco real de perda`});}
-    else{const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];const ar=r.filter(x=>x!=='none'&&x!=='');cp=ar.length>=2?25:15;factors.push({type:'negative',icon:'⚠️',label:`Churn sinalizado pelo CS (${ar.map(x=>x==='billing'?'faturamento':'cancelamento').join(', ')})`,val:`-${cp}`});}
+    if(autoChurnD&&manualChurnD){cp=P(30);factors.push({type:'negative',icon:'⚠️',label:'R ou C vermelho + churn sinalizado pelo CS',val:`-${cp}`});}
+    else if(autoChurnD){cp=P(20);const dims=[];if(e.R==='V')dims.push('R');if(e.C==='V')dims.push('C');factors.push({type:'negative',icon:'⚠️',label:`Risco de churn automático (${dims.join(' e ')} vermelhos)`,val:`-${cp}`});checklist.push({done:false,text:`Recuperar dimensão ${dims.join('/')} — risco real de perda`});}
+    else{const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];const ar=r.filter(x=>x!=='none'&&x!=='');cp=P(ar.length>=2?25:15);factors.push({type:'negative',icon:'⚠️',label:`Churn sinalizado pelo CS (${ar.map(x=>x==='billing'?'faturamento':'cancelamento').join(', ')})`,val:`-${cp}`});}
     penalty+=cp;
   }else{checklist.push({done:true,text:'Sem risco de churn'});}
 
@@ -1401,17 +1408,17 @@ function calcHSDetail(id){
   const vCrit=tier==='A'?60:120;
   const visitCompensMeeting=vd!==null&&vd<=15;
 
-  // Visita presencial
+  // Visita presencial — usa P() igual ao calcHealthScore
   if(vd===null){
-    const vp=tier==='A'?15:8;penalty+=vp;
+    const vp=P(tier==='A'?15:8);penalty+=vp;
     factors.push({type:'negative',icon:'🤝',label:'Sem visita presencial registrada',val:`-${vp}`});
     checklist.push({done:false,text:'Registrar data da última visita presencial'});
   }else if(vd>vCrit){
-    const vp=tier==='A'?20:12;penalty+=vp;
+    const vp=P(tier==='A'?20:12);penalty+=vp;
     factors.push({type:'negative',icon:'🤝',label:`Última visita há ${vd} dias — crítico para Tier ${tier}`,val:`-${vp}`});
     checklist.push({done:false,text:`Realizar visita presencial urgente (${vd} dias sem visita)`});
   }else if(vd>vLimit){
-    const vp=tier==='A'?12:8;penalty+=vp;
+    const vp=P(tier==='A'?12:8);penalty+=vp;
     factors.push({type:'warning',icon:'🤝',label:`Última visita há ${vd} dias (limite: D-${vLimit})`,val:`-${vp}`});
     checklist.push({done:false,text:`Agendar visita presencial (fora da cadência D-${vLimit})`});
   }else{
@@ -1419,67 +1426,64 @@ function calcHSDetail(id){
     factors.push({type:'positive',icon:'🤝',label:msg,val:'✓'});
   }
 
-  // Reunião online
+  // Reunião online — usa P() igual ao calcHealthScore
   if(!visitCompensMeeting){
     if(md===null){
-      penalty+=20;
-      factors.push({type:'negative',icon:'📹',label:'Sem reunião online registrada',val:'-20'});
+      const mp=P(20);penalty+=mp;
+      factors.push({type:'negative',icon:'📹',label:'Sem reunião online registrada',val:`-${mp}`});
       checklist.push({done:false,text:'Registrar data da última reunião online'});
     }else if(md>45){
-      penalty+=25;
-      factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias — abandono de cadência`,val:'-25'});
+      const mp=P(25);penalty+=mp;
+      factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias — abandono de cadência`,val:`-${mp}`});
       checklist.push({done:false,text:'Retomar contato online imediatamente'});
     }else if(md>30){
-      penalty+=18;
-      factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias (>30)`,val:'-18'});
+      const mp=P(18);penalty+=mp;
+      factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias (>30)`,val:`-${mp}`});
       checklist.push({done:false,text:'Agendar reunião online urgente'});
     }else if(md>15){
-      penalty+=10;
-      factors.push({type:'warning',icon:'📹',label:`Última reunião há ${md} dias (limite: D-15)`,val:'-10'});
+      const mp=P(10);penalty+=mp;
+      factors.push({type:'warning',icon:'📹',label:`Última reunião há ${md} dias (limite: D-15)`,val:`-${mp}`});
       checklist.push({done:false,text:'Agendar reunião online — fora da cadência D-15'});
     }else{
       factors.push({type:'positive',icon:'📹',label:`Reunião recente (${md} dias atrás — dentro de D-15)`,val:'✓'});
     }
   }else{
-    // Visita compensou — mostrar o estado da reunião sem penalidade crítica
     if(md===null){
       factors.push({type:'warning',icon:'📹',label:'Reunião online não registrada (visita recente compensa)',val:'–'});
     }else if(md>45){
-      penalty+=10;
-      factors.push({type:'warning',icon:'📹',label:`Reunião há ${md} dias (visita recente mitiga parcialmente)`,val:'-10'});
+      const mp=P(10);penalty+=mp;
+      factors.push({type:'warning',icon:'📹',label:`Reunião há ${md} dias (visita recente mitiga parcialmente)`,val:`-${mp}`});
     }else{
       factors.push({type:'positive',icon:'📹',label:`Reunião registrada (${md}d) — visita presencial recente compensa`,val:'✓'});
     }
   }
 
-
-
   const nps=e.npsScore?parseInt(e.npsScore):null;const npsAge=e.npsDate?daysSince(e.npsDate):null;
   if(nps===null){
-    penalty+=8;factors.push({type:'warning',icon:'⭐',label:'NPS não registrado',val:'-8'});
+    const np=P(8);penalty+=np;factors.push({type:'warning',icon:'⭐',label:'NPS não registrado',val:`-${np}`});
     checklist.push({done:false,text:'Registrar NPS do trimestre'});
   }else if(nps<=6){
-    penalty+=20;factors.push({type:'negative',icon:'⭐',label:`NPS ${nps}/10 — Detrator`,val:'-20'});
+    const np=P(20);penalty+=np;factors.push({type:'negative',icon:'⭐',label:`NPS ${nps}/10 — Detrator`,val:`-${np}`});
     checklist.push({done:false,text:'Plano de ação imediato — cliente detrator'});
   }else if(nps<=8){
-    penalty+=6;factors.push({type:'warning',icon:'⭐',label:`NPS ${nps}/10 — Neutro (zona de risco silencioso)`,val:'-6'});
+    const np=P(6);penalty+=np;factors.push({type:'warning',icon:'⭐',label:`NPS ${nps}/10 — Neutro (zona de risco silencioso)`,val:`-${np}`});
     checklist.push({done:false,text:'Aprofundar relacionamento — neutro pode virar detrator'});
   }else{
     penalty-=3;factors.push({type:'positive',icon:'⭐',label:`NPS ${nps}/10 — Promotor`,val:'+3'});
   }
   if(npsAge!==null&&npsAge>90){
-    penalty+=8;factors.push({type:'warning',icon:'📅',label:`NPS desatualizado (${npsAge} dias — mais de 1 trimestre)`,val:'-8'});
+    const np=P(8);penalty+=np;factors.push({type:'warning',icon:'📅',label:`NPS desatualizado (${npsAge} dias — mais de 1 trimestre)`,val:`-${np}`});
     checklist.push({done:false,text:'Aplicar NPS — última medição há mais de 90 dias'});
   }
 
   if(e.needFrom&&!e.actionTaken){
-    penalty+=8;factors.push({type:'warning',icon:'🙋',label:'Escalou sem registrar ação própria',val:'-8'});
+    const ep=P(8);penalty+=ep;factors.push({type:'warning',icon:'🙋',label:'Escalou sem registrar ação própria',val:`-${ep}`});
     checklist.push({done:false,text:'Registrar ação tomada antes de escalar'});
   }
   if(e.needFrom&&e.needFromDate){
     const sla=daysSince(e.needFromDate);
-    if(sla>14){penalty+=10;factors.push({type:'negative',icon:'⏱',label:`Escalada aberta há ${sla} dias — sem resolução`,val:'-10'});checklist.push({done:false,text:`Resolver escalada urgente (${sla} dias em aberto)`});}
-    else if(sla>7){penalty+=5;factors.push({type:'warning',icon:'⏱',label:`Escalada aberta há ${sla} dias`,val:'-5'});}
+    if(sla>14){const ep=P(10);penalty+=ep;factors.push({type:'negative',icon:'⏱',label:`Escalada aberta há ${sla} dias — sem resolução`,val:`-${ep}`});checklist.push({done:false,text:`Resolver escalada urgente (${sla} dias em aberto)`});}
+    else if(sla>7){const ep=P(5);penalty+=ep;factors.push({type:'warning',icon:'⏱',label:`Escalada aberta há ${sla} dias`,val:`-${ep}`});}
   }
 
   if(e.pipelineStage&&e.pipelineStage!==''){factors.push({type:'positive',icon:'💼',label:`Pipeline: ${{identified:'Identificado',negotiating:'Em negociação',proposal:'Proposta enviada',closed:'Fechado'}[e.pipelineStage]}${e.pipelineValue?` (R$ ${parseInt(e.pipelineValue).toLocaleString('pt-BR')}/mês)`:''}`,val:'✓'});}
@@ -1624,7 +1628,6 @@ function consecutiveCriticalWeeks(id){
   }
   return count;
 }
-function archiveCurrentWeek(){const k=getWeekKey();const s=JSON.parse(JSON.stringify(entries));weekHistory[k]=s;localStorage.setItem('roca_history',JSON.stringify(weekHistory));fbArchiveWeek(k,s).catch(e=>console.warn('Archive failed:',e));}
 function statusOrder(s){return{V:0,A:1,G:2,pending:3}[s]??3;}
 function getEntryStatus(id){
   const e=entries[id];
@@ -1690,7 +1693,7 @@ async function init(){
   // Re-apply CS filter after data load with fresh authUsers
   if(currentUser&&currentUser.role==='cs'){
     const _u=authUsers.find(u=>u.email===currentUser.email);
-    const _n=_u?.csName||_u?.name||currentUser.name;
+    const _n=_u?.csName||_u?.name||currentUser.name||'';
     currentFilter.gs=_n;
     // Force filter — ensure no other filter overrides this
     currentFilter.status=null;currentFilter.churn=false;currentFilter.vip=false;
@@ -2046,7 +2049,10 @@ function openHSDetail(id){
 
 // ── FILL MODAL ────────────────────────────────────────────────────────────────
 function openFillModal(id){
-  editingClientId=id;const c=clients.find(x=>x.id===id);const e=entries[id]||{};
+  editingClientId=id;
+  const c=clients.find(x=>x.id===id);
+  if(!c){showToast('⚠ Cliente não encontrado — pode ter sido removido.');return;}
+  const e=entries[id]||{};
   currentFarol={R:e.R||null,O:e.O||null,C:e.C||null,A:e.A||null};
   currentBilling=e.billing||null;churnSelected=new Set();
   if(e.churnRisk){const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];r.forEach(x=>{if(x&&x!=='none')churnSelected.add(x);});}
@@ -2128,8 +2134,14 @@ function saveEntry(){
   if(missingDims.length>0&&missingDims.length<4){
     if(!confirm(`⚠ Atenção: ${missingDims.length} farol(is) sem preenchimento (${missingDims.join(', ')}).\nDeseja salvar assim mesmo?`))return;
   }
-  const wk=getWeekKey();if(!weekHistory[wk])weekHistory[wk]={};
-  if(entries[editingClientId]){weekHistory[wk][editingClientId]=JSON.parse(JSON.stringify(entries[editingClientId]));localStorage.setItem('roca_history',JSON.stringify(weekHistory));}
+  const wk=getWeekKey();
+  // Só salva snapshot no weekHistory se não existe ainda para esta semana
+  // (previne sobrescrever histórico correto com versões intermediárias)
+  if(entries[editingClientId]&&!weekHistory[wk]?.[editingClientId]){
+    if(!weekHistory[wk])weekHistory[wk]={};
+    weekHistory[wk][editingClientId]=JSON.parse(JSON.stringify(entries[editingClientId]));
+    localStorage.setItem('roca_history',JSON.stringify(weekHistory));
+  }
   const prev=entries[editingClientId]||{};
   const needFrom=document.getElementById('needFrom').value;
   const needFromDate=(needFrom&&!prev.needFrom)?new Date().toISOString().slice(0,10):(prev.needFromDate||'');
@@ -2148,7 +2160,8 @@ function saveEntry(){
     weeklyComment:document.getElementById('weeklyComment').value,
     bookSent:clients.find(x=>x.id===editingClientId)?.book ? document.getElementById('bookSent').checked : false,
     bookDate:clients.find(x=>x.id===editingClientId)?.book ? document.getElementById('bookDate').value : '',
-    timestamp:new Date().toISOString()
+    timestamp:new Date().toISOString(),
+    _name:clients.find(x=>x.id===editingClientId)?.name||''  // preserve for history ID recovery on reimport
   };
   entries[editingClientId]=e;localStorage.setItem('roca_entries',JSON.stringify(entries));
   const _auditName=clients.find(x=>x.id===editingClientId)?.name||editingClientId;
@@ -2192,9 +2205,8 @@ function getFilterGs(){
 
 function filterStatus(st,btn){
   const tog=currentFilter.status===st;
-  // Preserve current GS filter (admin may have a CS selected)
   const gsToKeep=currentFilter.gs;
-  currentFilter={...currentFilter,status:tog?null:st,gs:gsToKeep,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
+  currentFilter={...currentFilter,status:tog?null:st,gs:gsToKeep,bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false,search:''};
   resetAllQuickBtns();
   if(!tog){
     btn.classList.add('active');
@@ -2282,14 +2294,14 @@ function filterConsecutiveCritical(btn){
   render();
 }
 function filterWorsened(btn){
-  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
+  currentFilter={...currentFilter,worsened:!currentFilter.worsened,improved:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false,tier:null,renovacao:false,search:''};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));safeActivateAll();
   if(currentFilter.worsened){btn.classList.add('active');setTitle('↓ Pioraram',filteredClients().length);}
   else{setTitle('Todas as Contas',filteredClients().length);}
   render();
 }
 function filterImproved(btn){
-  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
+  currentFilter={...currentFilter,improved:!currentFilter.improved,worsened:false,status:null,gs:getFilterGs(),bookPending:false,churn:false,vip:false,consec:false,tier:null,renovacao:false,search:''};
   resetAllQuickBtns();document.querySelectorAll('.summary-card').forEach(c=>c.classList.remove('active'));safeActivateAll();
   if(currentFilter.improved){btn.classList.add('active');setTitle('↑ Melhoraram',filteredClients().length);}
   else{setTitle('Todas as Contas',filteredClients().length);}
@@ -2323,7 +2335,7 @@ function renderAdminList(){
   clients.forEach((c,i)=>{
     const row=document.createElement('div');row.className='client-edit-row';
     row.innerHTML=`
-      <input type="text" value="${c.name}" data-idx="${i}" data-field="name" oninput="updateCF(this)">
+      <input type="text" value="${c.name.replace(/\"/g, '&quot;')}" data-idx="${i}" data-field="name" oninput="updateCF(this)">
       <select data-idx="${i}" data-field="gs" onchange="updateCF(this)">${getActiveCSNames().map(g=>`<option${g===c.gs?' selected':''}>${g}</option>`).join('')}</select>
       <select data-idx="${i}" data-field="book" onchange="updateCF(this)"><option value="false"${!c.book?' selected':''}>Não</option><option value="true"${c.book?' selected':''}>Sim</option></select>
       <select data-idx="${i}" data-field="tier" onchange="updateCF(this)"><option value="A"${c.tier==='A'?' selected':''}>A</option><option value="B"${(c.tier||'B')==='B'?' selected':''}>B</option><option value="C"${c.tier==='C'?' selected':''}>C</option></select>
@@ -2383,15 +2395,6 @@ function saveAdmin(){
 }
 
 // ── IMPORT ────────────────────────────────────────────────────────────────────
-function parseDate(v){
-  if(!v)return'';
-  // try dd/mm/aaaa
-  const str=String(v).trim();
-  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)){const[d,m,y]=str.split('/');return`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;}
-  // try Excel serial
-  if(!isNaN(v)&&v>40000){const d=new Date(Math.round((v-25569)*86400*1000));return d.toISOString().slice(0,10);}
-  return str;
-}
 function importFile(input){
   const file=input.files[0];if(!file)return;
   input.value='';
@@ -2484,7 +2487,12 @@ async function advanceWeek(){
   if(!confirm('Arquivar semana atual e iniciar nova semana em branco?\nOs dados ficam salvos no histórico.'))return;
   showSyncStatus('saving');
   try{
-    archiveCurrentWeek();
+    const k=getWeekKey();
+    const s=JSON.parse(JSON.stringify(entries));
+    weekHistory[k]=s;
+    localStorage.setItem('roca_history',JSON.stringify(weekHistory));
+    // Await archive BEFORE clearing entries — prevents data loss on race condition
+    await fbArchiveWeek(k,s);
     await fbSet('roca/entries',{});
     entries={};
     localStorage.setItem('roca_entries',JSON.stringify(entries));
@@ -2714,10 +2722,14 @@ function enterDashboard() {
     const dbUserCS = authUsers.find(u=>u.email===currentUser.email);
     const csName = dbUserCS?.csName || dbUserCS?.name || currentUser.name;
     currentFilter.gs = csName;
-    localStorage.removeItem('roca_entries');
-    localStorage.removeItem('roca_history');
-    localStorage.removeItem('roca_clients');
-        localStorage.removeItem('roca_gs');
+    // Only clear stale localStorage if Firebase is online (authUsers populated)
+    // If Firebase is offline, keep localStorage as fallback data source
+    if (authUsers.length > 0) {
+      localStorage.removeItem('roca_entries');
+      localStorage.removeItem('roca_history');
+      localStorage.removeItem('roca_clients');
+      localStorage.removeItem('roca_gs');
+    }
     const _gsAll=document.getElementById('gs-all');if(_gsAll)_gsAll.style.display='none';
     const _gsSbl=document.getElementById('gs-sidebar-list');
     if(_gsSbl){_gsSbl.style.pointerEvents='none';_gsSbl.style.opacity='0.5';}
@@ -2747,7 +2759,7 @@ function openNewUserModal() {
   document.getElementById('umPassword').value = '';
   document.getElementById('umPwField').style.display = '';
   document.getElementById('userModalErr').textContent = '';
-  document.getElementById('userModal').style.display = 'flex';
+  document.getElementById('userModal').classList.add('open');
 }
 
 function openEditUserModal(uid) {
@@ -2760,11 +2772,11 @@ function openEditUserModal(uid) {
   document.getElementById('umRole').value = user.role;
   document.getElementById('umPwField').style.display = 'none'; // edit doesn't change pw here
   document.getElementById('userModalErr').textContent = '';
-  document.getElementById('userModal').style.display = 'flex';
+  document.getElementById('userModal').classList.add('open');
 }
 
 function closeUserModal() {
-  document.getElementById('userModal').style.display = 'none';
+  document.getElementById('userModal').classList.remove('open');
   editingUserId = null;
 }
 
@@ -2881,7 +2893,6 @@ function renderAuditLog() {
     return;
   }
 
-  const typeLabel = { auth:'auth', create:'create', edit:'edit', delete:'delete', user:'user' };
   list.innerHTML = auditEntries.slice(0, 200).map(e => {
     const dt = new Date(e.ts);
     const dtStr = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -2900,13 +2911,7 @@ function renderAuditLog() {
 
 // ── Check session on load ─────────────────────────────────────────────────────
 async function checkAuthAndInit() {
-  // Always clear stale localStorage data on page load — fresh data always comes from Firebase
-  // This prevents stale data from a previous admin session leaking into a CS session
-  localStorage.removeItem('roca_entries');
-  localStorage.removeItem('roca_history');
-  localStorage.removeItem('roca_clients');
-    localStorage.removeItem('roca_gs');
-
+  // Load fresh data from Firebase first
   await loadAuthUsers();
   await loadAuditLog();
   renderUserMgmtList();
@@ -2914,17 +2919,31 @@ async function checkAuthAndInit() {
 
   const session = loadSession();
   if (session) {
-    // Always use fresh user data from Firebase, not stale session data
     const dbUser = authUsers.find(u => u.email === session.email && u.active !== false);
     if (dbUser) {
-      // Rebuild currentUser from fresh Firebase data
+      // Valid session + Firebase confirmed user — now safe to clear stale localStorage
+      // (prevents stale admin data leaking into a CS session)
+      localStorage.removeItem('roca_entries');
+      localStorage.removeItem('roca_history');
+      localStorage.removeItem('roca_clients');
+      localStorage.removeItem('roca_gs');
       currentUser = { email: dbUser.email, name: dbUser.name, role: dbUser.role, uid: dbUser.uid };
       saveSession(currentUser);
       enterDashboard();
       return;
     }
+    // Firebase returned users but this session email wasn't found (deactivated/deleted)
+    if (authUsers.length > 0) {
+      clearSession();
+      document.getElementById('loginScreen').classList.remove('hidden');
+      return;
+    }
+    // Firebase offline (authUsers empty) — use session as-is, load from localStorage
+    currentUser = session;
+    enterDashboard();
+    return;
   }
-  // Show login
+  // No session — show login
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 
@@ -2937,13 +2956,6 @@ function auditSaveEntry(clientName) {
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
-
-function npsClass(nps){
-  if(nps===null)return null;
-  if(nps>=9)return'promotor';
-  if(nps>=7)return'neutro';
-  return'detrator';
-}
 
 function getDashClients(){
   // CS always sees only their own carteira — regardless of dropdown
@@ -3106,7 +3118,7 @@ function renderDashboard(){
   // ── TOP BEST ───────────────────────────────────────────────────────────────
   const bestEl=document.getElementById('dashTopBest');
   if(bestEl){
-    const top=scores.sort((a,b)=>b.hs-a.hs).slice(0,7);
+    const top=scores.slice().sort((a,b)=>b.hs-a.hs).slice(0,7);
     if(!top.length){bestEl.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;">Nenhum dado disponível</div>';}
     else{
       bestEl.innerHTML=top.map((x,i)=>{
@@ -3348,9 +3360,7 @@ function importContracts(input){
         }else if(typeof venc==='string'&&venc.includes('/')){
           const parts=venc.split('/');
           if(parts.length===3)venc=`${parts[2].trim()}-${parts[1].trim().padStart(2,'0')}-${parts[0].trim().padStart(2,'0')}`;
-        }else if(venc instanceof Date){
-          venc=venc.toISOString().slice(0,10);
-        }else{venc=null;}
+        }else{venc=null;} // instanceof Date never occurs with type:'binary' in SheetJS
         if(venc==='0000-00-00'||venc==='NaN-aN-aN'||venc==='Invalid date')venc=null;
         imported.push({clientName,project,resp,assinatura,venc});
       }
@@ -3377,7 +3387,6 @@ function toggleCtDrawer(bucket){
     drawer.classList.remove('open');_ctDrawerBucket=null;return;
   }
   _ctDrawerBucket=bucket;
-  const today=new Date();
   const filtered=contracts.filter(ct=>{
     const d=contractDaysLeft(ct.venc);
     if(bucket==='expired')return d!==null&&d<0;
