@@ -1194,10 +1194,23 @@ async function spLoadAll(){
       const rawC=data.clients
         ? (Array.isArray(data.clients) ? data.clients : Object.values(data.clients).filter(x=>x&&x.name))
         : [];
-      clients = rawC.length > 0 ? rawC.map(x=>({...x,book:x.book===true||x.book==='true'||x.book==='S',vip:x.vip===true||x.vip==='true',renovacao:x.renovacao===true||x.renovacao==='true'||x.renovacao==='S'})).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')) : [];
+      const parsedClients = rawC.length > 0
+        ? rawC.map(x=>({...x,book:x.book===true||x.book==='true'||x.book==='S',vip:x.vip===true||x.vip==='true',renovacao:x.renovacao===true||x.renovacao==='true'||x.renovacao==='S'})).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))
+        : [];
+      // Só sobrescrever clients[] se Firebase retornou dados — previne race condition
+      // onde Firebase ainda não recebeu o PUT do import mas spLoadAll já rodou
+      if(parsedClients.length > 0){
+        clients = parsedClients;
+      } else if(clients.length === 0) {
+        // Firebase vazio E memória vazia — tentar localStorage como fallback
+        const lsClients = localStorage.getItem('roca_clients');
+        if(lsClients) try{ clients = JSON.parse(lsClients); }catch(e){}
+      }
+      // Se Firebase vazio mas memória tem dados (import recente), manter os dados em memória
       contracts=data.contracts
         ? (Array.isArray(data.contracts) ? data.contracts : Object.values(data.contracts).filter(x=>x&&x.clientName))
         : [];
+      if(contracts.length>0)localStorage.setItem('roca_contracts',JSON.stringify(contracts));
       showContractPanel(contracts.length>0);
       localStorage.setItem('roca_clients',JSON.stringify(clients));
 
@@ -1694,7 +1707,14 @@ async function init(){
   // sc-all only active for admin; CS stays on their filter
   if(!currentUser||currentUser.role==='admin'){const _sc=document.getElementById('sc-all');if(_sc)_sc.classList.add('active');}
   const ok=await spLoadAll();
-  if(!ok){const se=localStorage.getItem('roca_entries');const sh=localStorage.getItem('roca_history');if(se)entries=JSON.parse(se);if(sh)weekHistory=JSON.parse(sh);}
+  if(!ok){
+    const se=localStorage.getItem('roca_entries');
+    const sh=localStorage.getItem('roca_history');
+    const sct=localStorage.getItem('roca_contracts');
+    if(se)entries=JSON.parse(se);
+    if(sh)weekHistory=JSON.parse(sh);
+    if(sct)contracts=JSON.parse(sct);
+  }
   // Reload authUsers to get fresh csName (may have been updated by admin after login)
   await loadAuthUsers();
   // Re-apply CS filter after data load with fresh authUsers
@@ -2515,11 +2535,15 @@ async function confirmImport(){
     setTitle('Todas as Contas',clients.length);
   }
 
-  // Rebuild UI completamente
+  // Rebuild UI completamente — atualizar todas as abas com os novos dados
   buildSidebar();
   render();
   renderAdminList();
   updateContractPanel();
+  // Atualizar Dashboard se estiver ativo, ou marcar para atualizar quando abrir
+  if(document.getElementById('tab-dashboard')&&document.getElementById('tab-dashboard').classList.contains('active')){
+    renderDashboard();
+  }
 
   addAudit('create',`${clients.length} clientes importados via Excel${orphanIds.length?` (${orphanIds.length} entradas órfãs removidas)`:''}`);
   // Toast em vez de alert — não bloqueia o render
@@ -3390,10 +3414,10 @@ function importContracts(input){
       const imported=[];
       for(let i=start;i<data.length;i++){
         const r=data[i];
-        const clientName=String(r[0]||'').trim();if(!clientName)continue;
-        const project=String(r[1]||'').trim();
-        const resp=String(r[2]||'').trim();
-        const assinatura=String(r[3]||'').trim();
+        const clientName=String(r[0]||'').replace(/[\u00A0\s]+/g,' ').trim();if(!clientName)continue;
+        const project=String(r[1]||'').replace(/[\u00A0\s]+/g,' ').trim();
+        const resp=String(r[2]||'').replace(/[\u00A0\s]+/g,' ').trim();
+        const assinatura=String(r[3]||'').replace(/[\u00A0\s]+/g,' ').trim();
         let venc=r[4];
         // Normalize date — handle string dd/mm/yyyy, ISO, or Excel serial number
         if(typeof venc==='number'&&venc>40000){
@@ -3406,7 +3430,16 @@ function importContracts(input){
         imported.push({clientName,project,resp,assinatura,venc});
       }
       contracts=imported;
-      fbSet('roca/contracts',contracts).catch(e=>console.warn('Contracts save:',e));
+      // Salvar no localStorage para persistência offline
+      localStorage.setItem('roca_contracts',JSON.stringify(contracts));
+      // Await para garantir que Firebase tem os dados antes de qualquer reload
+      fbSet('roca/contracts',contracts).then(()=>{
+        showSyncStatus('saved');
+      }).catch(e=>{
+        console.warn('Contracts save failed:',e);
+        showSyncStatus('error');
+      });
+      showSyncStatus('saving');
       updateContractPanel();
       showContractPanel(true);
       showToast(`✓ ${contracts.length} contratos importados`);
