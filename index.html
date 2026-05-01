@@ -241,86 +241,82 @@ body {
    Linha colorida embaixo = único sinal semântico.
    Referência: Vercel Analytics · Linear · Stripe Dashboard
    ─────────────────────────────────────────────────────── */
-/* ─── SUMMARY STRIP — Surgical minimal ─────────────────────
-   Filosofia: espaço é design. Cor só no número.
-   Fundo neutro. Borda 1px como limite preciso.
-   Referência estética: Linear · Raycast · Vercel
+/* ─── SUMMARY STRIP — Executive KPI cards ───────────────────
+   Proporção quadrada. Número dominante.
+   Espaço amplo. Cor só no número e na borda superior.
    ─────────────────────────────────────────────────────── */
 .summary-strip {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  margin-bottom: 28px;
+  gap: 14px;
+  margin-bottom: 32px;
 }
 
 .summary-card {
   background: var(--card);
-  border-radius: 10px;
-  padding: 20px 20px 16px;
+  border-radius: 12px;
+  padding: 24px 22px 20px;
   cursor: pointer;
-  border: 1px solid var(--border);
-  box-shadow: none;
-  transition: border-color .15s, box-shadow .15s, transform .15s;
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow-xs);
+  transition: border-color .18s, box-shadow .18s, transform .18s;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 110px;
 }
 .summary-card:hover {
   border-color: var(--border2);
-  box-shadow: 0 2px 12px rgba(13,21,56,.07);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
 }
 .summary-card.active {
-  border-color: var(--brand2);
+  border-color: var(--brand3);
   box-shadow: 0 0 0 3px var(--brand-glow);
 }
 
-/* Número — único elemento com cor forte */
+/* Barra de cor no topo — 3px, sinal semântico único */
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+  background: var(--border);
+}
+.sc-total::before   { background: var(--brand3); }
+.sc-red::before     { background: var(--red); }
+.sc-churn::before   { background: var(--churn); }
+.sc-yellow::before  { background: var(--amber); }
+.sc-green::before   { background: var(--green); }
+.sc-pending::before { background: var(--muted); opacity:.35; }
+
+/* Número — âncora visual do card */
 .summary-num {
-  font-size: 36px;
+  font-size: 44px;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -.05em;
+  letter-spacing: -.06em;
   font-family: 'Outfit', sans-serif;
   color: var(--ink);
 }
-
-/* Cores semânticas apenas no número — tudo o mais permanece neutro */
 .sc-red    .summary-num { color: var(--red); }
 .sc-churn  .summary-num { color: var(--churn); }
 .sc-yellow .summary-num { color: var(--amber); }
 .sc-green  .summary-num { color: var(--green); }
 .sc-pending .summary-num { color: var(--muted); }
 
-/* Label — mínimo, discreto */
+/* Label — subordinado ao número */
 .summary-lbl {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 8px;
-  letter-spacing: .12em;
+  font-size: 9px;
+  letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--muted);
-  line-height: 1;
 }
 
-/* Ponto de cor — 4px no topo, único acento visual */
-.summary-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 16px; right: 16px;
-  height: 2px;
-  border-radius: 0 0 2px 2px;
-  background: var(--border);
-  transition: background .15s;
-}
-.sc-total::before  { background: var(--brand3); }
-.sc-red::before    { background: var(--red); }
-.sc-churn::before  { background: var(--churn); }
-.sc-yellow::before { background: var(--amber); }
-.sc-green::before  { background: var(--green); }
-.sc-pending::before { background: var(--muted); opacity: .3; }
-
-/* Ícone — removido. Menos é mais. */
 .summary-card-icon { display: none; }
 .summary-card-top  { display: none; }
 .summary-card-body { display: contents; }
