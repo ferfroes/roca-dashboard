@@ -588,10 +588,11 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     <div class="topbar-sep"></div>
     <div class="topbar-sub">ROCA · CS</div>
   </div>
+  <button class="sidebar-hamburger" id="sidebarHamburger" onclick="toggleSidebar()" style="display:none;" title="Menu">☰</button>
   <div class="topbar-right">
     <div class="week-badge" id="weekBadge"></div>
     <span id="syncStatus"></span>
-    <button class="tbtn" onclick="spLoadAll().then(()=>render())" title="Recarregar">⟳</button>
+    <button class="tbtn" onclick="spLoadAll().then(()=>{const activeTab=document.querySelector('.tab-content.active');if(activeTab&&activeTab.id==='tab-dashboard')renderDashboard();else render();})" title="Recarregar">⟳</button>
     <button class="tbtn" id="btnNovaSmn" onclick="advanceWeek()" title="Arquivar e abrir nova semana">↻ Nova Semana</button>
     <button class="tbtn tbtn-primary" id="btnExportar" onclick="exportData()">↓ Exportar</button>
     <div class="user-badge" id="userBadge" onclick="showUserMenu()" style="display:none;"><div class="user-avatar" id="userAvatar">?</div><span id="userLabel">–</span></div>
@@ -898,7 +899,22 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
     </div>
     <div class="client-list-edit" id="editClientList" style="max-height:none;border-radius:10px;"></div>
 
-    <div style="margin-top:20px;display:grid;grid-template-columns:1fr;gap:20px;">
+    <!-- USERS MANAGEMENT -->
+    <div style="margin-top:28px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-weight:700;font-size:13px;color:var(--ink);">👤 Controle de Acesso</div>
+        <button class="btn btn-primary" onclick="openNewUserModal()" style="font-size:12px;">+ Novo Usuário</button>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+        <div class="user-row user-row-hdr">
+          <span>E-MAIL</span><span>NOME</span><span>PERFIL</span><span>STATUS</span><span>ÚLTIMO ACESSO</span><span>AÇÕES</span>
+        </div>
+        <div id="userMgmtList"></div>
+      </div>
+    </div>
+
+    <!-- IMPORTAÇÃO — no final da página -->
+    <div style="margin-top:28px;display:grid;grid-template-columns:1fr;gap:20px;">
       <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
         <div style="font-weight:700;font-size:13px;color:var(--ink);margin-bottom:6px;">📋 Estrutura dos arquivos Excel</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -912,24 +928,9 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
               Col E: Renovação próxima (S / N)<br>
             </div>
           </div>
-
         </div>
         <div style="margin-top:8px;font-size:10.5px;color:var(--accent2);font-family:'JetBrains Mono',monospace;">Linha 1 = cabeçalho (ignorada automaticamente)</div>
         <div id="import-preview" style="margin-top:10px;"></div>
-              </div>
-    </div>
-
-    <!-- USERS MANAGEMENT -->
-    <div style="margin-top:28px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div style="font-weight:700;font-size:13px;color:var(--ink);">👤 Controle de Acesso</div>
-        <button class="btn btn-primary" onclick="openNewUserModal()" style="font-size:12px;">+ Novo Usuário</button>
-      </div>
-      <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-        <div class="user-row user-row-hdr">
-          <span>E-MAIL</span><span>NOME</span><span>PERFIL</span><span>STATUS</span><span>ÚLTIMO ACESSO</span><span>AÇÕES</span>
-        </div>
-        <div id="userMgmtList"></div>
       </div>
     </div>
 
@@ -1628,6 +1629,17 @@ function calcHealthScore_from(e, id){
   if(e.needFrom&&e.needFromDate&&daysSince(e.needFromDate)>14)penalty+=P(10);
   else if(e.needFrom&&e.needFromDate&&daysSince(e.needFromDate)>7)penalty+=P(5);
   if(c.renovacao===true||c.renovacao==='true')penalty+=P(15);
+
+  // ── CONTRATOS — espelha lógica do calcHealthScore ─────────────────────────
+  if(typeof getMostCriticalContract==='function'&&typeof contracts!=='undefined'&&contracts.length){
+    const mc=getMostCriticalContract(c.name);
+    if(mc){const dv=contractDaysLeft(mc.venc);if(dv!==null){
+      if(dv<0)penalty+=P(10);
+      else if(dv<=15)penalty+=P(20);
+      else if(dv<=30)penalty+=P(12);
+      else if(dv<=60)penalty+=P(6);
+    }}
+  }
 
   return Math.max(0,Math.min(100,Math.round(score-penalty)));
 }
@@ -2393,6 +2405,14 @@ function deleteClient(idx){
     localStorage.setItem('roca_entries',JSON.stringify(entries));
     spDelete(getWeekKey(),removedId).catch(()=>{});
   }
+  // Reconstruir gsList — CS sem clientes deve sumir da sidebar
+  gsList=[...new Set(clients.map(c=>c.gs).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  localStorage.setItem('roca_clients',JSON.stringify(clients));
+  localStorage.setItem('roca_gs',JSON.stringify(gsList));
+  // Persistir no Firebase — sem await para não bloquear a UI
+  fbSet('roca/clients',clients).catch(e=>console.warn('deleteClient Firebase sync failed:',e));
+  fbSet('roca/gsList',gsList).catch(e=>console.warn('deleteClient gsList sync failed:',e));
+  buildSidebar();
   renderAdminList();
 }
 function addClientRow(){const maxId=clients.reduce((m,c)=>Math.max(m,c.id),0);const _gsOpts=getActiveCSNames();clients.push({id:maxId+1,name:'Novo Cliente',gs:_gsOpts[0]||'',book:false,tier:'C',vip:false,renovacao:false});clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));renderAdminList();}
@@ -2507,7 +2527,7 @@ function importFile(input){
         :'';
 
       const prev=document.getElementById('import-preview');
-      prev.innerHTML=`${csWarning}<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">Tier ${c.tier} · ${c.gs}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="confirmImport()">💾 Salvar no sistema</button>`;
+      prev.innerHTML=`${csWarning}<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">Tier ${c.tier} · ${c.gs}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><div style="margin-top:10px;padding:8px 12px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:7px;font-size:11.5px;color:var(--green);font-weight:600;">✓ Importação aplicada — dados salvos automaticamente no sistema.</div>`;
       window._importedClients=imported;
 
       // Aplicar imediatamente em memória — não espera confirmação
@@ -2965,7 +2985,7 @@ function renderUserMgmtList() {
     list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">Nenhum usuário cadastrado.</div>';
     return;
   }
-  list.innerHTML = authUsers.sort((a,b)=>a.email.localeCompare(b.email)).map(u => {
+  list.innerHTML = authUsers.slice().sort((a,b)=>a.email.localeCompare(b.email)).map(u => {
     const lastAccess = u.lastAccess ? new Date(u.lastAccess).toLocaleString('pt-BR') : '–';
     const isMe = u.email === currentUser?.email;
     return `<div class="user-row">
@@ -3726,6 +3746,7 @@ checkAuthAndInit();
   <div id="kpiDrawerBody" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:6px;"></div>
 </div>
 <div id="kpiDrawerOverlay" onclick="closeKpiDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:899;"></div>
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
 </body>
 </html>
