@@ -1930,15 +1930,26 @@ function updateSummary(fc){
   if(currentFilter.search){const q=currentFilter.search.toLowerCase();pool=pool.filter(c=>c.name.toLowerCase().includes(q));}
 
   document.getElementById('s-total').textContent=pool.length;
-  const cntAll=document.getElementById('count-all');if(cntAll)cntAll.textContent=clients.length;
+  const cntAll=document.getElementById('count-all');if(cntAll)cntAll.textContent=pool.length;
   document.getElementById('s-red').textContent=pool.filter(c=>getEntryStatus(c.id)==='V').length;
   document.getElementById('s-yellow').textContent=pool.filter(c=>getEntryStatus(c.id)==='A').length;
   document.getElementById('s-green').textContent=pool.filter(c=>getEntryStatus(c.id)==='G').length;
   document.getElementById('s-churn').textContent=pool.filter(c=>hasChurnRisk(c.id)).length;
   document.getElementById('s-pending').textContent=pool.filter(c=>isPending(c.id)).length;
 
-  // Sidebar quick-filter counts always use full visible pool (not filtered)
-  const visibleClients=currentUser&&currentUser.role==='cs'?pool:clients;
+  // Sidebar quick-filter counts: respeitam filtro de GS ativo mas ignoram filtros de status
+  // Isso garante que os contadores reflitam a carteira selecionada
+  let visibleClients;
+  if(currentUser&&currentUser.role==='cs'){
+    visibleClients=pool;
+  }else{
+    const gsF=currentFilter.gs||'all';
+    visibleClients=gsF==='all'
+      ?clients.slice()
+      :clients.filter(c=>c.gs.toLowerCase().trim()===gsF.toLowerCase().trim());
+    // Aplicar search se ativo
+    if(currentFilter.search){const q=currentFilter.search.toLowerCase();visibleClients=visibleClients.filter(c=>c.name.toLowerCase().includes(q));}
+  }
   document.getElementById('count-churn').textContent=visibleClients.filter(c=>hasChurnRisk(c.id)).length;
   const _cntRenov=document.getElementById('count-renov');if(_cntRenov)_cntRenov.textContent=visibleClients.filter(c=>c.renovacao===true||c.renovacao==='true').length;
   const _cntTA=document.getElementById('count-tierA');if(_cntTA)_cntTA.textContent=visibleClients.filter(c=>c.tier==='A').length;
@@ -1952,7 +1963,7 @@ function updateSummary(fc){
   if(consecEl)consecEl.textContent=visibleClients.filter(c=>consecutiveCriticalWeeks(c.id)>=2).length;
   document.getElementById('count-worsened').textContent=visibleClients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));}).length;
   document.getElementById('count-improved').textContent=visibleClients.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));}).length;
-  document.querySelectorAll('.gs-btn-person').forEach(b=>{const gs=b.dataset.gsName;const cnt=b.querySelector('.gs-count');if(cnt&&gs)cnt.textContent=clients.filter(c=>c.gs===gs).length;});
+  document.querySelectorAll('.gs-btn-person').forEach(b=>{const gs=b.dataset.gsName;const cnt=b.querySelector('.gs-count');if(cnt&&gs)cnt.textContent=clients.filter(c=>c.gs===gs).length;}); // CS counts always show full carteira por CS
 }
 
 function renderList(fc){
