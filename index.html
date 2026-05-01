@@ -1207,10 +1207,17 @@ async function spLoadAll(){
         if(lsClients) try{ clients = JSON.parse(lsClients); }catch(e){}
       }
       // Se Firebase vazio mas memória tem dados (import recente), manter os dados em memória
-      contracts=data.contracts
+      const rawContracts=data.contracts
         ? (Array.isArray(data.contracts) ? data.contracts : Object.values(data.contracts).filter(x=>x&&x.clientName))
         : [];
-      if(contracts.length>0)localStorage.setItem('roca_contracts',JSON.stringify(contracts));
+      // Guard: só sobrescrever contracts se Firebase retornou dados
+      if(rawContracts.length>0){
+        contracts=rawContracts;
+        localStorage.setItem('roca_contracts',JSON.stringify(contracts));
+      } else if(contracts.length===0){
+        const lsContracts=localStorage.getItem('roca_contracts');
+        if(lsContracts) try{ contracts=JSON.parse(lsContracts); }catch(e){}
+      }
       showContractPanel(contracts.length>0);
       localStorage.setItem('roca_clients',JSON.stringify(clients));
 
@@ -1740,6 +1747,7 @@ function switchMainTab(tab,btn){
   if(tab==='configuracoes'){loadAuditLog().then(()=>{renderAuditLog();renderUserMgmtList();});}
   if(tab==='administrativa'){renderAdminList();}
   if(tab==='dashboard'){renderDashboard();}
+  if(tab==='gerencial'){buildSidebar();render();}
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -1849,10 +1857,12 @@ function render(){
       :clients.filter(c=>c.gs.toLowerCase().trim()===(currentFilter.gs||'').toLowerCase().trim());
   }
   updateRenovPanel(renovPool);
-  // Always keep title count in sync with actual filtered results
+  // Sempre atualizar count no título — independente do filtro ativo
   const titleEl=document.getElementById('mainTitle');
-  if(titleEl&&titleEl.innerHTML.includes('Todas as Contas')){
-    setTitle('Todas as Contas',fc.length);
+  if(titleEl){
+    // Extrair o texto do título (sem o span de count) e atualizar com count atual
+    const titleText=titleEl.firstChild?titleEl.firstChild.textContent.trim():titleEl.textContent.trim();
+    if(titleText) setTitle(titleText, fc.length);
   }
   if(currentView==='list')renderList(fc);else renderTable(fc);
   updateContractPanel();
@@ -2412,10 +2422,21 @@ function resetTotal(){
       location.reload();
     });
 }
-function saveAdmin(){
+async function saveAdmin(){
   clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  // Reconstruir gsList a partir dos clientes atuais
+  gsList=[...new Set(clients.map(c=>c.gs).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   localStorage.setItem('roca_clients',JSON.stringify(clients));
-  fbSet('roca/clients',clients).catch(e=>console.warn('Save clients failed:',e));
+  localStorage.setItem('roca_gs',JSON.stringify(gsList));
+  showSyncStatus('saving');
+  try{
+    await fbSet('roca/clients',clients);
+    await fbSet('roca/gsList',gsList);
+    showSyncStatus('saved');
+  }catch(e){
+    console.warn('Save clients failed:',e);
+    showSyncStatus('error');
+  }
   buildSidebar();render();renderAdminList();
   addAudit('edit','Clientes atualizados na aba Administração');
   alert('✓ Alterações salvas com sucesso.');
@@ -3432,14 +3453,14 @@ function importContracts(input){
       contracts=imported;
       // Salvar no localStorage para persistência offline
       localStorage.setItem('roca_contracts',JSON.stringify(contracts));
-      // Await para garantir que Firebase tem os dados antes de qualquer reload
+      // Salvar no Firebase — mostrar status correto
+      showSyncStatus('saving');
       fbSet('roca/contracts',contracts).then(()=>{
         showSyncStatus('saved');
       }).catch(e=>{
         console.warn('Contracts save failed:',e);
         showSyncStatus('error');
       });
-      showSyncStatus('saving');
       updateContractPanel();
       showContractPanel(true);
       showToast(`✓ ${contracts.length} contratos importados`);
