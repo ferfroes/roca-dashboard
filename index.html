@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SAFIRA · ROCA Dashboard</title>
+<title>MÉTODO ROCA · Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════
-   SAFIRA ROCA — Executive Platform
+   MÉTODO ROCA ROCA — Executive Platform
    Direção: Dark-accent sidebar · Floating card system
    ═══════════════════════════════════════════════════════ */
 :root{
@@ -750,17 +750,17 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
   <!-- Left: brand panel -->
   <div class="login-brand-panel">
     <div class="login-brand-content">
-      <div class="login-brand-wordmark">SAFIRA</div>
-      <div class="login-brand-headline">Governança de clientes com <em>precisão</em> executiva.</div>
-      <div class="login-brand-sub">Visibilidade total da carteira, Health Score em tempo real e tomada de decisão baseada em dados — para equipes de CS de alta performance.</div>
-      <div class="login-brand-tag">ROCA · CS · DASHBOARD</div>
+      <div class="login-brand-wordmark">MÉTODO ROCA</div>
+      <div class="login-brand-headline">HealthScore com <em>posicionamento</em> executivo.</div>
+      <div class="login-brand-sub">Health Score em tempo real e decisão baseada em dados — para equipes de CS que sabem performar.</div>
+      <div class="login-brand-tag">ROCA · CS · PERFORMANCE</div>
     </div>
   </div>
   <!-- Right: form panel -->
   <div class="login-form-panel">
     <div class="login-box">
-      <div class="login-logo">SAFIRA</div>
-      <div class="login-sub">ROCA · CS · DASHBOARD</div>
+      <div class="login-logo">MÉTODO ROCA</div>
+      <div class="login-sub">ROCA · CS · PERFORMANCE</div>
       <div class="login-title">Bem-vindo</div>
       <div class="login-field">
         <label>E-MAIL</label>
@@ -799,7 +799,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-brand">
-    <div class="topbar-logo">SAFIRA</div>
+    <div class="topbar-logo">MÉTODO ROCA</div>
     <div class="topbar-sep"></div>
     <div class="topbar-sub">ROCA · CS</div>
   </div>
@@ -2466,10 +2466,20 @@ function clearEntry(){if(!editingClientId)return;if(!confirm('Limpar todos os da
 
 function saveEntry(){
   if(!editingClientId)return;
-  // Aviso se faróis incompletos (não bloqueia — entrada parcial é permitida)
+  // Bloquear salvamento se algum farol ROCA não foi preenchido
   const missingDims=['R','O','C','A'].filter(d=>!currentFarol[d]);
-  if(missingDims.length>0&&missingDims.length<4){
-    if(!confirm(`⚠ Atenção: ${missingDims.length} farol(is) sem preenchimento (${missingDims.join(', ')}).\nDeseja salvar assim mesmo?`))return;
+  if(missingDims.length>0){
+    // Destacar visualmente os blocos não preenchidos
+    ['R','O','C','A'].forEach(d=>{
+      const block=document.getElementById(`block-${d}`);
+      if(!currentFarol[d]&&block){
+        block.style.borderColor='var(--red)';
+        block.style.boxShadow='0 0 0 3px rgba(220,38,38,.12)';
+        setTimeout(()=>{block.style.borderColor='';block.style.boxShadow='';},2500);
+      }
+    });
+    showToast(`⚠ Preencha todos os 4 faróis ROCA antes de salvar (faltam: ${missingDims.join(', ')})`);
+    return;
   }
   const wk=getWeekKey();
   // Só salva snapshot no weekHistory se não existe ainda para esta semana
@@ -2951,7 +2961,7 @@ function exportData(){
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
   ws['!cols']=rows[0].map((_,i)=>({wch:i===0?35:i===3?18:i===8||i===10||i===12||i===14||i===17||i===27||i===28?40:16}));
   XLSX.utils.book_append_sheet(wb,ws,'ROCA Dashboard');
-  XLSX.writeFile(wb,`SAFIRA_ROCA_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.writeFile(wb,`MÉTODO ROCA_ROCA_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
