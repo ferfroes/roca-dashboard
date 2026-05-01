@@ -872,35 +872,10 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
   <div class="admin-full">
     <div class="view-header">
       <div class="view-title">Administração <span>Cadastro de clientes e CS</span></div>
-      <div class="view-actions">
-        <div class="upload-zone" style="padding:8px 14px;border-style:dashed;border-width:1px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--accent2);font-weight:500;" onclick="document.getElementById('xlsxInput').click()">
-          <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" onchange="importFile(this)" style="display:none;">
-          📥 Importar Clientes
-        </div>
-        <div class="upload-zone" style="padding:8px 14px;border-style:dashed;border-width:1px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--accent2);font-weight:500;" onclick="document.getElementById('contractsXlsxInput2').click()">
-          <input type="file" id="contractsXlsxInput2" accept=".xlsx,.xls" onchange="importContracts(this)" style="display:none;">
-          📄 Importar Contratos
-        </div>
-
-        <button class="btn btn-primary" onclick="addClientRow()">+ Novo Cliente</button>
-        <button class="btn btn-primary" onclick="saveAdmin()">💾 Salvar Alterações</button>
-        <button class="btn" style="color:var(--red);border-color:var(--red-bd);font-weight:700;" onclick="resetTotal()">☢ Reset Total</button>
-      </div>
     </div>
 
-    <!-- Column headers -->
-    <div style="display:grid;grid-template-columns:1.6fr 1fr 52px 52px 52px 52px 30px;gap:5px;padding:4px 10px;margin-bottom:3px;background:var(--surface);border-radius:7px;">
-      <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">CLIENTE</span>
-      <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">CS RESPONSÁVEL</span>
-      <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">BOOK</span>
-      <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">TIER</span>
-      <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">RENOV.</span>
-      <span></span>
-    </div>
-    <div class="client-list-edit" id="editClientList" style="max-height:none;border-radius:10px;"></div>
-
-    <!-- USERS MANAGEMENT -->
-    <div style="margin-top:28px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+    <!-- 1. CONTROLE DE ACESSO — primeiro, sempre compacto -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div style="font-weight:700;font-size:13px;color:var(--ink);">👤 Controle de Acesso</div>
         <button class="btn btn-primary" onclick="openNewUserModal()" style="font-size:12px;">+ Novo Usuário</button>
@@ -913,25 +888,73 @@ tbody tr:hover{background:var(--surface);cursor:pointer;}
       </div>
     </div>
 
-    <!-- IMPORTAÇÃO — no final da página -->
-    <div style="margin-top:28px;display:grid;grid-template-columns:1fr;gap:20px;">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
-        <div style="font-weight:700;font-size:13px;color:var(--ink);margin-bottom:6px;">📋 Estrutura dos arquivos Excel</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div>
-            <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent2);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;">📥 Arquivo 1 — Clientes</div>
-            <div style="font-size:11px;color:var(--muted);line-height:1.9;font-family:'JetBrains Mono',monospace;">
-              Col A: Nome do Cliente<br>
-              Col B: CS Responsável<br>
-              Col C: Book (S / N)<br>
-              Col D: Tier (A / B / C)<br>
-              Col E: Renovação próxima (S / N)<br>
-            </div>
+    <!-- 2. CADASTRO DE CLIENTES — colapsável, com scroll interno -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;">
+      <!-- Header clicável para colapsar -->
+      <div onclick="toggleClientList()" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;" id="clientListHeader">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-weight:700;font-size:13px;color:var(--ink);">👥 Cadastro de Clientes</span>
+          <span id="clientListCount" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);background:var(--surface);padding:2px 8px;border-radius:20px;border:1px solid var(--border);">0 clientes</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="upload-zone" style="padding:6px 12px;border-style:dashed;border-width:1px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent2);font-weight:500;" onclick="event.stopPropagation();document.getElementById('xlsxInput').click()">
+            <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" onchange="importFile(this)" style="display:none;">
+            📥 Importar
+          </div>
+          <div class="upload-zone" style="padding:6px 12px;border-style:dashed;border-width:1px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent2);font-weight:500;" onclick="event.stopPropagation();document.getElementById('contractsXlsxInput2').click()">
+            <input type="file" id="contractsXlsxInput2" accept=".xlsx,.xls" onchange="importContracts(this)" style="display:none;">
+            📄 Contratos
+          </div>
+          <button class="btn" onclick="event.stopPropagation();addClientRow()" style="font-size:12px;padding:5px 12px;">+ Novo</button>
+          <button class="btn btn-primary" onclick="event.stopPropagation();saveAdmin()" style="font-size:12px;padding:5px 12px;">💾 Salvar</button>
+          <button class="btn" style="color:var(--red);border-color:var(--red-bd);font-size:12px;padding:5px 12px;" onclick="event.stopPropagation();resetTotal()">☢ Reset</button>
+          <span id="clientListChevron" style="font-size:14px;color:var(--muted);transition:transform .2s;display:inline-block;">▼</span>
+        </div>
+      </div>
+      <!-- Corpo colapsável -->
+      <div id="clientListBody" style="border-top:1px solid var(--border);">
+        <!-- Column headers -->
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 52px 52px 52px 52px 30px;gap:5px;padding:6px 16px;background:var(--surface);">
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">CLIENTE</span>
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">CS RESPONSÁVEL</span>
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">BOOK</span>
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">TIER</span>
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);">RENOV.</span>
+          <span></span>
+        </div>
+        <!-- Lista com altura fixa e scroll — não cresce infinitamente -->
+        <div class="client-list-edit" id="editClientList" style="max-height:420px;overflow-y:auto;border-radius:0 0 var(--radius) var(--radius);margin:0;"></div>
+        <!-- Prévia de importação dentro do corpo colapsável -->
+        <div id="import-preview" style="padding:0 16px 12px;"></div>
+      </div>
+    </div>
+
+    <!-- 3. IMPORTAÇÃO — referência da estrutura, no fundo -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">
+      <div style="font-weight:700;font-size:13px;color:var(--ink);margin-bottom:6px;">📋 Estrutura dos arquivos Excel</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent2);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;">📥 Arquivo 1 — Clientes</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.9;font-family:'JetBrains Mono',monospace;">
+            Col A: Nome do Cliente<br>
+            Col B: CS Responsável<br>
+            Col C: Book (S / N)<br>
+            Col D: Tier (A / B / C)<br>
+            Col E: Renovação próxima (S / N)<br>
           </div>
         </div>
-        <div style="margin-top:8px;font-size:10.5px;color:var(--accent2);font-family:'JetBrains Mono',monospace;">Linha 1 = cabeçalho (ignorada automaticamente)</div>
-        <div id="import-preview" style="margin-top:10px;"></div>
+        <div>
+          <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent2);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;">📄 Arquivo 2 — Contratos</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.9;font-family:'JetBrains Mono',monospace;">
+            Col A: Nome do Cliente<br>
+            Col B: Projeto<br>
+            Col C: Responsáveis<br>
+            Col D: Assinatura<br>
+            Col E: Vencimento (data)<br>
+          </div>
+        </div>
       </div>
+      <div style="margin-top:8px;font-size:10.5px;color:var(--accent2);font-family:'JetBrains Mono',monospace;">Linha 1 = cabeçalho (ignorada automaticamente)</div>
     </div>
 
     <!-- NEW / EDIT USER MODAL -->
@@ -2379,8 +2402,20 @@ function getActiveCSNames(){
   const csUsers = authUsers.filter(u => u.role === 'cs' && u.active !== false);
   return csUsers.map(u => u.name).sort((a,b) => a.localeCompare(b,'pt-BR'));
 }
+function toggleClientList(){
+  const body=document.getElementById('clientListBody');
+  const chevron=document.getElementById('clientListChevron');
+  if(!body||!chevron)return;
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'block';
+  chevron.style.transform=isOpen?'rotate(-90deg)':'rotate(0deg)';
+}
+
 function renderAdminList(){
   const list=document.getElementById('editClientList');list.innerHTML='';
+  // Atualizar contador no header
+  const countEl=document.getElementById('clientListCount');
+  if(countEl)countEl.textContent=`${clients.length} cliente${clients.length!==1?'s':''}`;
   clients.forEach((c,i)=>{
     const row=document.createElement('div');row.className='client-edit-row';
     row.innerHTML=`
