@@ -235,68 +235,96 @@ body {
 }
 .search-input:focus { border-color: var(--brand3); box-shadow: 0 0 0 3px var(--brand-glow); }
 
-/* ─── SUMMARY STRIP — 3×2 reimaginado ────────────────────
-   Sem borda. Floating cards com sombra suave.
-   Número grande como elemento visual principal.
-   Cor como único comunicador de estado.
+/* ─── SUMMARY STRIP — KPI bar executiva ─────────────────
+   Conceito: cada card é uma célula de dado limpa.
+   Fundo escuro com número elétrico e label discreto.
+   Linha colorida embaixo = único sinal semântico.
+   Referência: Vercel Analytics · Linear · Stripe Dashboard
    ─────────────────────────────────────────────────────── */
 .summary-strip {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
+
 .summary-card {
-  background: var(--card);
+  background: var(--brand);
   border-radius: var(--r-xl);
-  padding: 0;
+  padding: 16px 18px 14px;
   cursor: pointer;
-  border: 1.5px solid transparent;
-  box-shadow: var(--shadow-card);
-  transition: all .18s cubic-bezier(.4,0,.2,1);
-  overflow: hidden; position: relative;
-  display: flex; flex-direction: column;
+  border: 1px solid rgba(255,255,255,.07);
+  box-shadow: 0 4px 16px rgba(10,27,56,.25);
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.summary-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: rgba(255,255,255,.08);
+  transition: background .2s, height .2s;
 }
 .summary-card:hover {
-  box-shadow: var(--shadow); transform: translateY(-2px);
-  border-color: var(--border);
+  transform: translateY(-3px);
+  border-color: rgba(255,255,255,.16);
+  box-shadow: 0 8px 28px rgba(10,27,56,.35);
 }
+.summary-card:hover::after { height: 3px; }
 .summary-card.active {
-  border-color: var(--brand3);
-  box-shadow: 0 0 0 3px var(--brand-glow), var(--shadow);
+  border-color: rgba(59,130,246,.6);
+  box-shadow: 0 0 0 2px rgba(59,130,246,.25), 0 8px 28px rgba(10,27,56,.35);
 }
-/* Colored top stripe — the sole status indicator */
-.summary-card-top {
-  height: 4px; width: 100%;
-  background: var(--border2);
-  transition: background .18s;
-}
-.sc-total  .summary-card-top { background: var(--brand3); }
-.sc-red    .summary-card-top { background: var(--red); }
-.sc-churn  .summary-card-top { background: var(--churn); }
-.sc-yellow .summary-card-top { background: var(--amber); }
-.sc-green  .summary-card-top { background: var(--green); }
-.sc-pending .summary-card-top { background: var(--muted); }
 
-.summary-card-body {
-  padding: 14px 14px 12px;
-  display: flex; flex-direction: column; gap: 5px; flex: 1;
-}
+/* Linha colorida embaixo — semântica por cor */
+.sc-total  ::after, .sc-total.active::after  { background: var(--brand3); }
+.sc-red::after    { background: #f87171; }
+.sc-churn::after  { background: #fb923c; }
+.sc-yellow::after { background: #fbbf24; }
+.sc-green::after  { background: #34d399; }
+.sc-pending::after { background: rgba(255,255,255,.2); }
+
+.sc-red.active::after    { background: #f87171; height: 3px; }
+.sc-churn.active::after  { background: #fb923c; height: 3px; }
+.sc-yellow.active::after { background: #fbbf24; height: 3px; }
+.sc-green.active::after  { background: #34d399; height: 3px; }
+
+/* Número elétrico por categoria */
 .summary-num {
-  font-size: 30px; font-weight: 700; line-height: 1;
-  letter-spacing: -.04em; font-family: 'Outfit', sans-serif;
+  font-size: 32px; font-weight: 700; line-height: 1;
+  letter-spacing: -.05em; font-family: 'Outfit', sans-serif;
+  color: #fff;
 }
+.sc-red    .summary-num { color: #fca5a5; }
+.sc-churn  .summary-num { color: #fdba74; }
+.sc-yellow .summary-num { color: #fde68a; }
+.sc-green  .summary-num { color: #6ee7b7; }
+.sc-pending .summary-num { color: rgba(255,255,255,.45); }
+
+/* Label limpo */
 .summary-lbl {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 7.5px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: 8px; letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
 }
+
+/* Ícone SVG — discreto no canto */
 .summary-card-icon {
-  position: absolute; top: 10px; right: 10px;
-  width: 20px; height: 20px; border-radius: 5px;
+  position: absolute; top: 12px; right: 12px;
+  width: 22px; height: 22px;
   display: flex; align-items: center; justify-content: center;
-  opacity: .45;
+  opacity: .2;
 }
+
+/* Elementos legados que não existem mais nesta estrutura */
+.summary-card-top { display: none; }
+.summary-card-body { display: contents; }
 
 /* ─── GS HEALTH STRIP ────────────────────────────────────── */
 .gs-health-strip { margin-bottom: 18px; }
@@ -891,72 +919,54 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
       </div>
     </div>
 
-    <!-- SUMMARY — floating cards, top stripe, number-first -->
+    <!-- SUMMARY — dark cards executivos, 6 colunas, número elétrico -->
     <div class="summary-strip">
 
       <div class="summary-card sc-total" id="sc-all" onclick="filterByCard('all')">
-        <div class="summary-card-top"></div>
-        <div class="summary-card-body">
-          <div class="summary-num" id="s-total" style="color:var(--brand2)">0</div>
-          <div class="summary-lbl">TOTAL</div>
-        </div>
-        <div class="summary-card-icon" style="background:var(--brand-light);">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <div class="summary-num" id="s-total">0</div>
+        <div class="summary-lbl">TOTAL</div>
+        <div class="summary-card-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         </div>
       </div>
 
       <div class="summary-card sc-red" id="sc-red" onclick="filterByCard('V')">
-        <div class="summary-card-top"></div>
-        <div class="summary-card-body">
-          <div class="summary-num" id="s-red" style="color:var(--red)">0</div>
-          <div class="summary-lbl">PROBLEMA REAL</div>
-        </div>
-        <div class="summary-card-icon" style="background:var(--red-bg);">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="summary-num" id="s-red">0</div>
+        <div class="summary-lbl">PROBLEMA REAL</div>
+        <div class="summary-card-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
       </div>
 
       <div class="summary-card sc-churn" id="sc-churn" onclick="filterByCard('churn')">
-        <div class="summary-card-top"></div>
-        <div class="summary-card-body">
-          <div class="summary-num" id="s-churn" style="color:var(--churn)">0</div>
-          <div class="summary-lbl">RISCO DE CHURN</div>
-        </div>
-        <div class="summary-card-icon" style="background:var(--churn-bg);">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--churn)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+        <div class="summary-num" id="s-churn">0</div>
+        <div class="summary-lbl">RISCO DE CHURN</div>
+        <div class="summary-card-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
         </div>
       </div>
 
       <div class="summary-card sc-yellow" id="sc-yellow" onclick="filterByCard('A')">
-        <div class="summary-card-top"></div>
-        <div class="summary-card-body">
-          <div class="summary-num" id="s-yellow" style="color:var(--amber)">0</div>
-          <div class="summary-lbl">TOMAR AÇÃO</div>
-        </div>
-        <div class="summary-card-icon" style="background:var(--amber-bg);">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <div class="summary-num" id="s-yellow">0</div>
+        <div class="summary-lbl">TOMAR AÇÃO</div>
+        <div class="summary-card-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
       </div>
 
       <div class="summary-card sc-green" id="sc-green" onclick="filterByCard('G')">
-        <div class="summary-card-top"></div>
-        <div class="summary-card-body">
-          <div class="summary-num" id="s-green" style="color:var(--green)">0</div>
-          <div class="summary-lbl">ACOMPANHAR</div>
-        </div>
-        <div class="summary-card-icon" style="background:var(--green-bg);">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <div class="summary-num" id="s-green">0</div>
+        <div class="summary-lbl">ACOMPANHAR</div>
+        <div class="summary-card-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
       </div>
 
       <div class="summary-card sc-pending" id="sc-pending" onclick="filterByCard('pending')">
-        <div class="summary-card-top"></div>
-        <div class="summary-card-body">
-          <div class="summary-num" id="s-pending" style="color:var(--muted)">0</div>
-          <div class="summary-lbl">PENDENTES</div>
-        </div>
-        <div class="summary-card-icon" style="background:var(--surface2);">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div class="summary-num" id="s-pending">0</div>
+        <div class="summary-lbl">PENDENTES</div>
+        <div class="summary-card-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
       </div>
 
@@ -2168,19 +2178,35 @@ function render(){
 }
 
 function updateSummary(fc){
-  // Summary strip counts always reflect the FULL pool (current GS selection, no status filter)
-  // so that switching status filter doesn't zero out the other cards
+  // Summary strip counts: respeitam GS + tier + quick filters, mas NÃO o filtro de status
+  // Assim "Tier B" mostra os números do Tier B; clicar em "Vermelho" não zera os outros cards
   let pool;
   if(currentUser&&currentUser.role==='cs'){
     const _u=authUsers.find(u=>u.email===currentUser.email);
     const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
     pool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
   }else{
-    pool=( (currentFilter.gs||'all')==='all' )
+    const gsF=currentFilter.gs||'all';
+    pool=gsF==='all'
       ?clients.slice()
-      :clients.filter(c=>c.gs.toLowerCase().trim()===(currentFilter.gs||'').toLowerCase().trim());
+      :clients.filter(c=>c.gs.toLowerCase().trim()===gsF.toLowerCase().trim());
   }
+  // Aplicar search
   if(currentFilter.search){const q=currentFilter.search.toLowerCase();pool=pool.filter(c=>c.name.toLowerCase().includes(q));}
+  // Aplicar tier filter
+  if(currentFilter.tier)pool=pool.filter(c=>c.tier===currentFilter.tier);
+  // Aplicar churn filter
+  if(currentFilter.churn)pool=pool.filter(c=>hasChurnRisk(c.id));
+  // Aplicar consec filter
+  if(currentFilter.consec)pool=pool.filter(c=>consecutiveCriticalWeeks(c.id)>=2);
+  // Aplicar renovacao filter
+  if(currentFilter.renovacao===true)pool=pool.filter(c=>c.renovacao===true||c.renovacao==='true');
+  // Aplicar bookPending filter
+  if(currentFilter.bookPending)pool=pool.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent));
+  // Aplicar worsened/improved
+  if(currentFilter.worsened)pool=pool.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));});
+  if(currentFilter.improved)pool=pool.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));});
+  // NÃO aplica currentFilter.status — para não zerar os outros cards ao filtrar por status
 
   document.getElementById('s-total').textContent=pool.length;
   const cntAll=document.getElementById('count-all');if(cntAll)cntAll.textContent=pool.length;
