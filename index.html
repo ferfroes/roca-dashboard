@@ -2441,14 +2441,18 @@ function importFile(input){
       const unknownCS=new Set();
 
       for(let i=start;i<data.length;i++){
-        const r=data[i];const name=String(r[0]||'').trim();if(!name)continue;
+        const r=data[i];
+        // Limpar nome: remover espaços normais, não-quebrável ( ) e outros whitespace
+        const name=String(r[0]||'').replace(/[\u00A0\s]+/g,' ').trim();
+        if(!name)continue;
         const norm=name.toLowerCase().trim();
         const existingId=existingById[norm]||allHistoryIds[norm]||null;
         const id=existingId||++maxId;
-        const gsVal=String(r[1]||'').trim();
+        const gsVal=String(r[1]||'').replace(/[\u00A0\s]+/g,' ').trim();
         const gs=gsVal||(_csOpts.length?_csOpts[0]:'');
         if(gs&&!activeCSNames.includes(gs.toLowerCase().trim()))unknownCS.add(gs);
-        const renovacaoVal=String(r[4]||'').trim().toUpperCase();
+        // Col E = Renovação (opcional — planilhas sem esta coluna devem funcionar normalmente)
+        const renovacaoVal=r.length>4?String(r[4]||'').trim().toUpperCase():'';
         imported.push({
           id,name,gs,
           book:isBook(r[2]),
@@ -2458,7 +2462,7 @@ function importFile(input){
       }
       // FIX 4: show warning if any CS name doesn't match a user
       const csWarning=unknownCS.size>0
-        ?`<div style="background:var(--yellow-bg);border:1px solid var(--yellow-bd);border-radius:7px;padding:8px 12px;margin-bottom:8px;font-size:11.5px;color:var(--yellow);"><strong>⚠ Atenção:</strong> ${[...unknownCS].join(', ')} não correspond${unknownCS.size>1?'em':'e'} a nenhum usuário CS cadastrado. Verifique os nomes.</div>`
+        ?`<div style="background:var(--yellow-bg);border:1px solid var(--yellow-bd);border-radius:7px;padding:8px 12px;margin-bottom:8px;font-size:11.5px;color:var(--yellow);"><strong>⚠ Atenção:</strong> ${[...unknownCS].join(', ')} não correspond${unknownCS.size>1?'em':'e'} a nenhum usuário CS cadastrado — a importação funciona normalmente, mas esses CS não terão acesso ao sistema de login. Verifique os nomes ou cadastre os usuários.</div>`
         :'';
 
       const prev=document.getElementById('import-preview');
@@ -2503,6 +2507,14 @@ async function confirmImport(){
     showSyncStatus('error');
   }
 
+  // Resetar filtro para 'all' — garante que admin vê todos os clientes importados
+  if(currentUser&&currentUser.role==='admin'){
+    currentFilter={gs:'all',status:null,search:'',bookPending:false,worsened:false,improved:false,churn:false,vip:false,consec:false,tier:null,renovacao:false};
+    const scAll=document.getElementById('sc-all');if(scAll)scAll.classList.add('active');
+    const gsAll=document.getElementById('gs-all');if(gsAll)gsAll.classList.add('active');
+    setTitle('Todas as Contas',clients.length);
+  }
+
   // Rebuild UI completamente
   buildSidebar();
   render();
@@ -2510,7 +2522,8 @@ async function confirmImport(){
   updateContractPanel();
 
   addAudit('create',`${clients.length} clientes importados via Excel${orphanIds.length?` (${orphanIds.length} entradas órfãs removidas)`:''}`);
-  alert(`✓ ${clients.length} clientes importados com sucesso.${orphanIds.length?`\n${orphanIds.length} entrada(s) de clientes removidos foram limpas.`:''}`)
+  // Toast em vez de alert — não bloqueia o render
+  showToast(`✓ ${clients.length} clientes importados com sucesso.`);
 }
 
 // ── ADVANCE WEEK ──────────────────────────────────────────────────────────────
@@ -2753,13 +2766,11 @@ function enterDashboard() {
     const dbUserCS = authUsers.find(u=>u.email===currentUser.email);
     const csName = dbUserCS?.csName || dbUserCS?.name || currentUser.name;
     currentFilter.gs = csName;
-    // Only clear stale localStorage if Firebase is online (authUsers populated)
-    // If Firebase is offline, keep localStorage as fallback data source
+    // Limpar apenas entries e history (dados contextuais por CS)
+    // NÃO limpar roca_clients e roca_gs — são dados compartilhados válidos para qualquer usuário
     if (authUsers.length > 0) {
       localStorage.removeItem('roca_entries');
       localStorage.removeItem('roca_history');
-      localStorage.removeItem('roca_clients');
-      localStorage.removeItem('roca_gs');
     }
     const _gsAll=document.getElementById('gs-all');if(_gsAll)_gsAll.style.display='none';
     const _gsSbl=document.getElementById('gs-sidebar-list');
@@ -2952,12 +2963,11 @@ async function checkAuthAndInit() {
   if (session) {
     const dbUser = authUsers.find(u => u.email === session.email && u.active !== false);
     if (dbUser) {
-      // Valid session + Firebase confirmed user — now safe to clear stale localStorage
-      // (prevents stale admin data leaking into a CS session)
+      // Valid session + Firebase confirmed user
+      // Limpar entries e history (dados contextuais por usuário)
+      // NÃO limpar roca_clients e roca_gs — são dados compartilhados, usados como cache em init()
       localStorage.removeItem('roca_entries');
       localStorage.removeItem('roca_history');
-      localStorage.removeItem('roca_clients');
-      localStorage.removeItem('roca_gs');
       currentUser = { email: dbUser.email, name: dbUser.name, role: dbUser.role, uid: dbUser.uid };
       saveSession(currentUser);
       enterDashboard();
