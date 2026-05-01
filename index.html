@@ -2507,8 +2507,19 @@ function importFile(input){
         :'';
 
       const prev=document.getElementById('import-preview');
-      prev.innerHTML=`${csWarning}<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">Tier ${c.tier} · ${c.gs}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="confirmImport()">✓ Confirmar importação</button>`;
+      prev.innerHTML=`${csWarning}<div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:9px;padding:12px 14px;margin-bottom:10px;"><strong style="color:var(--green);">✓ ${imported.length} clientes detectados</strong><div style="font-size:11.5px;color:var(--muted);margin-top:3px;">A importação substituirá a lista atual.</div></div><div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">${imported.slice(0,20).map(c=>`<div style="padding:6px 10px;border-bottom:1px solid var(--border);font-size:12px;display:flex;justify-content:space-between;"><span>${c.name}</span><span style="color:var(--muted);">Tier ${c.tier} · ${c.gs}</span></div>`).join('')}${imported.length>20?`<div style="padding:7px 10px;color:var(--muted);font-size:11.5px;">...e mais ${imported.length-20} clientes</div>`:''}</div><button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="confirmImport()">💾 Salvar no sistema</button>`;
       window._importedClients=imported;
+
+      // Aplicar imediatamente em memória — não espera confirmação
+      // Isso garante que "Salvar Alterações" já encontra os dados corretos
+      clients=imported.slice();
+      clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+      gsList=[...new Set(clients.map(c=>c.gs).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      localStorage.setItem('roca_clients',JSON.stringify(clients));
+      localStorage.setItem('roca_gs',JSON.stringify(gsList));
+      buildSidebar();
+      renderAdminList();
+
     }catch(err){document.getElementById('import-preview').innerHTML=`<div style="color:var(--red);padding:10px;">Erro: ${err.message}</div>`;}
   };
   reader.readAsBinaryString(file);
