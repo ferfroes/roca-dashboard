@@ -1204,7 +1204,10 @@ async function spLoadAll(){
       const rawG=data.gsList
         ? (Array.isArray(data.gsList) ? data.gsList : Object.values(data.gsList).filter(x=>typeof x==='string'))
         : [];
-      gsList = rawG.length > 0 ? rawG.sort((a,b)=>a.localeCompare(b,'pt-BR')) : [];
+      // Se gsList está vazio mas clients tem dados, derivar gsList dos clientes (fallback)
+      gsList = rawG.length > 0
+        ? rawG.sort((a,b)=>a.localeCompare(b,'pt-BR'))
+        : [...new Set(clients.map(c=>c.gs).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
       localStorage.setItem('roca_gs',JSON.stringify(gsList));
     }else{entries={};weekHistory={};}
     showSyncStatus('ok');return true;
@@ -1676,6 +1679,10 @@ async function init(){
   const sc=localStorage.getItem('roca_clients');const sg=localStorage.getItem('roca_gs');
   if(sc)clients=JSON.parse(sc);if(sg)gsList=JSON.parse(sg);
   clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  // Se gsList vazio mas clients tem dados (ex: importação anterior sem salvar gsList), derivar
+  if(!gsList.length&&clients.length){
+    gsList=[...new Set(clients.map(c=>c.gs).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  }
   gsList.sort((a,b)=>a.localeCompare(b,'pt-BR'));
   const now=new Date();const dy=now.getDay();const mn=new Date(now);mn.setDate(now.getDate()+(dy===0?-6:1-dy));
   const fr=new Date(mn);fr.setDate(mn.getDate()+4);
@@ -2461,10 +2468,11 @@ function importFile(input){
   };
   reader.readAsBinaryString(file);
 }
-function confirmImport(){
+async function confirmImport(){
   if(!window._importedClients)return;
   const newClients=window._importedClients;
   window._importedClients=null; // limpa para evitar duplo clique
+
   // Remover entries órfãos de clientes que foram removidos
   const newIds=new Set(newClients.map(c=>c.id));
   const orphanIds=Object.keys(entries).map(Number).filter(id=>!newIds.has(id));
@@ -2472,14 +2480,37 @@ function confirmImport(){
     delete entries[id];
     spDelete(getWeekKey(),id).catch(()=>{});
   });
+
   clients=newClients;
   clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+
+  // Reconstruir gsList a partir dos clientes importados — essencial para sidebar e dashboard
+  gsList=[...new Set(clients.map(c=>c.gs).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+
+  // Salvar no localStorage imediatamente (sessão atual e fallback offline)
   localStorage.setItem('roca_clients',JSON.stringify(clients));
+  localStorage.setItem('roca_gs',JSON.stringify(gsList));
   localStorage.setItem('roca_entries',JSON.stringify(entries));
-  fbSet('roca/clients',clients).catch(e=>console.warn('Import save failed:',e));
-  buildSidebar();render();renderAdminList();
+
+  showSyncStatus('saving');
+  try{
+    // await garante que Firebase tem os dados antes do próximo spLoadAll
+    await fbSet('roca/clients',clients);
+    await fbSet('roca/gsList',gsList);
+    showSyncStatus('saved');
+  }catch(e){
+    console.warn('Import Firebase save failed:',e);
+    showSyncStatus('error');
+  }
+
+  // Rebuild UI completamente
+  buildSidebar();
+  render();
+  renderAdminList();
+  updateContractPanel();
+
   addAudit('create',`${clients.length} clientes importados via Excel${orphanIds.length?` (${orphanIds.length} entradas órfãs removidas)`:''}`);
-  alert(`✓ ${clients.length} clientes importados com sucesso.${orphanIds.length?`\n${orphanIds.length} entrada(s) de clientes removidos foram limpas.`:''}`);
+  alert(`✓ ${clients.length} clientes importados com sucesso.${orphanIds.length?`\n${orphanIds.length} entrada(s) de clientes removidos foram limpas.`:''}`)
 }
 
 // ── ADVANCE WEEK ──────────────────────────────────────────────────────────────
