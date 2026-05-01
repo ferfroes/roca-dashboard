@@ -278,20 +278,14 @@ body {
 }
 
 /* Barra de cor no topo — 3px, sinal semântico único */
-.summary-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  border-radius: 12px 12px 0 0;
-  background: var(--border);
-}
-.sc-total::before   { background: var(--brand3); }
-.sc-red::before     { background: var(--red); }
-.sc-churn::before   { background: var(--churn); }
-.sc-yellow::before  { background: var(--amber); }
-.sc-green::before   { background: var(--green); }
-.sc-pending::before { background: var(--muted); opacity:.35; }
+/* Acento de cor no topo via border — preserva border-radius */
+.sc-total  { border-top: 3px solid var(--brand3); }
+.sc-red    { border-top: 3px solid var(--red); }
+.sc-churn  { border-top: 3px solid var(--churn); }
+.sc-yellow { border-top: 3px solid var(--amber); }
+.sc-green  { border-top: 3px solid var(--green); }
+.sc-pending { border-top: 3px solid var(--muted); }
+.summary-card::before { display: none; }
 
 /* Número — âncora visual do card */
 .summary-num {
@@ -333,8 +327,8 @@ body {
 }
 .gs-health-card {
   background: var(--card); border-radius: var(--r-xl);
-  padding: 12px 14px; cursor: pointer; transition: all .14s;
-  box-shadow: var(--shadow-card); border: 1.5px solid transparent;
+  padding: 14px 16px; cursor: pointer; transition: all .14s;
+  box-shadow: var(--shadow-card); border: 1.5px solid var(--border);
 }
 .gs-health-card:hover { border-color: var(--brand3); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .gs-health-name { font-size: 10.5px; font-weight: 600; color: var(--ink2); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -611,16 +605,16 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 /* ─── CONTRACTS / RENOVAÇÃO ─────────────────────────────── */
 .contracts-panel { margin-bottom: 18px; }
 .contracts-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 4px; }
-.ct-card { background: var(--card); border-radius: var(--r-xl); padding: 13px 15px; cursor: pointer; transition: all .14s; box-shadow: var(--shadow-card); border: 1.5px solid transparent; }
-.ct-card:hover, .ct-card.active { box-shadow: 0 0 0 2px var(--brand3), var(--shadow-sm); border-color: var(--brand3); }
-.ct-card-label { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .08em; }
+.ct-card { background: var(--card); border-radius: var(--r-xl); padding: 16px 16px 14px; cursor: pointer; transition: all .14s; box-shadow: var(--shadow-card); border: 1.5px solid var(--border); border-top-width: 3px; }
+.ct-card:hover, .ct-card.active { box-shadow: 0 0 0 2px var(--brand3), var(--shadow-sm); border-color: var(--brand3); border-top-width: 3px; }
+.ct-card-label { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .08em; }
 .ct-card-count { font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -.03em; }
-.ct-card-sub { font-size: 9.5px; color: var(--muted); margin-top: 3px; }
-.ct-urgent  { border-top: 3px solid var(--red) !important; }
-.ct-warn    { border-top: 3px solid #F59E0B !important; }
-.ct-soon    { border-top: 3px solid var(--brand3) !important; }
-.ct-safe    { border-top: 3px solid var(--green) !important; }
-.ct-expired { border-top: 3px solid var(--muted) !important; }
+.ct-card-sub { font-size: 9.5px; color: var(--muted); margin-top: 4px; }
+.ct-urgent  { border-top-color: var(--red); }
+.ct-warn    { border-top-color: #F59E0B; }
+.ct-soon    { border-top-color: var(--brand3); }
+.ct-safe    { border-top-color: var(--green); }
+.ct-expired { border-top-color: var(--muted); }
 .ct-drawer { display: none; border: 1.5px solid var(--border); border-radius: var(--r-xl); background: var(--card); overflow: hidden; margin-top: 7px; max-height: 280px; overflow-y: auto; box-shadow: var(--shadow-sm); }
 .ct-drawer.open { display: block; }
 .ct-drawer-row { display: grid; grid-template-columns: 2fr 2fr 1fr 90px 80px; gap: 8px; padding: 7px 12px; border-bottom: 1px solid var(--border); font-size: 11px; align-items: center; }
@@ -629,16 +623,18 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 .renov-panel { margin-bottom: 18px; }
 .renov-panel-title { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 9px; display: flex; align-items: center; gap: 8px; }
 .renov-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
-.renov-card { background: var(--card); border-radius: var(--r-xl); padding: 13px 15px; cursor: pointer; transition: all .14s; box-shadow: var(--shadow-card); border: 1.5px solid transparent; }
-.renov-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); border-color: var(--border); }
+.renov-card { background: var(--card); border-radius: var(--r-xl); padding: 16px 16px 14px; cursor: pointer; transition: all .14s; box-shadow: var(--shadow-card); border: 1.5px solid var(--border); border-top-width: 3px; }
+.renov-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); border-color: var(--border2); }
 .renov-card.active { box-shadow: 0 0 0 2px var(--brand3); border-color: var(--brand3); }
-.renov-card-label { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .08em; }
+.renov-card-label { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .08em; }
 .renov-card-count { font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -.03em; }
-.renov-card-sub { font-size: 9.5px; color: var(--muted); margin-top: 3px; }
-.rc-urgent { border-top: 3px solid var(--red) !important; }
-.rc-warn   { border-top: 3px solid #F59E0B !important; }
-.rc-ok     { border-top: 3px solid var(--brand3) !important; }
-.rc-safe   { border-top: 3px solid var(--green) !important; }
+.renov-card-sub { font-size: 9.5px; color: var(--muted); margin-top: 4px; }
+.rc-urgent { border-top-color: var(--red); }
+.rc-warn   { border-top-color: #F59E0B; }
+.rc-ok     { border-top-color: var(--brand3); }
+.rc-safe   { border-top-color: var(--green); }
+#rc-total  { border-top-color: var(--muted); }
+#rc-pct    { border-top-color: var(--brand3); }
 
 /* ─── DASHBOARD ─────────────────────────────────────────── */
 .dash-shell { flex: 1; padding: 22px 24px; overflow-y: auto; background: var(--bg); width: 100%; min-width: 0; }
@@ -648,8 +644,8 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 .dash-select { border: 1.5px solid var(--border); border-radius: var(--r-lg); padding: 6px 11px; font-size: 12px; font-family: 'Outfit', sans-serif; color: var(--ink); background: var(--card); cursor: pointer; outline: none; box-shadow: var(--shadow-xs); }
 .dash-week-badge { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--muted); background: var(--card); border: 1.5px solid var(--border); padding: 4px 10px; border-radius: var(--r); box-shadow: var(--shadow-xs); }
 .dash-kpi-strip { display: grid; grid-template-columns: repeat(6,1fr); gap: 8px; margin-bottom: 16px; }
-.dash-kpi { background: var(--card); border-radius: var(--r-xl); padding: 13px 15px; position: relative; overflow: hidden; box-shadow: var(--shadow-card); border: 1.5px solid transparent; transition: all .14s; }
-.dash-kpi:hover { border-color: var(--border); box-shadow: var(--shadow-sm); }
+.dash-kpi { background: var(--card); border-radius: var(--r-xl); padding: 16px 16px 14px; position: relative; overflow: hidden; box-shadow: var(--shadow-card); border: 1.5px solid var(--border); transition: all .14s; }
+.dash-kpi:hover { border-color: var(--border2); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .dash-kpi-val { font-size: 24px; font-weight: 700; line-height: 1; letter-spacing: -.04em; }
 .dash-kpi-lbl { font-size: 8.5px; color: var(--muted); margin-top: 3px; font-family: 'JetBrains Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
 .dash-kpi-sub { font-size: 9.5px; color: var(--muted); margin-top: 5px; }
@@ -837,7 +833,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 </div>
 
 <!-- MAIN TABS -->
-<div style="background:var(--brand);border-bottom:1px solid rgba(255,255,255,.1);">
+<div style="background:var(--brand);border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:var(--topbar-h);z-index:199;">
   <div class="main-tabs">
     <button class="main-tab active" onclick="switchMainTab('gerencial',this)">📊 Gestão</button>
     <button class="main-tab" id="tab-btn-dashboard" onclick="switchMainTab('dashboard',this)" style="display:none;">📈 Dashboard</button>
@@ -996,12 +992,12 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
           <div class="renov-card-count" id="rc-count-ok" style="color:var(--green);">0</div>
           <div class="renov-card-sub">Situação tranquila</div>
         </div>
-        <div class="renov-card" id="rc-total" style="border-top:3px solid var(--muted);">
+        <div class="renov-card" id="rc-total" >
           <div class="renov-card-label">Total contas</div>
           <div class="renov-card-count" id="rc-count-total" style="color:var(--ink);">0</div>
           <div class="renov-card-sub">na carteira</div>
         </div>
-        <div class="renov-card" id="rc-pct" style="border-top:3px solid var(--brand3);">
+        <div class="renov-card" id="rc-pct" >
           <div class="renov-card-label">% sinalizadas</div>
           <div class="renov-card-count" id="rc-count-pct" style="color:var(--brand2);">0%</div>
           <div class="renov-card-sub">do total</div>
