@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MÉTODO ROCA · Dashboard</title>
+<title>MÉTODO ARCO · Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════
-   MÉTODO ROCA ROCA — Executive Platform
+   MÉTODO ARCO — Executive Platform
    Direção: Dark-accent sidebar · Floating card system
    ═══════════════════════════════════════════════════════ */
 :root{
@@ -584,73 +584,130 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 .empty-icon { font-size: 32px; margin-bottom: 10px; opacity: .22; }
 .empty-title { font-weight: 600; font-size: 13.5px; color: var(--ink2); margin-bottom: 5px; }
 
-/* ─── LOGIN — split layout, polished ────────────────────── */
+/* ─── LOGIN — ARCO identity, arc motif ───────────────────── */
 #loginScreen {
   position: fixed; inset: 0; display: flex; z-index: 9999;
 }
 #loginScreen.hidden { display: none; }
+
+/* Left brand panel — dark, architectural */
 .login-brand-panel {
   flex: 1; background: var(--brand);
   display: flex; flex-direction: column;
-  justify-content: flex-end; padding: 56px 60px;
+  justify-content: flex-end; padding: 64px 68px;
   position: relative; overflow: hidden;
 }
+
+/* Arc motif — the visual signature of ARCO */
 .login-brand-panel::before {
-  content: ''; position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 70% 60% at 20% 90%, rgba(59,130,246,.22) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 40% at 85% 15%, rgba(59,130,246,.1) 0%, transparent 60%),
-    radial-gradient(ellipse 30% 30% at 50% 50%, rgba(59,130,246,.06) 0%, transparent 70%);
+  content: ''; position: absolute;
+  width: 700px; height: 700px;
+  border: 80px solid rgba(59,130,246,.07);
+  border-radius: 50%;
+  bottom: -280px; left: -140px;
+  pointer-events: none;
 }
-/* Grid pattern overlay */
 .login-brand-panel::after {
-  content: ''; position: absolute; inset: 0; opacity: .04;
-  background-image: linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px);
-  background-size: 40px 40px;
+  content: ''; position: absolute;
+  width: 480px; height: 480px;
+  border: 48px solid rgba(59,130,246,.05);
+  border-radius: 50%;
+  top: -140px; right: -100px;
+  pointer-events: none;
 }
+
+/* Subtle dot grid */
+.login-brand-arc-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
 .login-brand-content { position: relative; z-index: 1; }
+
+/* ARCO lettered dimensions — the four pillars shown as vertical pills */
+.arco-dims {
+  display: flex; gap: 10px; margin-bottom: 52px;
+}
+.arco-dim-pill {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px;
+}
+.arco-dim-letter {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(59,130,246,.15);
+  border: 1px solid rgba(59,130,246,.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--brand3);
+  font-family: 'Outfit', sans-serif;
+}
+.arco-dim-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px; color: rgba(255,255,255,.28);
+  letter-spacing: .1em; text-transform: uppercase;
+}
+
 .login-brand-wordmark {
-  font-size: 11.5px; font-weight: 800; letter-spacing: .2em;
-  color: rgba(255,255,255,.5); text-transform: uppercase;
-  margin-bottom: 48px;
+  font-size: 10px; font-weight: 800; letter-spacing: .24em;
+  color: rgba(255,255,255,.35); text-transform: uppercase;
+  margin-bottom: 20px; font-family: 'Outfit', sans-serif;
 }
 .login-brand-headline {
-  font-size: 38px; font-weight: 700; color: #fff;
-  line-height: 1.15; letter-spacing: -.03em; margin-bottom: 14px;
-  max-width: 460px;
+  font-size: 42px; font-weight: 700; color: #fff;
+  line-height: 1.1; letter-spacing: -.04em; margin-bottom: 16px;
+  max-width: 480px;
 }
 .login-brand-headline em {
-  font-style: normal; color: var(--brand3);
+  font-style: normal;
+  background: linear-gradient(90deg, var(--brand3), #60a5fa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .login-brand-sub {
-  font-size: 14px; color: rgba(255,255,255,.45);
-  line-height: 1.65; max-width: 380px; margin-bottom: 40px;
+  font-size: 14px; color: rgba(255,255,255,.4);
+  line-height: 1.7; max-width: 380px; margin-bottom: 48px;
 }
 .login-brand-tag {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9.5px; color: rgba(255,255,255,.25);
-  letter-spacing: .14em; text-transform: uppercase;
+  font-size: 9px; color: rgba(255,255,255,.18);
+  letter-spacing: .16em; text-transform: uppercase;
 }
+
+/* Right form panel */
 .login-form-panel {
-  width: 420px; background: var(--bg);
+  width: 440px; background: #fff;
   display: flex; flex-direction: column;
-  justify-content: center; padding: 56px 52px;
+  justify-content: center; padding: 60px 56px;
+  border-left: 1px solid var(--border);
 }
 .login-box { width: 100%; }
+
+/* Small arc mark above logo */
+.login-arc-mark {
+  width: 36px; height: 18px;
+  border: 2.5px solid var(--brand3);
+  border-bottom: none;
+  border-radius: 36px 36px 0 0;
+  margin-bottom: 20px;
+  opacity: .7;
+}
+
 .login-logo {
-  font-size: 10px; font-weight: 800; letter-spacing: .2em;
-  color: var(--brand); margin-bottom: 4px; text-transform: uppercase;
+  font-size: 11px; font-weight: 800; letter-spacing: .22em;
+  color: var(--brand); margin-bottom: 3px; text-transform: uppercase;
   font-family: 'Outfit', sans-serif;
 }
 .login-sub {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 8.5px; color: var(--muted); letter-spacing: .12em;
-  margin-bottom: 36px; text-transform: uppercase;
+  font-size: 8px; color: var(--muted); letter-spacing: .14em;
+  margin-bottom: 40px; text-transform: uppercase;
 }
 .login-title {
-  font-size: 24px; font-weight: 700; color: var(--ink);
-  margin-bottom: 28px; letter-spacing: -.02em; line-height: 1.2;
+  font-size: 22px; font-weight: 700; color: var(--ink);
+  margin-bottom: 6px; letter-spacing: -.02em; line-height: 1.2;
+}
+.login-title-sub {
+  font-size: 13px; color: var(--muted); margin-bottom: 32px;
 }
 .login-field { margin-bottom: 14px; }
 .login-field label {
@@ -661,26 +718,30 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 }
 .login-field input {
   width: 100%; border: 1.5px solid var(--border);
-  border-radius: var(--r-xl); padding: 11px 14px;
+  border-radius: var(--r-xl); padding: 12px 16px;
   font-size: 13.5px; font-family: 'Outfit', sans-serif;
-  color: var(--ink); background: var(--card); outline: none;
-  transition: all .16s; box-shadow: var(--shadow-xs);
+  color: var(--ink); background: var(--surface); outline: none;
+  transition: all .16s;
 }
-.login-field input:focus { border-color: var(--brand3); background: var(--card); box-shadow: 0 0 0 4px var(--brand-glow); }
-.login-err { font-size: 11.5px; color: var(--red); margin-bottom: 12px; min-height: 17px; font-weight: 500; }
+.login-field input:focus {
+  border-color: var(--brand3); background: var(--card);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+.login-err {
+  font-size: 11.5px; color: var(--red);
+  margin-bottom: 12px; min-height: 17px; font-weight: 500;
+}
 .login-btn {
   width: 100%; padding: 13px;
-  background: linear-gradient(135deg, var(--brand-mid) 0%, var(--brand2) 100%);
-  color: #fff; border: none; border-radius: var(--r-xl);
-  font-size: 14px; font-weight: 600; cursor: pointer;
+  background: var(--brand); color: #fff;
+  border: none; border-radius: var(--r-xl);
+  font-size: 13.5px; font-weight: 600; cursor: pointer;
   font-family: 'Outfit', sans-serif; transition: all .18s;
-  box-shadow: 0 4px 14px rgba(23,85,196,.35);
+  letter-spacing: .02em;
 }
-.login-btn:hover {
-  background: linear-gradient(135deg, var(--brand2) 0%, var(--brand3) 100%);
-  transform: translateY(-1px); box-shadow: 0 8px 20px rgba(23,85,196,.4);
-}
+.login-btn:hover { background: var(--brand-mid); transform: translateY(-1px); }
 .login-btn:active { transform: translateY(0); }
+
 #changePwModal { position: fixed; inset: 0; background: rgba(8,14,32,.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
 #changePwModal.hidden { display: none; }
 .changepw-box { background: var(--card); border-radius: var(--r-2xl); padding: 30px 34px; width: 340px; box-shadow: var(--shadow-lg); border: 1.5px solid var(--border); }
@@ -851,15 +912,15 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 .dash-row-4 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; margin-bottom: 20px; }
 .dash-card { background: var(--card); border-radius: var(--r-xl); padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-card); border: 1.5px solid var(--border); }
 .dash-card-title { font-size: 8.5px; font-weight: 600; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 9px; }
-.dash-roca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; flex: 1; }
-.dash-roca-pillar { border: 1px solid var(--border); border-radius: var(--r-lg); padding: 10px 12px; background: var(--surface); }
-.dash-roca-pillar-name { font-size: 8.5px; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--ink2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .08em; }
-.dash-roca-bar-wrap { display: flex; flex-direction: column; gap: 4px; }
-.dash-roca-bar-row { display: flex; align-items: center; gap: 6px; font-size: 10px; }
-.dash-roca-bar-label { width: 18px; font-family: 'JetBrains Mono', monospace; font-weight: 600; flex-shrink: 0; }
-.dash-roca-bar-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 20px; overflow: hidden; }
-.dash-roca-bar-fill { height: 100%; border-radius: 20px; transition: width .5s ease; }
-.dash-roca-bar-count { width: 22px; text-align: right; color: var(--muted); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+.dash-arco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; flex: 1; }
+.dash-arco-pillar { border: 1px solid var(--border); border-radius: var(--r-lg); padding: 10px 12px; background: var(--surface); }
+.dash-arco-pillar-name { font-size: 8.5px; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--ink2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.dash-arco-bar-wrap { display: flex; flex-direction: column; gap: 4px; }
+.dash-arco-bar-row { display: flex; align-items: center; gap: 6px; font-size: 10px; }
+.dash-arco-bar-label { width: 18px; font-family: 'JetBrains Mono', monospace; font-weight: 600; flex-shrink: 0; }
+.dash-arco-bar-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 20px; overflow: hidden; }
+.dash-arco-bar-fill { height: 100%; border-radius: 20px; transition: width .5s ease; }
+.dash-arco-bar-count { width: 22px; text-align: right; color: var(--muted); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
 .dash-nps-row { display: flex; align-items: center; gap: 9px; }
 .dash-nps-label { width: 68px; font-size: 10.5px; font-weight: 600; }
 .dash-nps-track { flex: 1; height: 7px; background: var(--surface2); border-radius: 20px; overflow: hidden; }
@@ -963,23 +1024,44 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 <body>
 
 
-<!-- LOGIN SCREEN — split layout -->
+<!-- LOGIN SCREEN — ARCO identity -->
 <div id="loginScreen">
   <!-- Left: brand panel -->
   <div class="login-brand-panel">
+    <div class="login-brand-arc-grid"></div>
     <div class="login-brand-content">
-      <div class="login-brand-wordmark">MÉTODO ROCA</div>
-      <div class="login-brand-headline">HealthScore com <em>posicionamento</em> executivo.</div>
-      <div class="login-brand-sub">Health Score em tempo real e decisão baseada em dados — para equipes de CS que sabem performar.</div>
-      <div class="login-brand-tag">ROCA · CS · PERFORMANCE</div>
+      <div class="login-brand-wordmark">Método ARCO</div>
+      <div class="login-brand-headline">Health Score com <em>inteligência</em> de carteira.</div>
+      <div class="login-brand-sub">Adoção, Resultado, Continuidade, Operação — quatro dimensões, uma carteira saudável.</div>
+      <div class="arco-dims">
+        <div class="arco-dim-pill">
+          <div class="arco-dim-letter">A</div>
+          <div class="arco-dim-label">Adoção</div>
+        </div>
+        <div class="arco-dim-pill">
+          <div class="arco-dim-letter">R</div>
+          <div class="arco-dim-label">Resultado</div>
+        </div>
+        <div class="arco-dim-pill">
+          <div class="arco-dim-letter">C</div>
+          <div class="arco-dim-label">Continuidade</div>
+        </div>
+        <div class="arco-dim-pill">
+          <div class="arco-dim-letter">O</div>
+          <div class="arco-dim-label">Operação</div>
+        </div>
+      </div>
+      <div class="login-brand-tag">ARCO · CS · PERFORMANCE · SAFIRA</div>
     </div>
   </div>
   <!-- Right: form panel -->
   <div class="login-form-panel">
     <div class="login-box">
-      <div class="login-logo">MÉTODO ROCA</div>
-      <div class="login-sub">ROCA · CS · PERFORMANCE</div>
+      <div class="login-arc-mark"></div>
+      <div class="login-logo">Método ARCO</div>
+      <div class="login-sub">ARCO · CS · PERFORMANCE</div>
       <div class="login-title">Bem-vindo</div>
+      <div class="login-title-sub">Acesse sua carteira de contas</div>
       <div class="login-field">
         <label>E-MAIL</label>
         <input type="email" id="loginEmail" placeholder="seu@safirast.com" autocomplete="username">
@@ -1017,9 +1099,10 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-brand">
-    <div class="topbar-logo">MÉTODO ROCA</div>
+    <div style="width:18px;height:9px;border:2px solid rgba(59,130,246,.5);border-bottom:none;border-radius:18px 18px 0 0;margin-right:2px;flex-shrink:0;"></div>
+    <div class="topbar-logo">Método ARCO</div>
     <div class="topbar-sep"></div>
-    <div class="topbar-sub">ROCA · CS</div>
+    <div class="topbar-sub">ARCO · CS</div>
   </div>
   <button class="sidebar-hamburger" id="sidebarHamburger" onclick="toggleSidebar()" style="display:none;" title="Menu">☰</button>
   <div class="topbar-right">
@@ -1094,6 +1177,17 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
   </div>
 
   <div class="main">
+    <!-- ARCO DIMENSION CONTEXT BAR -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:9px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--shadow-xs);">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-right:2px;">Método</span>
+      <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;background:var(--brand-light);border:1px solid rgba(59,130,246,.3);font-size:10px;font-weight:700;color:var(--brand2);font-family:'JetBrains Mono',monospace;">A <span style="font-weight:400;font-size:9px;color:var(--ink3);">Adoção</span></span>
+      <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;background:var(--surface2);border:1px solid var(--border2);font-size:10px;font-weight:700;color:var(--ink2);font-family:'JetBrains Mono',monospace;">R <span style="font-weight:400;font-size:9px;color:var(--muted);">Resultado</span></span>
+      <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;background:var(--surface2);border:1px solid var(--border2);font-size:10px;font-weight:700;color:var(--ink2);font-family:'JetBrains Mono',monospace;">C <span style="font-weight:400;font-size:9px;color:var(--muted);">Continuidade</span></span>
+      <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;background:var(--surface2);border:1px solid var(--border2);font-size:10px;font-weight:700;color:var(--ink2);font-family:'JetBrains Mono',monospace;">O <span style="font-weight:400;font-size:9px;color:var(--muted);">Operação</span></span>
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;">Health Score semanal</span>
+    </div>
+
     <!-- CONTEXT LINE -->
     <div class="gestao-context">
       <div class="gestao-context-title" id="mainTitle">Todas as Contas <span id="mainTitleCount"></span></div>
@@ -1279,11 +1373,11 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
     <!-- ROW 1: KPI STRIP -->
     <div class="dash-kpi-strip" id="dashKPIStrip"></div>
 
-    <!-- ROW 2: ROCA PILLARS + NPS -->
+    <!-- ROW 2: ARCO PILLARS + NPS -->
     <div class="dash-row-2">
       <div class="dash-card dash-card-roca">
-        <div class="dash-card-title">Pilares ROCA — Distribuição do time</div>
-        <div class="dash-roca-grid" id="dashROCA"></div>
+        <div class="dash-card-title">Pilares ARCO — Distribuição do time</div>
+        <div class="dash-arco-grid" id="dashARCO"></div>
       </div>
       <div class="dash-card">
         <div class="dash-card-title">NPS — Classificação da carteira</div>
@@ -1464,16 +1558,34 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
     </div>
     <div class="modal-body">
       <div id="modalHistoryStrip" style="margin-bottom:14px;"></div>
-      <div class="section-title">ROCA — Faróis<div class="section-divider"></div></div>
+      <div class="section-title">ARCO — Dimensões<div class="section-divider"></div></div>
       <div class="farol-grid">
+        <div class="farol-block" id="block-A">
+          <div class="farol-block-title">🎯 A — ADOÇÃO</div>
+          <div class="farol-opts">
+            <div class="farol-opt" onclick="selectFarol('A','G',this)">🟢</div>
+            <div class="farol-opt" onclick="selectFarol('A','A',this)">🟡</div>
+            <div class="farol-opt" onclick="selectFarol('A','V',this)">🔴</div>
+          </div>
+          <textarea id="justA" placeholder="O cliente usa o serviço ativamente? Engajamento real ou apenas contratual? Usuários recorrentes, acessos, utilização do escopo contratado." rows="3"></textarea>
+        </div>
         <div class="farol-block" id="block-R">
-          <div class="farol-block-title">🤝 R — RELACIONAMENTO</div>
+          <div class="farol-block-title">📊 R — RESULTADO</div>
           <div class="farol-opts">
             <div class="farol-opt" onclick="selectFarol('R','G',this)">🟢</div>
             <div class="farol-opt" onclick="selectFarol('R','A',this)">🟡</div>
             <div class="farol-opt" onclick="selectFarol('R','V',this)">🔴</div>
           </div>
-          <textarea id="justR" placeholder="Tom da última conversa com decisor? Conhecemos os desafios do cliente? O que temos entregado de valor para ele?" rows="3"></textarea>
+          <textarea id="justR" placeholder="O cliente percebe ROI? Entregas realizadas vs prometidas. O decisor reconhece valor? Existe evidência mensurável do impacto gerado." rows="3"></textarea>
+        </div>
+        <div class="farol-block" id="block-C">
+          <div class="farol-block-title">🔄 C — CONTINUIDADE</div>
+          <div class="farol-opts">
+            <div class="farol-opt" onclick="selectFarol('C','G',this)">🟢</div>
+            <div class="farol-opt" onclick="selectFarol('C','A',this)">🟡</div>
+            <div class="farol-opt" onclick="selectFarol('C','V',this)">🔴</div>
+          </div>
+          <textarea id="justC" placeholder="Sinais de renovação, questionamento de valor, inadimplência ou cancelamento. Intenção de continuar ou riscos contratuais visíveis?" rows="3"></textarea>
         </div>
         <div class="farol-block" id="block-O">
           <div class="farol-block-title">⚙️ O — OPERAÇÃO</div>
@@ -1482,25 +1594,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
             <div class="farol-opt" onclick="selectFarol('O','A',this)">🟡</div>
             <div class="farol-opt" onclick="selectFarol('O','V',this)">🔴</div>
           </div>
-          <textarea id="justO" placeholder="Ticket crônico? Reclamação de entrega? O cliente percebe qualidade na operação?" rows="3"></textarea>
-        </div>
-        <div class="farol-block" id="block-C">
-          <div class="farol-block-title">📄 C — CONTRATO</div>
-          <div class="farol-opts">
-            <div class="farol-opt" onclick="selectFarol('C','G',this)">🟢</div>
-            <div class="farol-opt" onclick="selectFarol('C','A',this)">🟡</div>
-            <div class="farol-opt" onclick="selectFarol('C','V',this)">🔴</div>
-          </div>
-          <textarea id="justC" placeholder="Renovação próxima? Inadimplência? O cliente questiona valor ou escopo?" rows="3"></textarea>
-        </div>
-        <div class="farol-block" id="block-A">
-          <div class="farol-block-title">🚀 A — AVANÇO</div>
-          <div class="farol-opts">
-            <div class="farol-opt" onclick="selectFarol('A','G',this)">🟢</div>
-            <div class="farol-opt" onclick="selectFarol('A','A',this)">🟡</div>
-            <div class="farol-opt" onclick="selectFarol('A','V',this)">🔴</div>
-          </div>
-          <textarea id="justA" placeholder="Upsell em discussão? Expansão? O que temos proposto de novo para este cliente?" rows="3"></textarea>
+          <textarea id="justO" placeholder="Estabilidade da entrega técnica. Tickets crônicos, SLA, incidentes recorrentes. O cliente percebe qualidade operacional ou há atritos sistêmicos?" rows="3"></textarea>
         </div>
       </div>
 
@@ -1765,7 +1859,7 @@ function calcHealthScore(id){
   // Tier A não tem regras diferentes — tem tolerância reduzida em tudo
   const P=p=>isTierA?Math.round(p*1.3):p;
 
-  // ── BASE ROCA (R=30%, O=20%, C=30%, A=20%) ───────────────────────────────
+  // ── BASE ARCO (R=30%, O=20%, C=30%, A=20%) ───────────────────────────────
   // G=100 | A=40 (amarelo É problema) | V=0
   const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
   let score=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
@@ -1873,11 +1967,11 @@ function calcHSDetail(id){
   const tier=c.tier||'C';const isVIP=c.vip||false;const isTierA=tier==='A'||isVIP;
   const factors=[];const checklist=[];
 
-  if(!e.R){return{score:null,factors:[{type:'neutral',icon:'ℹ️',label:'Conta não preenchida esta semana',val:'–'}],checklist:[{done:false,text:'Preencher os 4 faróis ROCA'}]};}
+  if(!e.R){return{score:null,factors:[{type:'neutral',icon:'ℹ️',label:'Conta não preenchida esta semana',val:'–'}],checklist:[{done:false,text:'Preencher as 4 dimensões ARCO'}]};}
 
   const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40; // mesma lógica de calcHealthScore
   const base=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
-  factors.push({type:base>=75?'positive':base>=40?'warning':'negative',icon:'📊',label:`Base ROCA (R${e.R||'?'}/O${e.O||'?'}/C${e.C||'?'}/A${e.A||'?'})`,val:`${Math.round(base)}/100`});
+  factors.push({type:base>=75?'positive':base>=40?'warning':'negative',icon:'📊',label:`Base ARCO (R${e.R||'?'}/O${e.O||'?'}/C${e.C||'?'}/A${e.A||'?'})`,val:`${Math.round(base)}/100`});
 
   let penalty=0;
   const P=p=>isTierA?Math.round(p*1.3):p;
@@ -2741,7 +2835,7 @@ function clearEntry(){if(!editingClientId)return;if(!confirm('Limpar todos os da
 
 function saveEntry(){
   if(!editingClientId)return;
-  // Bloquear salvamento se algum farol ROCA não foi preenchido
+  // Bloquear salvamento se alguma dimensão ARCO não foi preenchido
   const missingDims=['R','O','C','A'].filter(d=>!currentFarol[d]);
   if(missingDims.length>0){
     // Destacar visualmente os blocos não preenchidos
@@ -2753,7 +2847,7 @@ function saveEntry(){
         setTimeout(()=>{block.style.borderColor='';block.style.boxShadow='';},2500);
       }
     });
-    showToast(`⚠ Preencha todos os 4 faróis ROCA antes de salvar (faltam: ${missingDims.join(', ')})`);
+    showToast(`⚠ Preencha todos os 4 dimensões ARCO antes de salvar (faltam: ${missingDims.join(', ')})`);
     return;
   }
   const wk=getWeekKey();
@@ -3235,8 +3329,8 @@ function exportData(){
   });
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
   ws['!cols']=rows[0].map((_,i)=>({wch:i===0?35:i===3?18:i===8||i===10||i===12||i===14||i===17||i===27||i===28?40:16}));
-  XLSX.utils.book_append_sheet(wb,ws,'ROCA Dashboard');
-  XLSX.writeFile(wb,`MÉTODO ROCA_ROCA_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.utils.book_append_sheet(wb,ws,'ARCO Dashboard');
+  XLSX.writeFile(wb,`MÉTODO ARCO_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
@@ -3745,8 +3839,8 @@ function renderDashboard(){
       <div class="dash-kpi-bar" style="width:${k.bar}%;background:${k.color};opacity:.5;"></div>
     </div>`).join('');
 
-  // ── ROCA PILLARS ───────────────────────────────────────────────────────────
-  const rocaEl=document.getElementById('dashROCA');
+  // ── ARCO PILLARS ───────────────────────────────────────────────────────────
+  const arcoEl=document.getElementById('dashARCO');
   if(rocaEl){
     const pillars=[
       {key:'R',name:'Relacionamento',icon:'🤝'},
@@ -3760,23 +3854,23 @@ function renderDashboard(){
       const a=vals.filter(v=>v==='A').length;
       const v=vals.filter(v=>v==='V').length;
       const tot=vals.length||1;
-      return `<div class="dash-roca-pillar">
-        <div class="dash-roca-pillar-name">${p.icon} ${p.name}</div>
-        <div class="dash-roca-bar-wrap">
-          <div class="dash-roca-bar-row">
-            <div class="dash-roca-bar-label" style="color:var(--green);">G</div>
-            <div class="dash-roca-bar-track"><div class="dash-roca-bar-fill" style="width:${Math.round(g/tot*100)}%;background:var(--green);"></div></div>
-            <div class="dash-roca-bar-count">${g}</div>
+      return `<div class="dash-arco-pillar">
+        <div class="dash-arco-pillar-name">${p.icon} ${p.name}</div>
+        <div class="dash-arco-bar-wrap">
+          <div class="dash-arco-bar-row">
+            <div class="dash-arco-bar-label" style="color:var(--green);">G</div>
+            <div class="dash-arco-bar-track"><div class="dash-arco-bar-fill" style="width:${Math.round(g/tot*100)}%;background:var(--green);"></div></div>
+            <div class="dash-arco-bar-count">${g}</div>
           </div>
-          <div class="dash-roca-bar-row">
-            <div class="dash-roca-bar-label" style="color:var(--amber);">A</div>
-            <div class="dash-roca-bar-track"><div class="dash-roca-bar-fill" style="width:${Math.round(a/tot*100)}%;background:#f59e0b;"></div></div>
-            <div class="dash-roca-bar-count">${a}</div>
+          <div class="dash-arco-bar-row">
+            <div class="dash-arco-bar-label" style="color:var(--amber);">A</div>
+            <div class="dash-arco-bar-track"><div class="dash-arco-bar-fill" style="width:${Math.round(a/tot*100)}%;background:#f59e0b;"></div></div>
+            <div class="dash-arco-bar-count">${a}</div>
           </div>
-          <div class="dash-roca-bar-row">
-            <div class="dash-roca-bar-label" style="color:var(--red);">V</div>
-            <div class="dash-roca-bar-track"><div class="dash-roca-bar-fill" style="width:${Math.round(v/tot*100)}%;background:var(--red);"></div></div>
-            <div class="dash-roca-bar-count">${v}</div>
+          <div class="dash-arco-bar-row">
+            <div class="dash-arco-bar-label" style="color:var(--red);">V</div>
+            <div class="dash-arco-bar-track"><div class="dash-arco-bar-fill" style="width:${Math.round(v/tot*100)}%;background:var(--red);"></div></div>
+            <div class="dash-arco-bar-count">${v}</div>
           </div>
         </div>
       </div>`;
