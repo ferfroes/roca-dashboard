@@ -2798,37 +2798,34 @@ function render(){
 }
 
 function updateSummary(fc){
-  // Summary strip counts: respeitam GS + tier + quick filters, mas NÃO o filtro de status
-  // Assim "Tier B" mostra os números do Tier B; clicar em "Vermelho" não zera os outros cards
-  let pool;
+  // Summary strip counts: respeitam GS + tier + search, mas NÃO filtros rápidos (churn, consec, etc.)
+  // NÃO aplica status filter — para não zerar os outros cards ao filtrar por status
+  let basePool;
   if(currentUser&&currentUser.role==='cs'){
     const _u=authUsers.find(u=>u.email===currentUser.email);
     const _n=(_u?.csName||_u?.name||currentUser.name||'').toLowerCase().trim();
-    pool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
+    basePool=clients.filter(c=>c.gs.toLowerCase().trim()===_n);
   }else{
     const gsF=currentFilter.gs||'all';
-    pool=gsF==='all'
+    basePool=gsF==='all'
       ?clients.slice()
       :clients.filter(c=>c.gs.toLowerCase().trim()===gsF.toLowerCase().trim());
   }
-  // Aplicar search
-  if(currentFilter.search){const q=currentFilter.search.toLowerCase();pool=pool.filter(c=>c.name.toLowerCase().includes(q));}
-  // Aplicar tier filter
-  if(currentFilter.tier)pool=pool.filter(c=>c.tier===currentFilter.tier);
-  // Aplicar churn filter
+  // Aplicar search e tier (filtros estruturais, não rápidos)
+  if(currentFilter.search){const q=currentFilter.search.toLowerCase();basePool=basePool.filter(c=>c.name.toLowerCase().includes(q));}
+  if(currentFilter.tier)basePool=basePool.filter(c=>c.tier===currentFilter.tier);
+
+  // pool = basePool + filtros rápidos (para Críticos, Churn, Pendentes refletirem o filtro ativo)
+  let pool=basePool.slice();
   if(currentFilter.churn)pool=pool.filter(c=>hasChurnRisk(c.id));
-  // Aplicar consec filter
   if(currentFilter.consec)pool=pool.filter(c=>consecutiveCriticalWeeks(c.id)>=2);
-  // Aplicar renovacao filter
   if(currentFilter.renovacao===true)pool=pool.filter(c=>c.renovacao===true||c.renovacao==='true');
-  // Aplicar bookPending filter
   if(currentFilter.bookPending)pool=pool.filter(c=>c.book&&(!entries[c.id]||!entries[c.id].bookSent));
-  // Aplicar worsened/improved
   if(currentFilter.worsened)pool=pool.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))<statusOrder(getEntryStatus_from(p));});
   if(currentFilter.improved)pool=pool.filter(c=>{const p=getPrevEntry(c.id);if(!p)return false;return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p));});
-  // NÃO aplica currentFilter.status — para não zerar os outros cards ao filtrar por status
 
-  document.getElementById('s-total').textContent=pool.length;
+  // TOTAL sempre mostra o basePool (carteira sem filtros rápidos)
+  document.getElementById('s-total').textContent=basePool.length;
   // count-all sempre mostra o total real da carteira — nunca o filtro ativo
   const cntAll=document.getElementById('count-all');
   if(cntAll){
