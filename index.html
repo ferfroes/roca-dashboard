@@ -16,12 +16,12 @@
   --ink2:    #1D2B4A;
   --ink3:    #4A5E82;
   --muted:   #8496B8;
-  --bg:      #F4F6F9;
-  --surface: #FAFBFD;
+  --bg:      #F0F3FA;
+  --surface: #F8FAFD;
   --card:    #FFFFFF;
-  --border:  #E4E8F0;
-  --border2: #C8D0E0;
-  --surface2:#EAEEF6;
+  --border:  #DDE3F0;
+  --border2: #BAC4DA;
+  --surface2:#E5EAF5;
 
   /* Brand — one electric blue */
   --brand:       #0A1B38;
@@ -235,91 +235,205 @@ body {
 }
 .search-input:focus { border-color: var(--brand3); box-shadow: 0 0 0 3px var(--brand-glow); }
 
-/* ─── SUMMARY STRIP — Executive KPI row ─────────────────────
-   Label acima em mono. Número 48px dominante.
-   Borda topo 3px = único acento semântico. Zero decoração.
+/* ─── GESTÃO LAYOUT — Asymmetric 2-column system ──────────
+   Philosophy: left col = weekly dynamics (health, status)
+               right col = slower-changing signals (contracts)
+   Typography does the work. Color only where it earns it.
    ─────────────────────────────────────────────────────── */
-.summary-strip {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
-  margin-bottom: 40px;
+
+/* Context line above content */
+.gestao-context {
+  display: flex; align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
-.summary-card {
-  background: var(--card);
-  border-radius: 12px;
-  padding: 22px 20px 20px;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  border-top-width: 3px;
-  box-shadow: 0 1px 3px rgba(13,21,56,.05);
-  transition: box-shadow .15s, transform .15s, border-color .15s;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 108px;
+.gestao-context-title {
+  font-size: 20px; font-weight: 700;
+  color: var(--ink); letter-spacing: -.02em;
 }
-.summary-card:hover {
-  box-shadow: 0 6px 20px rgba(13,21,56,.09);
-  transform: translateY(-2px);
-  border-color: var(--border2);
+.gestao-context-title span {
+  font-size: 13px; font-weight: 400;
+  color: var(--muted); margin-left: 8px; letter-spacing: 0;
 }
-.summary-card.active {
-  border-top-color: var(--brand3) !important;
-  box-shadow: 0 0 0 3px var(--brand-glow), 0 4px 14px rgba(13,21,56,.08);
-  border-color: var(--brand3);
-}
-/* Cor semântica: só na borda topo */
-.sc-total   { border-top-color: var(--brand3); }
-.sc-red     { border-top-color: var(--red); }
-.sc-churn   { border-top-color: var(--churn); }
-.sc-yellow  { border-top-color: var(--amber); }
-.sc-green   { border-top-color: var(--green); }
-.sc-pending { border-top-color: var(--border2); }
-/* Label — mono acima do número */
-.summary-lbl {
+.gestao-context-week {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 8px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--muted);
+  font-size: 9.5px; color: var(--muted);
+  background: var(--card); border: 1px solid var(--border);
+  padding: 3px 10px; border-radius: var(--r);
 }
-/* Número — 48px, domina o card */
+
+/* ─── SECTION LABEL — uniform divider style ─── */
+.section-label-divider {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  letter-spacing: .14em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+.section-label-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--border);
+}
+
+/* ─── SUMMARY STRIP — single bar, not card grid ─── */
+.summary-strip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-xs);
+}
+
+.summary-card {
+  flex: 1;
+  padding: 16px 18px 14px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 3px;
+  transition: background .14s;
+  position: relative;
+  border-radius: 0;
+  border-top: none;
+  border-left: none;
+  border-bottom: none;
+  box-shadow: none;
+  min-height: unset;
+  justify-content: flex-start;
+}
+.summary-card:last-child { border-right: none; }
+.summary-card:hover { background: var(--surface); }
+.summary-card.active { background: var(--brand-light); }
+
+/* Alert accent — 3px left stripe on critical cards */
+.sc-total  { flex: 0.8; }
+.sc-pending { flex: 0.8; border-left: none; }
+.sc-red    { border-left: 3px solid var(--red); }
+.sc-churn  { border-left: 3px solid var(--churn); }
+.sc-yellow { border-left: 3px solid var(--amber); }
+.sc-green  { border-left: 3px solid var(--green); }
+
+/* Number — dominant anchor */
 .summary-num {
-  font-size: 48px; font-weight: 700; line-height: 1;
-  letter-spacing: -.06em; font-family: 'Outfit', sans-serif;
-  color: var(--ink); margin-top: auto;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.05em;
+  font-family: 'Outfit', sans-serif;
+  color: var(--ink2);
 }
+.sc-total  .summary-num { color: var(--muted); font-size: 28px; }
+.sc-pending .summary-num { color: var(--muted); font-size: 28px; }
 .sc-red    .summary-num { color: var(--red); }
 .sc-churn  .summary-num { color: var(--churn); }
 .sc-yellow .summary-num { color: var(--amber); }
 .sc-green  .summary-num { color: var(--green); }
-.sc-pending .summary-num { color: var(--muted); }
+
+/* Label */
+.summary-lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .summary-card-icon { display: none; }
 .summary-card-top  { display: none; }
 .summary-card-body { display: contents; }
 
-/* ─── GS HEALTH STRIP ────────────────────────────────────── */
-.gs-health-strip { margin-bottom: 28px; }
-.gs-health-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; color: var(--ink3); letter-spacing: .14em;
-  text-transform: uppercase; margin-bottom: 16px;
-  font-weight: 600;
-}
+/* ─── GS HEALTH STRIP — ranking table, not card grid ─────── */
+.gs-health-strip { margin-bottom: 20px; }
+.gs-health-title { display: none; } /* replaced by section-label-divider */
+
 .gs-health-grid {
-  display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
 }
 .gs-health-card {
-  background: var(--card); border-radius: var(--r-xl);
-  padding: 18px 18px; cursor: pointer; transition: all .14s;
-  box-shadow: var(--shadow-card); border: 1.5px solid var(--border);
+  display: grid;
+  grid-template-columns: 32px 1fr 80px 52px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .12s;
+  border-radius: 0;
+  box-shadow: none;
+  border-left: none; border-right: none; border-top: none;
 }
-.gs-health-card:hover { border-color: var(--brand3); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
-.gs-health-name { font-size: 10.5px; font-weight: 600; color: var(--ink2); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hs-bar-track { height: 3px; background: var(--surface2); border-radius: 20px; overflow: hidden; margin-bottom: 6px; }
-.hs-bar-fill { height: 100%; border-radius: 20px; transition: width .4s ease; }
-.hs-score-row { display: flex; align-items: center; justify-content: space-between; }
-.hs-score-val { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 600; }
-.hs-score-accounts { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); }
+.gs-health-card:last-child { border-bottom: none; }
+.gs-health-card:hover { background: var(--surface); }
+.gs-health-card.flagged { background: var(--red-bg); }
+.gs-health-card.flagged:hover { background: #fde8e8; }
+
+/* Avatar — reuse existing gs-avatar style */
+.gs-health-name {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 400; color: var(--ink);
+  overflow: hidden;
+}
+.gs-health-name-inner {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1;
+}
+.gs-health-mid {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.hs-bar-track {
+  height: 3px; background: var(--surface2);
+  border-radius: 20px; overflow: hidden;
+}
+.hs-bar-fill {
+  height: 100%; border-radius: 20px; transition: width .4s ease;
+}
+.hs-score-row { display: none; } /* replaced by grid columns */
+.hs-score-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 600; text-align: right;
+}
+.hs-score-accounts {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted); text-align: right;
+}
+
+/* Health grid header row */
+.gs-health-grid-header {
+  display: grid;
+  grid-template-columns: 32px 1fr 80px 52px;
+  gap: 10px; padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .1em;
+}
+.gs-health-grid-pending-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .1em;
+  padding: 8px 16px 4px;
+  border-top: 1px solid var(--border);
+  grid-column: 1 / -1;
+  background: var(--surface);
+}
+
+/* Badge for health status in grid */
+.hs-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600;
+  padding: 2px 7px; border-radius: 4px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.hs-badge-crit { background: var(--red-bg); color: var(--red); }
+.hs-badge-warn { background: var(--churn-bg); color: var(--churn); }
+.hs-badge-low  { background: var(--surface2); color: var(--muted); }
 
 /* ─── CLIENT LIST ROW ────────────────────────────────────── */
 .client-list { display: flex; flex-direction: column; gap: 8px; }
@@ -585,68 +699,138 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 .user-status-active   { color: var(--green); font-weight: 600; }
 .user-status-inactive { color: var(--red); font-weight: 600; }
 
-/* ─── CONTRACTS / RENOVAÇÃO ─────────────────────────────── */
-.contracts-panel { margin-bottom: 28px; }
-/* Seções secundárias — colapsáveis com estilo */
-.section-collapse-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 0; cursor: pointer; user-select: none;
-  border-bottom: 1px solid var(--border); margin-bottom: 0;
-  transition: opacity .12s;
+/* ─── GESTÃO MAIN GRID — asymmetric 2-col layout ─────────── */
+.gestao-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
 }
-.section-collapse-header:hover { opacity: .75; }
-.section-collapse-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px; color: var(--ink3); letter-spacing: .14em;
-  text-transform: uppercase; display: flex; align-items: center; gap: 8px;
-  font-weight: 600;
-}
-.section-collapse-chevron {
-  font-size: 10px; color: var(--muted);
-  transition: transform .2s; display: inline-block;
-}
-.section-collapse-chevron.open { transform: rotate(180deg); }
-.section-collapse-body {
+.gestao-left  { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.gestao-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* ─── CONTRACTS PANEL — list style, not card grid ─────────── */
+.contracts-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
   overflow: hidden;
-  max-height: 0;
-  transition: max-height .3s cubic-bezier(.4,0,.2,1), padding .3s;
-  padding-top: 0;
+  box-shadow: var(--shadow-xs);
+  margin-bottom: 0;
 }
-.section-collapse-body.open {
-  max-height: 600px;
-  padding-top: 16px;
+.contracts-grid { display: none; } /* replaced — kept for JS compat */
+
+/* Panel header */
+.ct-panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .14em;
+  background: var(--surface);
 }
-.contracts-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 16px; margin-bottom: 8px; }
-.ct-card { background: var(--card); border-radius: var(--r-xl); padding: 20px 20px 16px; cursor: pointer; transition: all .14s; box-shadow: var(--shadow-card); border: 1.5px solid var(--border); border-top-width: 3px; }
-.ct-card:hover, .ct-card.active { box-shadow: 0 0 0 2px var(--brand3), var(--shadow-sm); border-color: var(--brand3); border-top-width: 3px; }
-.ct-card-label { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .08em; }
-.ct-card-count { font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -.03em; }
-.ct-card-sub { font-size: 9.5px; color: var(--muted); margin-top: 4px; }
-.ct-urgent  { border-top-color: var(--red); }
-.ct-warn    { border-top-color: #F59E0B; }
-.ct-soon    { border-top-color: var(--brand3); }
-.ct-safe    { border-top-color: var(--green); }
-.ct-expired { border-top-color: var(--muted); }
-.ct-drawer { display: none; border: 1.5px solid var(--border); border-radius: var(--r-xl); background: var(--card); overflow: hidden; margin-top: 7px; max-height: 280px; overflow-y: auto; box-shadow: var(--shadow-sm); }
+
+/* Each contract bucket as a list row */
+.ct-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background .12s;
+  border-radius: 0;
+  box-shadow: none;
+  border-left: none; border-right: none; border-top: none;
+  background: var(--card);
+}
+.ct-card:last-of-type { border-bottom: none; }
+.ct-card:hover { background: var(--surface); }
+.ct-card.active { background: var(--brand-light); }
+
+.ct-card-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.ct-card-label {
+  flex: 1; font-size: 12px; color: var(--ink3); font-weight: 400;
+}
+.ct-card-sub {
+  font-size: 10px; color: var(--muted); flex-shrink: 0;
+}
+.ct-card-bar-wrap {
+  width: 52px; height: 3px; background: var(--surface2);
+  border-radius: 2px; overflow: hidden; flex-shrink: 0;
+}
+.ct-card-bar-fill { height: 3px; border-radius: 2px; }
+.ct-card-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px; font-weight: 600;
+  min-width: 24px; text-align: right; flex-shrink: 0;
+}
+
+/* Semantic dot colors */
+.ct-urgent .ct-card-dot { background: var(--red); }
+.ct-warn   .ct-card-dot { background: #F59E0B; }
+.ct-soon   .ct-card-dot { background: var(--brand3); }
+.ct-safe   .ct-card-dot { background: var(--green); }
+.ct-expired .ct-card-dot { background: var(--muted); }
+
+/* Old CSS preserved for drawer compatibility */
+.ct-drawer { display: none; border: 1px solid var(--border); border-radius: 0 0 var(--r-xl) var(--r-xl); background: var(--card); overflow: hidden; max-height: 280px; overflow-y: auto; box-shadow: var(--shadow-sm); }
 .ct-drawer.open { display: block; }
 .ct-drawer-row { display: grid; grid-template-columns: 2fr 2fr 1fr 90px 80px; gap: 8px; padding: 7px 12px; border-bottom: 1px solid var(--border); font-size: 11px; align-items: center; }
 .ct-drawer-row:last-child { border-bottom: none; }
 .ct-drawer-hdr { background: var(--surface); font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
-.renov-panel { margin-bottom: 28px; }
-.renov-panel-title { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 9px; display: flex; align-items: center; gap: 8px; }
-.renov-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
-.renov-card { background: var(--card); border-radius: var(--r-xl); padding: 20px 20px 16px; cursor: pointer; transition: all .14s; box-shadow: var(--shadow-card); border: 1.5px solid var(--border); border-top-width: 3px; }
-.renov-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); border-color: var(--border2); }
-.renov-card.active { box-shadow: 0 0 0 2px var(--brand3); border-color: var(--brand3); }
-.renov-card-label { font-family: 'JetBrains Mono', monospace; font-size: 8.5px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .08em; }
-.renov-card-count { font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -.03em; }
-.renov-card-sub { font-size: 9.5px; color: var(--muted); margin-top: 4px; }
-.rc-urgent { border-top-color: var(--red); }
-.rc-warn   { border-top-color: #F59E0B; }
-.rc-ok     { border-top-color: var(--brand3); }
-.rc-safe   { border-top-color: var(--green); }
-#rc-total  { border-top-color: var(--muted); }
-#rc-pct    { border-top-color: var(--brand3); }
+
+/* ─── RENOVAÇÃO PANEL — compact 2x2 grid ─────────────────── */
+.renov-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  margin-bottom: 0;
+}
+.renov-panel-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .14em;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: block; /* override old flex style */
+}
+.renov-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.renov-card {
+  padding: 14px 16px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background .12s;
+  display: flex; flex-direction: column; gap: 3px;
+  border-radius: 0; box-shadow: none;
+  border-top: none; border-left: none;
+}
+.renov-card:nth-child(2n) { border-right: none; }
+.renov-card:nth-child(3),
+.renov-card:nth-child(4) { border-bottom: none; }
+.renov-card:hover { background: var(--surface); }
+.renov-card.active { background: var(--brand-light); }
+.renov-card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.renov-card-count {
+  font-size: 22px; font-weight: 700;
+  line-height: 1; letter-spacing: -.03em;
+}
+.renov-card-sub { font-size: 9.5px; color: var(--muted); }
+.rc-urgent { }
+.rc-warn   { }
+.rc-ok     { }
+.rc-safe   { }
+#rc-total  { }
+#rc-pct    { }
 
 /* ─── DASHBOARD ─────────────────────────────────────────── */
 .dash-shell { flex: 1; padding: 28px 32px; overflow-y: auto; background: var(--bg); width: 100%; min-width: 0; }
@@ -723,15 +907,17 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
   .dash-row-2 { grid-template-columns: 1fr 1fr; }
   .dash-row-3 { grid-template-columns: 1fr 1fr; }
   .dash-row-4 { grid-template-columns: 1fr; }
-  .contracts-grid { grid-template-columns: repeat(3,1fr); }
-  .renov-grid { grid-template-columns: repeat(2,1fr); }
+  .gestao-main-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 900px) {
   .sidebar { display: none; }
-  .summary-strip { grid-template-columns: repeat(3,1fr); gap:7px; }
+  .summary-strip { flex-wrap: wrap; }
+  .summary-card { flex: 0 0 calc(50% - 1px); }
   .farol-grid, .field-grid-2, .field-grid-3, .field-grid-4 { grid-template-columns: 1fr; }
-  .gs-health-grid { grid-template-columns: 1fr 1fr; }
+  .gs-health-card { grid-template-columns: 32px 1fr 64px; }
+  .gs-health-card .hs-badge { display: none; }
   .admin-sections { grid-template-columns: 1fr; }
+  .gestao-main-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
   #loginScreen { flex-direction: column; }
@@ -755,9 +941,9 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
   .sidebar-overlay.open { display: block; }
   .sidebar-hamburger { display: flex; }
   .main, .admin-full, .dash-shell { padding: 14px; }
-  .summary-strip { grid-template-columns: repeat(3,1fr); gap: 6px; }
-  .renov-grid { grid-template-columns: repeat(2,1fr); }
-  .contracts-grid { grid-template-columns: repeat(2,1fr); }
+  .summary-strip { flex-wrap: wrap; }
+  .summary-card { flex: 0 0 calc(50% - 1px); }
+  .gestao-main-grid { grid-template-columns: 1fr; }
   .dash-kpi-strip { grid-template-columns: repeat(2,1fr); }
   .dash-row-2, .dash-row-3, .dash-row-4 { grid-template-columns: 1fr; }
   .farol-grid { grid-template-columns: 1fr 1fr; }
@@ -765,9 +951,11 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
   #kpiDrawer { width: 100%; border-radius: 0; }
 }
 @media (max-width: 480px) {
-  .summary-strip { grid-template-columns: repeat(2,1fr); gap: 6px; }
+  .summary-strip { flex-direction: column; }
+  .summary-card { border-right: none; border-bottom: 1px solid var(--border); }
+  .summary-card.sc-red, .summary-card.sc-churn,
+  .summary-card.sc-yellow, .summary-card.sc-green { border-left: 3px solid; }
   .dash-kpi-strip { grid-template-columns: 1fr 1fr; }
-  .renov-grid { grid-template-columns: 1fr 1fr; }
   .farol-grid { grid-template-columns: 1fr; }
 }
 </style>
@@ -906,10 +1094,12 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
   </div>
 
   <div class="main">
-    <div class="view-header">
-      <div class="view-title" id="mainTitle">Todas as Contas</div>
-      <div class="view-actions">
+    <!-- CONTEXT LINE -->
+    <div class="gestao-context">
+      <div class="gestao-context-title" id="mainTitle">Todas as Contas <span id="mainTitleCount"></span></div>
+      <div style="display:flex;align-items:center;gap:10px;">
         <input class="search-input" type="text" placeholder="🔍 Buscar cliente..." oninput="searchClients(this.value)"/>
+        <div class="gestao-context-week" id="gestaoWeekBadge"></div>
       </div>
     </div>
 
@@ -922,7 +1112,8 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
       </div>
     </div>
 
-    <!-- SUMMARY — surgical minimal, 6 colunas -->
+    <!-- SUMMARY BAR — single unified strip -->
+    <div class="section-label-divider">Situação da carteira</div>
     <div class="summary-strip">
       <div class="summary-card sc-total" id="sc-all" onclick="filterByCard('all')">
         <div class="summary-num" id="s-total">0</div>
@@ -950,109 +1141,126 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
       </div>
     </div>
 
+    <!-- ASYMMETRIC 2-COL GRID -->
+    <div class="gestao-main-grid">
 
-    <!-- CONTRACTS PANEL — colapsável -->
-    <div class="contracts-panel" id="contractsPanel">
-      <div class="section-collapse-header" onclick="toggleSection('ct-body','ct-chevron')">
-        <span class="section-collapse-title">📄 Vencimento de Contratos</span>
-        <span class="section-collapse-chevron" id="ct-chevron">▼</span>
+      <!-- LEFT: Health Score (weekly, highest priority) + list -->
+      <div class="gestao-left">
+
+        <!-- GS HEALTH STRIP — ranking table -->
+        <div class="gs-health-strip">
+          <div class="section-label-divider">Health score por manager · meta ≥ 75%</div>
+          <div class="gs-health-grid" id="gsHealthGrid">
+            <div class="gs-health-grid-header">
+              <span></span>
+              <span>Manager</span>
+              <span style="text-align:right">Score</span>
+              <span style="text-align:right">Contas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIST VIEW -->
+        <div class="section-label-divider">Contas</div>
+        <div id="list-view"><div class="client-list" id="client-list"></div></div>
+
+        <!-- TABLE VIEW -->
+        <div id="table-view" style="display:none;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th><th>Tier</th><th>CS</th><th>HS</th>
+                  <th>R</th><th>O</th><th>C</th><th>A</th>
+                  <th>Status</th><th>Churn</th><th>NPS</th><th>Ação</th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="section-collapse-body" id="ct-body">
-      <div class="contracts-grid">
-        <div class="ct-card ct-urgent" onclick="toggleCtDrawer('urgent')">
-          <div class="ct-card-label">≤ 30 dias</div>
-          <div class="ct-card-count" id="ct-count-30" style="color:var(--red);">0</div>
-          <div class="ct-card-sub">ação imediata</div>
-        </div>
-        <div class="ct-card ct-warn" onclick="toggleCtDrawer('warn')">
-          <div class="ct-card-label">31 – 60 dias</div>
-          <div class="ct-card-count" id="ct-count-60" style="color:#d97706;">0</div>
-          <div class="ct-card-sub">iniciar conversa</div>
-        </div>
-        <div class="ct-card ct-soon" onclick="toggleCtDrawer('soon')">
-          <div class="ct-card-label">61 – 90 dias</div>
-          <div class="ct-card-count" id="ct-count-90" style="color:var(--brand2);">0</div>
-          <div class="ct-card-sub">no radar</div>
-        </div>
-        <div class="ct-card ct-safe" onclick="toggleCtDrawer('safe')">
-          <div class="ct-card-label">&gt; 90 dias</div>
-          <div class="ct-card-count" id="ct-count-safe" style="color:var(--green);">0</div>
-          <div class="ct-card-sub">tranquilo</div>
-        </div>
-        <div class="ct-card ct-expired" onclick="toggleCtDrawer('expired')">
-          <div class="ct-card-label">Vencidos</div>
-          <div class="ct-card-count" id="ct-count-exp" style="color:var(--muted);">0</div>
-          <div class="ct-card-sub">verificar situação</div>
-        </div>
-      </div>
-      </div></div><!-- /ct-body -->
-      <div class="ct-drawer" id="ct-drawer">
-        <div class="ct-drawer-row ct-drawer-hdr">
-          <span>Cliente</span><span>Projeto</span><span>Resp.</span><span>Vencimento</span><span>Status</span>
-        </div>
-        <div id="ct-drawer-body"></div>
-      </div>
-    </div>
 
-    <!-- RENOVAÇÃO PANEL — colapsável -->
-    <div class="renov-panel">
-      <div class="section-collapse-header" onclick="toggleSection('renov-body','renov-chevron')">
-        <span class="section-collapse-title">🔄 Renovação Sinalizada</span>
-        <span class="section-collapse-chevron" id="renov-chevron">▼</span>
-      </div>
-      <div class="section-collapse-body" id="renov-body">
-      <div class="renov-grid" id="renovGrid">
-        <div class="renov-card rc-urgent" id="rc-urgent">
-          <div class="renov-card-label">Renovação próxima</div>
-          <div class="renov-card-count" id="rc-count-urgent" style="color:var(--red);">0</div>
-          <div class="renov-card-sub">Ação imediata</div>
-        </div>
-        <div class="renov-card rc-safe" id="rc-ok">
-          <div class="renov-card-label">Sem sinalização</div>
-          <div class="renov-card-count" id="rc-count-ok" style="color:var(--green);">0</div>
-          <div class="renov-card-sub">Situação tranquila</div>
-        </div>
-        <div class="renov-card" id="rc-total" >
-          <div class="renov-card-label">Total contas</div>
-          <div class="renov-card-count" id="rc-count-total" style="color:var(--ink);">0</div>
-          <div class="renov-card-sub">na carteira</div>
-        </div>
-        <div class="renov-card" id="rc-pct" >
-          <div class="renov-card-label">% sinalizadas</div>
-          <div class="renov-card-count" id="rc-count-pct" style="color:var(--brand2);">0%</div>
-          <div class="renov-card-sub">do total</div>
-        </div>
-      </div><!-- /renov-grid -->
-      </div></div><!-- /renov-body -->
-    </div><!-- /renov-panel -->
+      <!-- RIGHT: Contract risk signals (slower-changing) -->
+      <div class="gestao-right">
 
-    <!-- GS HEALTH STRIP -->
-    <div class="gs-health-strip">
-      <div class="gs-health-title">Health Score médio por Customer Success</div>
-      <div class="gs-health-grid" id="gsHealthGrid"></div>
-    </div>
+        <!-- CONTRACTS PANEL -->
+        <div>
+          <div class="section-label-divider">Vencimento de contratos</div>
+          <div class="contracts-panel" id="contractsPanel">
+            <div class="ct-card ct-urgent" onclick="toggleCtDrawer('urgent')">
+              <div class="ct-card-dot"></div>
+              <div class="ct-card-label">≤ 30 dias</div>
+              <div class="ct-card-bar-wrap"><div class="ct-card-bar-fill" id="ct-bar-30" style="background:var(--red);width:0%"></div></div>
+              <div class="ct-card-count" id="ct-count-30" style="color:var(--red);">0</div>
+            </div>
+            <div class="ct-card ct-warn" onclick="toggleCtDrawer('warn')">
+              <div class="ct-card-dot"></div>
+              <div class="ct-card-label">31 – 60 dias</div>
+              <div class="ct-card-bar-wrap"><div class="ct-card-bar-fill" id="ct-bar-60" style="background:#F59E0B;width:0%"></div></div>
+              <div class="ct-card-count" id="ct-count-60" style="color:#d97706;">0</div>
+            </div>
+            <div class="ct-card ct-soon" onclick="toggleCtDrawer('soon')">
+              <div class="ct-card-dot"></div>
+              <div class="ct-card-label">61 – 90 dias</div>
+              <div class="ct-card-bar-wrap"><div class="ct-card-bar-fill" id="ct-bar-90" style="background:var(--brand3);width:0%"></div></div>
+              <div class="ct-card-count" id="ct-count-90" style="color:var(--brand2);">0</div>
+            </div>
+            <div class="ct-card ct-safe" onclick="toggleCtDrawer('safe')">
+              <div class="ct-card-dot"></div>
+              <div class="ct-card-label">&gt; 90 dias</div>
+              <div class="ct-card-bar-wrap"><div class="ct-card-bar-fill" id="ct-bar-safe" style="background:var(--green);width:0%"></div></div>
+              <div class="ct-card-count" id="ct-count-safe" style="color:var(--green);">0</div>
+            </div>
+            <div class="ct-card ct-expired" onclick="toggleCtDrawer('expired')">
+              <div class="ct-card-dot"></div>
+              <div class="ct-card-label">Vencidos</div>
+              <div class="ct-card-bar-wrap"><div class="ct-card-bar-fill" id="ct-bar-exp" style="background:var(--muted);width:0%"></div></div>
+              <div class="ct-card-count" id="ct-count-exp" style="color:var(--muted);">0</div>
+            </div>
+            <div class="ct-drawer" id="ct-drawer">
+              <div class="ct-drawer-row ct-drawer-hdr">
+                <span>Cliente</span><span>Projeto</span><span>Resp.</span><span>Vencimento</span><span>Status</span>
+              </div>
+              <div id="ct-drawer-body"></div>
+            </div>
+          </div>
+        </div>
 
-    <!-- LIST VIEW -->
-    <div id="list-view"><div class="client-list" id="client-list"></div></div>
+        <!-- RENOVAÇÃO PANEL -->
+        <div>
+          <div class="section-label-divider">Renovação sinalizada</div>
+          <div class="renov-panel">
+            <div class="renov-grid" id="renovGrid">
+              <div class="renov-card rc-urgent" id="rc-urgent">
+                <div class="renov-card-label">Renovação próxima</div>
+                <div class="renov-card-count" id="rc-count-urgent" style="color:var(--red);">0</div>
+                <div class="renov-card-sub">Ação imediata</div>
+              </div>
+              <div class="renov-card rc-safe" id="rc-ok">
+                <div class="renov-card-label">Sem sinalização</div>
+                <div class="renov-card-count" id="rc-count-ok" style="color:var(--green);">0</div>
+                <div class="renov-card-sub">Situação tranquila</div>
+              </div>
+              <div class="renov-card" id="rc-total">
+                <div class="renov-card-label">Total contas</div>
+                <div class="renov-card-count" id="rc-count-total" style="color:var(--ink);">0</div>
+                <div class="renov-card-sub">na carteira</div>
+              </div>
+              <div class="renov-card" id="rc-pct">
+                <div class="renov-card-label">% sinalizadas</div>
+                <div class="renov-card-count" id="rc-count-pct" style="color:var(--brand2);">0%</div>
+                <div class="renov-card-sub">do total</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <!-- TABLE VIEW -->
-    <div id="table-view" style="display:none;">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Cliente</th><th>Tier</th><th>CS</th><th>HS</th>
-              <th>R</th><th>O</th><th>C</th><th>A</th>
-              <th>Status</th><th>Churn</th><th>NPS</th><th>Ação</th>
-            </tr>
-          </thead>
-          <tbody id="table-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+      </div><!-- /gestao-right -->
+    </div><!-- /gestao-main-grid -->
 
+  </div><!-- /.main -->
+</div><!-- /#tab-gerencial -->
 
 <!-- TAB: DASHBOARD -->
 <div class="tab-content" id="tab-dashboard">
@@ -1993,6 +2201,7 @@ async function init(){
   const fr=new Date(mn);fr.setDate(mn.getDate()+4);
   const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   document.getElementById('weekBadge').textContent=`Semana ${fmt(mn)} – ${fmt(fr)}`;
+  const _gwb=document.getElementById('gestaoWeekBadge');if(_gwb)_gwb.textContent=`Semana ${fmt(mn)} – ${fmt(fr)}`;
   buildSidebar();
   // Only show admin tabs if admin
   if(currentUser&&currentUser.role==='admin'){renderAdminList();}
@@ -2055,21 +2264,75 @@ function buildSidebar(){
 
 // ── GS HEALTH STRIP ───────────────────────────────────────────────────────────
 function renderGSHealthStrip(){
-  const grid=document.getElementById('gsHealthGrid');grid.innerHTML='';
+  const grid=document.getElementById('gsHealthGrid');
+  // Keep header row, clear only data rows
+  const hdr=grid.querySelector('.gs-health-grid-header');
+  grid.innerHTML='';
+  if(hdr)grid.appendChild(hdr);
+  else{
+    const h=document.createElement('div');h.className='gs-health-grid-header';
+    h.innerHTML='<span></span><span>Manager</span><span style="text-align:right">Score</span><span style="text-align:right">Contas</span>';
+    grid.appendChild(h);
+  }
   const isCS=currentUser&&currentUser.role==='cs';
   const dbU2=isCS?authUsers.find(u=>u.email===currentUser.email):null;
   const csName=isCS?((dbU2?.csName||dbU2?.name||currentUser.name||'').toLowerCase().trim()):null;
-  [...new Set(clients.map(c=>c.gs))].sort().forEach(gs=>{
+  const gsNames=[...new Set(clients.map(c=>c.gs))].sort();
+
+  // Separate scored vs pending for ranked display
+  const scored=[];const pending=[];
+  gsNames.forEach(gs=>{
     if(isCS&&csName&&gs.toLowerCase().trim()!==csName)return;
-    const avg=calcGSHealthAvg(gs);const col=hsColor(avg);
+    const avg=calcGSHealthAvg(gs);
     const gsCount=clients.filter(c=>c.gs===gs).length;
     const filled=clients.filter(c=>c.gs===gs&&entries[c.id]&&entries[c.id].R).length;
+    if(avg!==null)scored.push({gs,avg,gsCount,filled});
+    else pending.push({gs,avg:null,gsCount,filled});
+  });
+  // Sort scored ascending (lowest first = most critical at top)
+  scored.sort((a,b)=>a.avg-b.avg);
+
+  const renderRow=(gs,avg,gsCount,filled)=>{
+    const col=hsColor(avg);
     const gsCol=gsColors[gs]||{bg:'#eee',color:'#444'};
     const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const card=document.createElement('div');card.className='gs-health-card';
-    card.innerHTML=`<div class="gs-health-name" style="display:flex;align-items:center;gap:6px;"><span style="width:20px;height:20px;border-radius:50%;background:${gsCol.bg};color:${gsCol.color};font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</span>${gs}</div><div class="hs-bar-track"><div class="hs-bar-fill" style="width:${avg||0}%;background:${col.bar};"></div></div><div class="hs-score-row"><span class="hs-score-val" style="color:${col.fg};">${avg!==null?avg+'%':'–'}</span><span class="hs-score-accounts">${filled}/${gsCount}</span></div>`;
-    card.onclick=()=>filterGS(gs,null);grid.appendChild(card);
-  });
+    const isCrit=avg!==null&&avg<50;
+    const isWarn=avg!==null&&avg>=50&&avg<75;
+    const card=document.createElement('div');
+    card.className='gs-health-card'+(isCrit?' flagged':'');
+    // Badge html
+    let badge='';
+    if(isCrit)badge=`<span class="hs-badge hs-badge-crit">crítico</span>`;
+    else if(isWarn)badge=`<span class="hs-badge hs-badge-warn">atenção</span>`;
+    else if(avg===null&&filled===0)badge=`<span class="hs-badge hs-badge-low">pendente</span>`;
+    // Bar
+    const barColor=avg!==null?col.bar:'var(--surface2)';
+    const barW=avg!==null?avg:0;
+    card.innerHTML=`
+      <div style="width:28px;height:28px;border-radius:50%;background:${gsCol.bg};color:${gsCol.color};font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</div>
+      <div class="gs-health-mid">
+        <div style="font-size:13px;font-weight:400;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${gs}</div>
+        <div class="hs-bar-track"><div class="hs-bar-fill" style="width:${barW}%;background:${barColor};"></div></div>
+      </div>
+      <span class="hs-score-val" style="color:${col.fg};text-align:right;">${avg!==null?avg+'%':'–'}</span>
+      <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);">${filled}/${gsCount}</span>
+        ${badge}
+      </div>
+    `;
+    card.onclick=()=>filterGS(gs,null);
+    grid.appendChild(card);
+  };
+
+  scored.forEach(({gs,avg,gsCount,filled})=>renderRow(gs,avg,gsCount,filled));
+
+  if(pending.length&&scored.length){
+    const lbl=document.createElement('div');
+    lbl.className='gs-health-grid-pending-label';
+    lbl.textContent='Sem dados esta semana';
+    grid.appendChild(lbl);
+  }
+  pending.forEach(({gs,avg,gsCount,filled})=>renderRow(gs,avg,gsCount,filled));
 }
 
 // ── CONTRACT PANEL ────────────────────────────────────────────────────────────
@@ -3748,14 +4011,6 @@ function renderDashboard(){
 }
 
 
-function toggleSection(bodyId, chevronId) {
-  const body = document.getElementById(bodyId);
-  const chev = document.getElementById(chevronId);
-  if (!body) return;
-  body.classList.toggle('open');
-  if (chev) chev.classList.toggle('open');
-}
-
 function showToast(msg,duration=2500){
   let t=document.getElementById('_toast');
   if(!t){t=document.createElement('div');t.id='_toast';t.className='toast';document.body.appendChild(t);}
@@ -3892,15 +4147,20 @@ function showContractPanel(show){
 function updateContractPanel(){
   if(!contracts.length){showContractPanel(false);return;}
   showContractPanel(true);
-  // Cards mostram TODOS os contratos importados — sem cruzar com clientes cadastrados
-  // (nomes podem não bater exatamente; o drawer já filtra corretamente)
   const visible=contracts;
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  set('ct-count-30', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>=0&&d<=30;}).length);
-  set('ct-count-60', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>30&&d<=60;}).length);
-  set('ct-count-90', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>60&&d<=90;}).length);
-  set('ct-count-safe',visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>90;}).length);
-  set('ct-count-exp', visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d<0;}).length);
+  const n30=visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>=0&&d<=30;}).length;
+  const n60=visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>30&&d<=60;}).length;
+  const n90=visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>60&&d<=90;}).length;
+  const nSafe=visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d>90;}).length;
+  const nExp=visible.filter(ct=>{const d=contractDaysLeft(ct.venc);return d!==null&&d<0;}).length;
+  set('ct-count-30',n30);set('ct-count-60',n60);set('ct-count-90',n90);
+  set('ct-count-safe',nSafe);set('ct-count-exp',nExp);
+  // Update proportion bars
+  const total=visible.length||1;
+  const setBar=(id,n)=>{const el=document.getElementById(id);if(el)el.style.width=Math.round(n/total*100)+'%';};
+  setBar('ct-bar-30',n30);setBar('ct-bar-60',n60);setBar('ct-bar-90',n90);
+  setBar('ct-bar-safe',nSafe);setBar('ct-bar-exp',nExp);
 }
 
 
