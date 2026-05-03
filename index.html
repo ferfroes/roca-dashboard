@@ -1600,7 +1600,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
     </div>
 
     <!-- NEW / EDIT USER MODAL -->
-    <div id="userModal" class="modal-overlay" style="display:none;">
+    <div id="userModal" class="modal-overlay">
       <div class="modal" style="max-width:420px;">
         <div class="modal-header">
           <div class="modal-title" id="userModalTitle">Novo Usuário</div>
@@ -2394,6 +2394,13 @@ function calcHealthScore_from(e, id){
   if(e.needFrom&&e.needFromDate&&daysSince(e.needFromDate)>14)penalty+=P(10);
   else if(e.needFrom&&e.needFromDate&&daysSince(e.needFromDate)>7)penalty+=P(5);
   if(c.renovacao===true||c.renovacao==='true')penalty+=P(15);
+
+  // ── CHECKLIST OPERACIONAL SAFIRA — mirrors calcHealthScore ────────────────
+  if(e.chk_basico==='N')    penalty+=P(10);
+  if(e.chk_gatilhos==='N')  penalty+=P(8);
+  if(e.chk_licencas==='N')  penalty+=P(6);
+  if(e.chk_governanca==='N')penalty+=P(6);
+  if(e.chk_revisaoDate){const rd=daysSince(e.chk_revisaoDate);if(rd!==null&&rd>90)penalty+=P(8);}
 
   // ── CONTRATOS — espelha lógica do calcHealthScore ─────────────────────────
   if(typeof getMostCriticalContract==='function'&&typeof contracts!=='undefined'&&contracts.length){
