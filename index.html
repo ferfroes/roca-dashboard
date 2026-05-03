@@ -1908,6 +1908,8 @@ async function spLoadAll(){
     showSyncStatus('syncing');
     const data=await fbGet('roca');
     if(data){
+      // Sempre resetar entries antes de carregar do Firebase
+      // Evita contaminação de dados em memória de sessões anteriores
       const re=data.entries||{};const fixed={};Object.keys(re).forEach(k=>{fixed[parseInt(k)]=re[k];});entries=fixed;
       const rh=data.history||{};weekHistory={};
       Object.keys(rh).forEach(wk=>{const ws={};Object.keys(rh[wk]).forEach(c=>{ws[parseInt(c)]=rh[wk][c];});weekHistory[wk]=ws;});
@@ -2120,9 +2122,9 @@ function calcHealthScore(id){
   return final;
 }
 
-function calcHSDetail(id){
-  // Returns {score, factors[], checklist[]}
-  const e=entries[id]||{};const c=clients.find(x=>x.id===id)||{};
+function calcHSDetail(id, overrideEntry){
+  // overrideEntry: optional entry snapshot (e.g. unsaved modal state)
+  const e=overrideEntry||entries[id]||{};const c=clients.find(x=>x.id===id)||{};
   const tier=c.tier||'C';const isVIP=c.vip||false;const isTierA=tier==='A'||isVIP;
   const factors=[];const checklist=[];
 
@@ -2130,7 +2132,8 @@ function calcHSDetail(id){
 
   const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40; // mesma lógica de calcHealthScore
   const base=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
-  factors.push({type:base>=75?'positive':base>=40?'warning':'negative',icon:'📊',label:`Base ARCO (R${e.R||'?'}/O${e.O||'?'}/C${e.C||'?'}/A${e.A||'?'})`,val:`${Math.round(base)}/100`});
+  const dimLabel=v=>v==='G'?'🟢':v==='A'?'🟡':v==='V'?'🔴':'?';
+  factors.push({type:base>=75?'positive':base>=40?'warning':'negative',icon:'📊',label:`Base ARCO — A:${dimLabel(e.A)} R:${dimLabel(e.R)} C:${dimLabel(e.C)} O:${dimLabel(e.O)}`,val:`${Math.round(base)}/100`});
 
   let penalty=0;
   const P=p=>isTierA?Math.round(p*1.3):p;
@@ -3003,7 +3006,31 @@ function renderTable(fc){
 // ── HS DETAIL MODAL ───────────────────────────────────────────────────────────
 function openHSDetail(id){
   const c=clients.find(x=>x.id===id)||{};
-  const detail=calcHSDetail(id);
+
+  // Se chamado de dentro do fillModal, usa o estado ATUAL do modal
+  // (currentFarol + campos não salvos) para mostrar o HS em tempo real
+  const calledFromModal = editingClientId===id &&
+    document.getElementById('fillModal').classList.contains('open');
+  let overrideEntry=null;
+  if(calledFromModal && currentFarol.R){
+    const prev=entries[id]||{};
+    overrideEntry={
+      ...prev,
+      R:currentFarol.R, O:currentFarol.O, C:currentFarol.C, A:currentFarol.A,
+      lastMeeting:document.getElementById('lastMeeting').value||prev.lastMeeting||'',
+      lastVisit:document.getElementById('lastVisit').value||prev.lastVisit||'',
+      npsScore:document.getElementById('npsScore').value||prev.npsScore||'',
+      npsDate:document.getElementById('npsDate').value||prev.npsDate||'',
+      billing:currentBilling||prev.billing||null,
+      chk_basico:currentChk.basico||prev.chk_basico||null,
+      chk_gatilhos:currentChk.gatilhos||prev.chk_gatilhos||null,
+      chk_licencas:currentChk.licencas||prev.chk_licencas||null,
+      chk_governanca:currentChk.governanca||prev.chk_governanca||null,
+      chk_revisaoDate:document.getElementById('chkRevisaoDate').value||prev.chk_revisaoDate||'',
+    };
+  }
+
+  const detail=calcHSDetail(id, overrideEntry);
   const consec=consecutiveCriticalWeeks(id);
   document.getElementById('hsModalTitle').textContent=c.name||(id||'');
   document.getElementById('hsModalSub').textContent=`CS: ${c.gs||'–'} · Tier ${c.tier||'C'}${c.vip?' · ⭐ VIP':''}${consec>=2?' · 🔁 '+consec+'ª semana crítica':''}`;
@@ -3428,16 +3455,19 @@ function resetTotal(){
   if(!ok1)return;
   const typed=prompt('Para confirmar, digite exatamente:  RESET');
   if(typed!=='RESET'){alert('Reset cancelado.');return;}
+
+  // Limpar memória imediatamente antes de qualquer operação de rede
+  entries={};weekHistory={};clients=[];gsList=[];contracts=[];currentUser=null;
+  localStorage.clear();
+
   // DELETE the entire roca node from Firebase
   fetch(`${FB_URL}/roca.json`,{method:'DELETE'})
     .then(()=>{
-      localStorage.clear();
       alert('✓ Reset concluído. O sistema será recarregado.');
       location.reload();
     })
     .catch(e=>{
       alert('Erro Firebase: '+e.message+'\n\nApague o nó "roca" manualmente no Firebase Console.');
-      localStorage.clear();
       location.reload();
     });
 }
