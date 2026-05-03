@@ -3497,7 +3497,21 @@ function exportData(){
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
-window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));});
+window.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  // 1. Modais
+  const openModal=document.querySelector('.modal-overlay.open');
+  if(openModal){openModal.classList.remove('open');return;}
+  // 2. KPI Drawer (painel lateral de contas)
+  const kpiDrawer=document.getElementById('kpiDrawer');
+  if(kpiDrawer&&kpiDrawer.style.display!=='none'&&kpiDrawer.style.transform!=='translateX(100%)'){closeKpiDrawer();return;}
+  // 3. Drawer de contratos
+  const ctDrawer=document.getElementById('ct-drawer');
+  if(ctDrawer&&ctDrawer.classList.contains('open')){ctDrawer.classList.remove('open');return;}
+  // 4. Sidebar mobile
+  const sb=document.getElementById('mainSidebar');
+  if(sb&&sb.classList.contains('open')){closeSidebar();return;}
+});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // AUTH SYSTEM
