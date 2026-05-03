@@ -778,7 +778,32 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 .user-status-active   { color: var(--green); font-weight: 600; }
 .user-status-inactive { color: var(--red); font-weight: 600; }
 
-/* ─── SITUATIONAL CONTEXT BAR ────────────────────────────── */
+/* ─── CHECKLIST OPERACIONAL ──────────────────────────────── */
+.chk-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.chk-row:last-child { border-bottom: none; }
+.chk-row-date { padding: 8px 14px; }
+.chk-label {
+  font-size: 12.5px; color: var(--ink2); flex: 1;
+  line-height: 1.4;
+}
+.chk-opts {
+  display: flex; gap: 5px; flex-shrink: 0;
+}
+.chk-opt {
+  padding: 4px 12px; border-radius: 20px; font-size: 11px;
+  font-weight: 600; cursor: pointer; border: 1.5px solid var(--border);
+  background: var(--card); color: var(--muted);
+  transition: all .13s; font-family: 'JetBrains Mono', monospace;
+  user-select: none;
+}
+.chk-opt:hover { border-color: var(--border2); color: var(--ink2); }
+.chk-opt.chk-sel-S { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+.chk-opt.chk-sel-N { background: var(--red-bg);   border-color: var(--red);   color: var(--red);   }
+.chk-opt.chk-sel-NA{ background: var(--surface2); border-color: var(--border2); color: var(--ink3); }
 .ctx-cell {
   display: flex; flex-direction: column; justify-content: center;
   padding: 14px 22px; border-right: 1px solid var(--border);
@@ -1682,6 +1707,57 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
         </div>
       </div>
 
+      <!-- CHECKLIST OPERACIONAL SAFIRA -->
+      <div class="section-title">Checklist Operacional<div class="section-divider"></div></div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;margin-bottom:4px;">
+        <!-- Row 1 -->
+        <div class="chk-row" id="chkrow-gatilhos">
+          <div class="chk-label">⚡ Gatilhos estão implementados e funcionais?</div>
+          <div class="chk-opts">
+            <div class="chk-opt chk-yes" onclick="selectChk('gatilhos','S',this)">Sim</div>
+            <div class="chk-opt chk-no"  onclick="selectChk('gatilhos','N',this)">Não</div>
+            <div class="chk-opt chk-na"  onclick="selectChk('gatilhos','NA',this)">N/A</div>
+          </div>
+        </div>
+        <!-- Row 2 -->
+        <div class="chk-row" id="chkrow-licencas">
+          <div class="chk-label">🔑 Todas as licenças contratadas estão em uso?</div>
+          <div class="chk-opts">
+            <div class="chk-opt chk-yes" onclick="selectChk('licencas','S',this)">Sim</div>
+            <div class="chk-opt chk-no"  onclick="selectChk('licencas','N',this)">Não</div>
+            <div class="chk-opt chk-na"  onclick="selectChk('licencas','NA',this)">N/A</div>
+          </div>
+        </div>
+        <!-- Row 3 -->
+        <div class="chk-row" id="chkrow-governanca">
+          <div class="chk-label">📋 Processos e governança de ativos documentados?</div>
+          <div class="chk-opts">
+            <div class="chk-opt chk-yes" onclick="selectChk('governanca','S',this)">Sim</div>
+            <div class="chk-opt chk-no"  onclick="selectChk('governanca','N',this)">Não</div>
+            <div class="chk-opt chk-na"  onclick="selectChk('governanca','NA',this)">N/A</div>
+          </div>
+        </div>
+        <!-- Row 4 -->
+        <div class="chk-row" id="chkrow-basico">
+          <div class="chk-label">✅ O básico está sendo bem feito e funciona?</div>
+          <div class="chk-opts">
+            <div class="chk-opt chk-yes" onclick="selectChk('basico','S',this)">Sim</div>
+            <div class="chk-opt chk-no"  onclick="selectChk('basico','N',this)">Não</div>
+            <div class="chk-opt chk-na"  onclick="selectChk('basico','NA',this)">N/A</div>
+          </div>
+        </div>
+        <!-- Row 5 — date field -->
+        <div class="chk-row chk-row-date" id="chkrow-revisao">
+          <div class="chk-label">📅 Data da última revisão com o cliente</div>
+          <div class="chk-opts">
+            <input type="date" id="chkRevisaoDate" style="border:1px solid var(--border);border-radius:var(--r-lg);padding:5px 10px;font-size:12px;font-family:'Outfit',sans-serif;color:var(--ink);background:var(--card);height:32px;">
+          </div>
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);margin-bottom:12px;padding:0 2px;">
+        Pesos: Básico −10 · Gatilhos −8 · Revisão &gt;90d −8 · Licenças −6 · Governança −6 · NA não penaliza
+      </div>
+
       <!-- ENGAJAMENTO -->
       <div class="section-title">Engajamento<div class="section-divider"></div></div>
       <div class="field-grid field-grid-3">
@@ -2013,6 +2089,19 @@ function calcHealthScore(id){
   }
 
 
+  // ── CHECKLIST OPERACIONAL SAFIRA ─────────────────────────────────────────
+  // NA = não penaliza. Sem resposta = não penaliza (campo novo, não obriga retroativo).
+  // Pesos: basico=10, gatilhos=8, revisao=8, licencas=6, governanca=6
+  if(e.chk_basico==='N')    penalty+=P(10);
+  if(e.chk_gatilhos==='N')  penalty+=P(8);
+  if(e.chk_licencas==='N')  penalty+=P(6);
+  if(e.chk_governanca==='N')penalty+=P(6);
+  // Revisão com cliente: penaliza se data preenchida e > 90 dias OU se data não informada e conta tem dados
+  if(e.chk_revisaoDate){
+    const rd=daysSince(e.chk_revisaoDate);
+    if(rd!==null&&rd>90)penalty+=P(8);
+  }
+
   // ── RENOVAÇÃO PRÓXIMA ─────────────────────────────────────────────────────
   if(cl.renovacao===true||cl.renovacao==='true')penalty+=P(15);
 
@@ -2217,6 +2306,37 @@ function calcHSDetail(id){
     }else{
       factors.push({type:'negative',icon:'📋',label:`Book não enviado em ${refMonthName} (prazo: dia 1–12)`,val:`-${bookPenalty}`});
       checklist.push({done:false,text:`Enviar book entre dias 1–12 de ${refMonthName}`});
+    }
+  }
+
+  // ── CHECKLIST OPERACIONAL SAFIRA ─────────────────────────────────────────
+  const chkItems=[
+    {key:'basico',    label:'O básico está sendo bem feito e funciona',    weight:10, icon:'✅'},
+    {key:'gatilhos',  label:'Gatilhos implementados e funcionais',          weight:8,  icon:'⚡'},
+    {key:'licencas',  label:'Todas as licenças contratadas em uso',         weight:6,  icon:'🔑'},
+    {key:'governanca',label:'Processos e governança de ativos documentados',weight:6,  icon:'📋'},
+  ];
+  chkItems.forEach(({key,label,weight,icon})=>{
+    const val=e[`chk_${key}`];
+    if(val==='N'){
+      const p=P(weight);penalty+=p;
+      factors.push({type:'negative',icon,label:`${label}: Não`,val:`-${p}`});
+      checklist.push({done:false,text:`Corrigir: ${label}`});
+    }else if(val==='S'){
+      factors.push({type:'positive',icon,label:`${label}: Sim`,val:'✓'});
+    }else if(val==='NA'){
+      factors.push({type:'neutral',icon,label:`${label}: N/A`,val:'–'});
+    }
+    // null = não preenchido, não penaliza (campo novo)
+  });
+  if(e.chk_revisaoDate){
+    const rd=daysSince(e.chk_revisaoDate);
+    if(rd!==null&&rd>90){
+      const p=P(8);penalty+=p;
+      factors.push({type:'negative',icon:'📅',label:`Última revisão com cliente há ${rd} dias (limite: 90d)`,val:`-${p}`});
+      checklist.push({done:false,text:'Agendar revisão com o cliente (última há mais de 90 dias)'});
+    }else if(rd!==null){
+      factors.push({type:'positive',icon:'📅',label:`Revisão com cliente há ${rd} dias`,val:'✓'});
     }
   }
 
@@ -2941,6 +3061,7 @@ function openFillModal(id){
   document.getElementById('pipelineValue').value=e.pipelineValue||'';
   document.getElementById('pipelineStage').value=e.pipelineStage||'';
   renderChurnOpts();
+  loadChk(e);
   resetBillingOpts();
   if(currentBilling){document.getElementById(`bill-${currentBilling}`).classList.add(`sel-${currentBilling}`);document.getElementById('billingDetailRow').style.display=currentBilling!=='stable'?'grid':'none';}
   else document.getElementById('billingDetailRow').style.display='none';
@@ -2994,6 +3115,39 @@ function selectFarol(dim,val,el){currentFarol[dim]=val;el.parentElement.querySel
 function resetBillingOpts(){['up','stable','down'].forEach(v=>document.getElementById(`bill-${v}`).className='billing-opt');}
 function selectBilling(val,el){currentBilling=val;resetBillingOpts();el.classList.add(`sel-${val}`);document.getElementById('billingDetailRow').style.display=val!=='stable'?'grid':'none';}
 
+// ── CHECKLIST OPERACIONAL ────────────────────────────────────────────────────
+const CHK_KEYS=['gatilhos','licencas','governanca','basico'];
+let currentChk={gatilhos:null,licencas:null,governanca:null,basico:null};
+
+function selectChk(key,val,el){
+  currentChk[key]=val;
+  const row=document.getElementById(`chkrow-${key}`);
+  if(row){
+    row.querySelectorAll('.chk-opt').forEach(o=>{
+      o.classList.remove('chk-sel-S','chk-sel-N','chk-sel-NA');
+    });
+    el.classList.add(`chk-sel-${val}`);
+  }
+}
+
+function loadChk(e){
+  currentChk={gatilhos:null,licencas:null,governanca:null,basico:null};
+  CHK_KEYS.forEach(k=>{
+    const val=e[`chk_${k}`]||null;
+    currentChk[k]=val;
+    const row=document.getElementById(`chkrow-${k}`);
+    if(row){
+      row.querySelectorAll('.chk-opt').forEach(o=>o.classList.remove('chk-sel-S','chk-sel-N','chk-sel-NA'));
+      if(val){
+        const target=row.querySelector(`.chk-${val==='S'?'yes':val==='N'?'no':'na'}`);
+        if(target)target.classList.add(`chk-sel-${val}`);
+      }
+    }
+  });
+  const revisaoEl=document.getElementById('chkRevisaoDate');
+  if(revisaoEl)revisaoEl.value=e.chk_revisaoDate||'';
+}
+
 function clearEntry(){if(!editingClientId)return;if(!confirm('Limpar todos os dados desta conta?'))return;delete entries[editingClientId];localStorage.setItem('roca_entries',JSON.stringify(entries));closeModal('fillModal');render();showSyncStatus('saving');spDelete(getWeekKey(),editingClientId).then(()=>showSyncStatus('saved')).catch(()=>showSyncStatus('error'));}
 
 function saveEntry(){
@@ -3039,6 +3193,11 @@ function saveEntry(){
     weeklyComment:document.getElementById('weeklyComment').value,
     bookSent:clients.find(x=>x.id===editingClientId)?.book ? document.getElementById('bookSent').checked : false,
     bookDate:clients.find(x=>x.id===editingClientId)?.book ? document.getElementById('bookDate').value : '',
+    chk_gatilhos:currentChk.gatilhos||null,
+    chk_licencas:currentChk.licencas||null,
+    chk_governanca:currentChk.governanca||null,
+    chk_basico:currentChk.basico||null,
+    chk_revisaoDate:document.getElementById('chkRevisaoDate').value||'',
     timestamp:new Date().toISOString(),
     _name:clients.find(x=>x.id===editingClientId)?.name||''  // preserve for history ID recovery on reimport
   };
