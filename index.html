@@ -1627,20 +1627,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
     <div class="modal-body">
       <div id="modalHistoryStrip" style="margin-bottom:14px;"></div>
       <div class="section-title">ARCO — Dimensões<div class="section-divider"></div></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:0 2px;">Peso maior no HS (30%)</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:0 2px;">Peso menor no HS (20%)</div>
-      </div>
       <div class="farol-grid">
-        <div class="farol-block" id="block-R">
-          <div class="farol-block-title">📊 R — RESULTADO <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">30%</span></div>
-          <div class="farol-opts">
-            <div class="farol-opt" onclick="selectFarol('R','G',this)">🟢</div>
-            <div class="farol-opt" onclick="selectFarol('R','A',this)">🟡</div>
-            <div class="farol-opt" onclick="selectFarol('R','V',this)">🔴</div>
-          </div>
-          <textarea id="justR" placeholder="O cliente percebe ROI? Entregas realizadas vs prometidas. O decisor reconhece valor? Existe evidência mensurável do impacto gerado." rows="3"></textarea>
-        </div>
         <div class="farol-block" id="block-A">
           <div class="farol-block-title">🎯 A — ADOÇÃO <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">20%</span></div>
           <div class="farol-opts">
@@ -1649,6 +1636,15 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
             <div class="farol-opt" onclick="selectFarol('A','V',this)">🔴</div>
           </div>
           <textarea id="justA" placeholder="O cliente usa o serviço ativamente? Engajamento real ou apenas contratual? Usuários recorrentes, acessos, utilização do escopo contratado." rows="3"></textarea>
+        </div>
+        <div class="farol-block" id="block-R">
+          <div class="farol-block-title">📊 R — RESULTADO <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">30%</span></div>
+          <div class="farol-opts">
+            <div class="farol-opt" onclick="selectFarol('R','G',this)">🟢</div>
+            <div class="farol-opt" onclick="selectFarol('R','A',this)">🟡</div>
+            <div class="farol-opt" onclick="selectFarol('R','V',this)">🔴</div>
+          </div>
+          <textarea id="justR" placeholder="O cliente percebe ROI? Entregas realizadas vs prometidas. O decisor reconhece valor? Existe evidência mensurável do impacto gerado." rows="3"></textarea>
         </div>
         <div class="farol-block" id="block-C">
           <div class="farol-block-title">🔄 C — CONTINUIDADE <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">30%</span></div>
@@ -1849,10 +1845,10 @@ async function spLoadAll(){
       // onde Firebase ainda não recebeu o PUT do import mas spLoadAll já rodou
       if(parsedClients.length > 0){
         clients = parsedClients;
+        clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
       } else if(clients.length === 0) {
-        // Firebase vazio E memória vazia — tentar localStorage como fallback
         const lsClients = localStorage.getItem('roca_clients');
-        if(lsClients) try{ clients = JSON.parse(lsClients); }catch(e){}
+        if(lsClients) try{ clients = JSON.parse(lsClients); clients.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')); }catch(e){}
       }
       // Se Firebase vazio mas memória tem dados (import recente), manter os dados em memória
       const rawContracts=data.contracts
@@ -2418,7 +2414,7 @@ function buildSidebar(){
   const isCS=currentUser&&currentUser.role==='cs';
   const dbU=isCS?authUsers.find(u=>u.email===currentUser.email):null;
   const csName=isCS?((dbU?.csName||dbU?.name||currentUser.name||'').toLowerCase().trim()):null;
-  [...new Set(clients.map(c=>c.gs))].sort().forEach(gs=>{
+  [...new Set(clients.map(c=>c.gs))].sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(gs=>{
     if(isCS&&csName&&gs.toLowerCase().trim()!==csName)return;
     const count=clients.filter(c=>c.gs===gs).length;
     const col=gsColors[gs]||{bg:'#f0f0f5',color:'#444'};
@@ -2438,7 +2434,7 @@ function renderGSHealthStrip(){
   const isCS=currentUser&&currentUser.role==='cs';
   const dbU2=isCS?authUsers.find(u=>u.email===currentUser.email):null;
   const csName=isCS?((dbU2?.csName||dbU2?.name||currentUser.name||'').toLowerCase().trim()):null;
-  const gsNames=[...new Set(clients.map(c=>c.gs))].sort();
+  const gsNames=[...new Set(clients.map(c=>c.gs))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
 
   // Separate scored vs unscored
   const scored=[];const pending=[];
@@ -2451,6 +2447,7 @@ function renderGSHealthStrip(){
     else pending.push({gs,avg:null,gsCount,filled});
   });
   scored.sort((a,b)=>a.avg-b.avg);
+  pending.sort((a,b)=>a.gs.localeCompare(b.gs,'pt-BR'));
 
   // Compute team average for header
   const teamAvg=scored.length>0?Math.round(scored.reduce((s,x)=>s+x.avg,0)/scored.length):null;
