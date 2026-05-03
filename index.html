@@ -594,57 +594,53 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 .login-brand-panel {
   flex: 1; background: var(--brand);
   display: flex; flex-direction: column;
-  justify-content: flex-end; padding: 64px 68px;
+  justify-content: flex-end; padding: 56px 60px;
   position: relative; overflow: hidden;
 }
 
-/* Arc motif — the visual signature of ARCO */
+/* Original radial gradient atmosphere — restored */
 .login-brand-panel::before {
-  content: ''; position: absolute;
-  width: 700px; height: 700px;
-  border: 80px solid rgba(59,130,246,.07);
-  border-radius: 50%;
-  bottom: -280px; left: -140px;
-  pointer-events: none;
-}
-.login-brand-panel::after {
-  content: ''; position: absolute;
-  width: 480px; height: 480px;
-  border: 48px solid rgba(59,130,246,.05);
-  border-radius: 50%;
-  top: -140px; right: -100px;
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 20% 90%, rgba(59,130,246,.22) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 85% 15%, rgba(59,130,246,.1) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 30% at 50% 50%, rgba(59,130,246,.06) 0%, transparent 70%);
   pointer-events: none;
 }
 
-/* Subtle dot grid */
-.login-brand-arc-grid {
-  position: absolute; inset: 0; pointer-events: none;
-  background-image: radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+/* Grid pattern overlay — original */
+.login-brand-panel::after {
+  content: ''; position: absolute; inset: 0; opacity: .04;
+  background-image: linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
 }
+
+/* Arc grid div — hidden, kept for HTML compat */
+.login-brand-arc-grid { display: none; }
 
 .login-brand-content { position: relative; z-index: 1; }
 
-/* ARCO lettered dimensions — the four pillars shown as vertical pills */
+/* ARCO dimensions — horizontal pill strip, ambient style */
 .arco-dims {
-  display: flex; gap: 10px; margin-bottom: 52px;
+  display: flex; gap: 16px; margin-bottom: 48px; align-items: center;
 }
 .arco-dim-pill {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
+  display: flex; align-items: center; gap: 7px;
 }
 .arco-dim-letter {
-  width: 32px; height: 32px; border-radius: 8px;
-  background: rgba(59,130,246,.15);
-  border: 1px solid rgba(59,130,246,.25);
+  width: 26px; height: 26px; border-radius: 6px;
+  background: rgba(59,130,246,.16);
+  border: 1px solid rgba(59,130,246,.28);
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 700; color: var(--brand3);
-  font-family: 'Outfit', sans-serif;
+  font-size: 11px; font-weight: 700; color: var(--brand3);
+  font-family: 'Outfit', sans-serif; flex-shrink: 0;
 }
 .arco-dim-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 7.5px; color: rgba(255,255,255,.28);
-  letter-spacing: .1em; text-transform: uppercase;
+  font-size: 8px; color: rgba(255,255,255,.32);
+  letter-spacing: .08em; text-transform: uppercase;
 }
 
 .login-brand-wordmark {
