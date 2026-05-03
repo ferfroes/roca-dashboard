@@ -1028,7 +1028,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
     <div class="login-brand-content">
       <div class="login-brand-wordmark">Método ARCO</div>
       <div class="login-brand-headline">Health Score com <em>inteligência</em> de carteira.</div>
-      <div class="login-brand-sub">Adoção, Resultado, Continuidade, Operação — quatro dimensões, uma carteira saudável.</div>
+      <div class="login-brand-sub">Health Score em tempo real e decisão baseada em dados — para equipes de CS que sabem performar.</div>
       <div class="arco-dims">
         <div class="arco-dim-pill">
           <div class="arco-dim-letter">A</div>
@@ -1047,7 +1047,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
           <div class="arco-dim-label">Operação</div>
         </div>
       </div>
-      <div class="login-brand-tag">ARCO · CS · PERFORMANCE · SAFIRA</div>
+      <div class="login-brand-tag">CS · PERFORMANCE</div>
     </div>
   </div>
   <!-- Right: form panel -->
@@ -1239,15 +1239,8 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 
         <!-- GS HEALTH STRIP — ranking table -->
         <div class="gs-health-strip">
-          <div class="section-label-divider">Health score por manager · meta ≥ 75%</div>
-          <div class="gs-health-grid" id="gsHealthGrid">
-            <div class="gs-health-grid-header">
-              <span></span>
-              <span>Manager</span>
-              <span style="text-align:right">Score</span>
-              <span style="text-align:right">Contas</span>
-            </div>
-          </div>
+          <div class="section-label-divider" id="hsStripLabel">Health score por manager · meta ≥ 75%</div>
+          <div class="gs-health-grid" id="gsHealthGrid"></div>
         </div>
 
         <!-- LIST VIEW -->
@@ -1524,10 +1517,15 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 
           <div class="login-field" style="margin:0;">
             <label>PERFIL</label>
-            <select id="umRole" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
+            <select id="umRole" onchange="toggleCsNameField()" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--ink);background:var(--surface);">
               <option value="cs">CS (Customer Success)</option>
               <option value="admin">Admin</option>
             </select>
+          </div>
+          <div class="login-field" style="margin:0;" id="umCsNameField">
+            <label>NOME DO CS (como aparece nas contas)</label>
+            <input type="text" id="umCsName" placeholder="Ex: Fernando Fróes">
+            <div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Para admin: preencha para associar uma carteira de contas a este usuário.</div>
           </div>
           <div class="login-field" style="margin:0;" id="umPwField">
             <label>SENHA INICIAL</label>
@@ -2355,21 +2353,14 @@ function buildSidebar(){
 // ── GS HEALTH STRIP ───────────────────────────────────────────────────────────
 function renderGSHealthStrip(){
   const grid=document.getElementById('gsHealthGrid');
-  // Keep header row, clear only data rows
-  const hdr=grid.querySelector('.gs-health-grid-header');
   grid.innerHTML='';
-  if(hdr)grid.appendChild(hdr);
-  else{
-    const h=document.createElement('div');h.className='gs-health-grid-header';
-    h.innerHTML='<span></span><span>Manager</span><span style="text-align:right">Score</span><span style="text-align:right">Contas</span>';
-    grid.appendChild(h);
-  }
+
   const isCS=currentUser&&currentUser.role==='cs';
   const dbU2=isCS?authUsers.find(u=>u.email===currentUser.email):null;
   const csName=isCS?((dbU2?.csName||dbU2?.name||currentUser.name||'').toLowerCase().trim()):null;
   const gsNames=[...new Set(clients.map(c=>c.gs))].sort();
 
-  // Separate scored vs pending for ranked display
+  // Separate scored vs unscored
   const scored=[];const pending=[];
   gsNames.forEach(gs=>{
     if(isCS&&csName&&gs.toLowerCase().trim()!==csName)return;
@@ -2379,8 +2370,23 @@ function renderGSHealthStrip(){
     if(avg!==null)scored.push({gs,avg,gsCount,filled});
     else pending.push({gs,avg:null,gsCount,filled});
   });
-  // Sort scored ascending (lowest first = most critical at top)
   scored.sort((a,b)=>a.avg-b.avg);
+
+  // Compute team average for header
+  const teamAvg=scored.length>0?Math.round(scored.reduce((s,x)=>s+x.avg,0)/scored.length):null;
+  const teamAvgColor=teamAvg===null?'var(--muted)':teamAvg>=75?'var(--green)':teamAvg>=50?'var(--amber)':'var(--red)';
+
+  // Update section label with team avg
+  const lbl=document.getElementById('hsStripLabel');
+  if(lbl){
+    lbl.innerHTML=`Health score por manager · meta ≥ 75%`
+      +(teamAvg!==null?` <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:${teamAvgColor};margin-left:8px;">Média do time: ${teamAvg}%</span>`:'');
+  }
+
+  // Dynamic column header
+  const h=document.createElement('div');h.className='gs-health-grid-header';
+  h.innerHTML='<span></span><span>Manager</span><span style="text-align:right">Score</span><span style="text-align:right">Contas</span>';
+  grid.appendChild(h);
 
   const renderRow=(gs,avg,gsCount,filled)=>{
     const col=hsColor(avg);
@@ -2390,12 +2396,10 @@ function renderGSHealthStrip(){
     const isWarn=avg!==null&&avg>=50&&avg<75;
     const card=document.createElement('div');
     card.className='gs-health-card'+(isCrit?' flagged':'');
-    // Badge html
     let badge='';
     if(isCrit)badge=`<span class="hs-badge hs-badge-crit">crítico</span>`;
     else if(isWarn)badge=`<span class="hs-badge hs-badge-warn">atenção</span>`;
-    else if(avg===null&&filled===0)badge=`<span class="hs-badge hs-badge-low">pendente</span>`;
-    // Bar
+    else if(avg===null)badge=`<span class="hs-badge hs-badge-low">pendente</span>`;
     const barColor=avg!==null?col.bar:'var(--surface2)';
     const barW=avg!==null?avg:0;
     card.innerHTML=`
@@ -2414,15 +2418,8 @@ function renderGSHealthStrip(){
     grid.appendChild(card);
   };
 
-  scored.forEach(({gs,avg,gsCount,filled})=>renderRow(gs,avg,gsCount,filled));
-
-  if(pending.length&&scored.length){
-    const lbl=document.createElement('div');
-    lbl.className='gs-health-grid-pending-label';
-    lbl.textContent='Sem dados esta semana';
-    grid.appendChild(lbl);
-  }
-  pending.forEach(({gs,avg,gsCount,filled})=>renderRow(gs,avg,gsCount,filled));
+  // All managers — scored (ascending) then pending
+  [...scored,...pending].forEach(({gs,avg,gsCount,filled})=>renderRow(gs,avg,gsCount,filled));
 }
 
 // ── CONTRACT PANEL ────────────────────────────────────────────────────────────
@@ -3552,13 +3549,22 @@ function showUserMenu() {
 // ── User management ──────────────────────────────────────────────────────────
 let editingUserId = null;
 
-// csName field functions removed
+function toggleCsNameField(){
+  const role=document.getElementById('umRole').value;
+  const f=document.getElementById('umCsNameField');
+  // Always show — CS uses name by default, admin can optionally set csName
+  if(f)f.style.display=role==='admin'?'':'none';
+}
+
+// csName field functions
 function openNewUserModal() {
   editingUserId = null;
   document.getElementById('userModalTitle').textContent = 'Novo Usuário';
   document.getElementById('umEmail').value = '';
   document.getElementById('umName').value = '';
   document.getElementById('umRole').value = 'cs';
+  document.getElementById('umCsName').value = '';
+  document.getElementById('umCsNameField').style.display = 'none';
   document.getElementById('umPassword').value = '';
   document.getElementById('umPwField').style.display = '';
   document.getElementById('userModalErr').textContent = '';
@@ -3573,7 +3579,9 @@ function openEditUserModal(uid) {
   document.getElementById('umEmail').value = user.email;
   document.getElementById('umName').value = user.name;
   document.getElementById('umRole').value = user.role;
-  document.getElementById('umPwField').style.display = 'none'; // edit doesn't change pw here
+  document.getElementById('umCsName').value = user.csName||'';
+  document.getElementById('umCsNameField').style.display = user.role==='admin'?'':'none';
+  document.getElementById('umPwField').style.display = 'none';
   document.getElementById('userModalErr').textContent = '';
   document.getElementById('userModal').classList.add('open');
 }
@@ -3588,6 +3596,9 @@ async function saveUserModal() {
   const name = document.getElementById('umName').value.trim();
   const role = document.getElementById('umRole').value;
   const pw = document.getElementById('umPassword').value;
+  const csNameInput = document.getElementById('umCsName').value.trim();
+  // For CS: csName = name. For admin: csName = explicit field if filled, else null
+  const csName = role==='cs' ? name : (csNameInput||null);
   const errEl = document.getElementById('userModalErr');
   errEl.textContent = '';
 
@@ -3595,14 +3606,12 @@ async function saveUserModal() {
   if (!name) { errEl.textContent = 'Informe o nome.'; return; }
 
   if (editingUserId) {
-    // Edit existing
     const user = authUsers.find(u => u.uid === editingUserId);
-    const updated = {...user, email, name, role, csName: role==='cs' ? name : null};
+    const updated = {...user, email, name, role, csName};
     await saveAuthUser(editingUserId, updated);
     authUsers = authUsers.map(u => u.uid === editingUserId ? {uid: editingUserId, ...updated} : u);
     addAudit('user', `Usuário editado: ${email} (${role})`);
   } else {
-    // New user
     if (pw.length < 6) { errEl.textContent = 'Senha mínima 6 caracteres.'; return; }
     if (authUsers.find(u => u.email === email)) { errEl.textContent = 'E-mail já cadastrado.'; return; }
     const hash = await sha256(pw);
@@ -3611,7 +3620,7 @@ async function saveUserModal() {
       email, name, role,
       passwordHash: hash, active: true, mustChangePw: true,
       createdAt: Date.now(), lastAccess: null,
-      csName: role==='cs' ? name : null
+      csName
     };
     await saveAuthUser(uid, newUser);
     authUsers.push({uid, ...newUser});
@@ -3837,14 +3846,14 @@ function renderDashboard(){
 
   // ── ARCO PILLARS ───────────────────────────────────────────────────────────
   const arcoEl=document.getElementById('dashARCO');
-  if(rocaEl){
+  if(arcoEl){
     const pillars=[
-      {key:'R',name:'Relacionamento',icon:'🤝'},
+      {key:'A',name:'Adoção',icon:'🎯'},
+      {key:'R',name:'Resultado',icon:'📊'},
+      {key:'C',name:'Continuidade',icon:'🔄'},
       {key:'O',name:'Operação',icon:'⚙️'},
-      {key:'C',name:'Contrato',icon:'📄'},
-      {key:'A',name:'Avanço',icon:'🚀'},
     ];
-    rocaEl.innerHTML=pillars.map(p=>{
+    arcoEl.innerHTML=pillars.map(p=>{
       const vals=filled.map(c=>entries[c.id][p.key]).filter(Boolean);
       const g=vals.filter(v=>v==='G').length;
       const a=vals.filter(v=>v==='A').length;
