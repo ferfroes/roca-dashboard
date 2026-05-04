@@ -1270,8 +1270,8 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
             <div style="flex:0 0 25%;background:linear-gradient(90deg,#97C459,#059669);cursor:pointer;transition:filter .15s;" onclick="openKpiDrawer('hs-saudavel')" title="HS Saudável — clique para ver contas" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''"></div>
           </div>
           <!-- Meta line at 75% -->
-          <div style="position:absolute;top:0;bottom:0;left:75%;width:2px;background:var(--ink3);opacity:.45;pointer-events:none;border-radius:1px;"></div>
-          <div style="position:absolute;top:1px;left:75%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink3);pointer-events:none;white-space:nowrap;font-weight:600;">meta</div>
+          <div style="position:absolute;top:0;bottom:0;left:90%;width:2px;background:var(--ink3);opacity:.45;pointer-events:none;border-radius:1px;"></div>
+          <div style="position:absolute;top:1px;left:90%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink3);pointer-events:none;white-space:nowrap;font-weight:600;">meta</div>
           <!-- Pointer -->
           <div id="ctx-ruler-pointer" style="position:absolute;top:50%;transform:translate(-50%,-50%);left:0%;transition:left .5s cubic-bezier(.4,0,.2,1);display:none;pointer-events:none;">
             <div style="width:3px;height:20px;background:var(--ink);border-radius:2px;margin:0 auto;box-shadow:0 0 6px rgba(0,0,0,.25);"></div>
@@ -1340,7 +1340,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 
         <!-- GS HEALTH STRIP — ranking table -->
         <div class="gs-health-strip">
-          <div class="section-label-divider" id="hsStripLabel">Health score por manager · meta ≥ 75%</div>
+          <div class="section-label-divider" id="hsStripLabel">Health score por manager · meta ≥ 90%</div>
           <div class="gs-health-grid" id="gsHealthGrid"></div>
         </div>
 
@@ -1656,7 +1656,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
       <div class="section-title">ARCO — Dimensões<div class="section-divider"></div></div>
       <div class="farol-grid">
         <div class="farol-block" id="block-A">
-          <div class="farol-block-title">🎯 A — ADOÇÃO <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">20%</span></div>
+          <div class="farol-block-title">🎯 A — ADOÇÃO <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">40%</span></div>
           <div class="farol-opts">
             <div class="farol-opt" onclick="selectFarol('A','G',this)">🟢</div>
             <div class="farol-opt" onclick="selectFarol('A','A',this)">🟡</div>
@@ -1665,7 +1665,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
           <textarea id="justA" placeholder="O cliente usa o serviço ativamente? Engajamento real ou apenas contratual? Usuários recorrentes, acessos, utilização do escopo contratado." rows="3"></textarea>
         </div>
         <div class="farol-block" id="block-R">
-          <div class="farol-block-title">📊 R — RESULTADO <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">30%</span></div>
+          <div class="farol-block-title">📊 R — RESULTADO <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">20%</span></div>
           <div class="farol-opts">
             <div class="farol-opt" onclick="selectFarol('R','G',this)">🟢</div>
             <div class="farol-opt" onclick="selectFarol('R','A',this)">🟡</div>
@@ -1674,7 +1674,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
           <textarea id="justR" placeholder="O cliente percebe ROI? Entregas realizadas vs prometidas. O decisor reconhece valor? Existe evidência mensurável do impacto gerado." rows="3"></textarea>
         </div>
         <div class="farol-block" id="block-C">
-          <div class="farol-block-title">🔄 C — CONTINUIDADE <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">30%</span></div>
+          <div class="farol-block-title">🔄 C — CONTINUIDADE <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);font-weight:400;">20%</span></div>
           <div class="farol-opts">
             <div class="farol-opt" onclick="selectFarol('C','G',this)">🟢</div>
             <div class="farol-opt" onclick="selectFarol('C','A',this)">🟡</div>
@@ -2010,7 +2010,7 @@ function calcHealthScore(id){
   // ── BASE ARCO (R=30%, O=20%, C=30%, A=20%) ───────────────────────────────
   // G=100 | A=40 (amarelo É problema) | V=0
   const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
-  let score=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
+  let score=dv(e.R)*.20+dv(e.O)*.20+dv(e.C)*.20+dv(e.A)*.40;
 
   let penalty=0;
   const dims=[e.R,e.O,e.C,e.A];
@@ -2131,9 +2131,9 @@ function calcHSDetail(id, overrideEntry){
   if(!e.R){return{score:null,factors:[{type:'neutral',icon:'ℹ️',label:'Conta não preenchida esta semana',val:'–'}],checklist:[{done:false,text:'Preencher as 4 dimensões ARCO'}]};}
 
   const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40; // mesma lógica de calcHealthScore
-  const base=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
+  const base=dv(e.R)*.20+dv(e.O)*.20+dv(e.C)*.20+dv(e.A)*.40;
   const dimLabel=v=>v==='G'?'🟢':v==='A'?'🟡':v==='V'?'🔴':'?';
-  factors.push({type:base>=75?'positive':base>=40?'warning':'negative',icon:'📊',label:`Base ARCO — A:${dimLabel(e.A)} R:${dimLabel(e.R)} C:${dimLabel(e.C)} O:${dimLabel(e.O)}`,val:`${Math.round(base)}/100`});
+  factors.push({type:base>=90?'positive':base>=70?'warning':'negative',icon:'📊',label:`Base ARCO — A:${dimLabel(e.A)} R:${dimLabel(e.R)} C:${dimLabel(e.C)} O:${dimLabel(e.O)}`,val:`${Math.round(base)}/100`});
 
   let penalty=0;
   const P=p=>isTierA?Math.round(p*1.3):p;
@@ -2361,7 +2361,7 @@ function calcHealthScore_from(e, id){
   const tier=c.tier||'C';const isVIP=c.vip||false;const isTierA=tier==='A'||isVIP;
   const P=p=>isTierA?Math.round(p*1.3):p;
   const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
-  let score=dv(e.R)*.30+dv(e.O)*.20+dv(e.C)*.30+dv(e.A)*.20;
+  let score=dv(e.R)*.20+dv(e.O)*.20+dv(e.C)*.20+dv(e.A)*.40;
   let penalty=0;
   const dims=[e.R,e.O,e.C,e.A];const cv=dims.filter(d=>d==='V').length;const ca=dims.filter(d=>d==='A').length;
   if(cv>=3)penalty+=P(20);else if(cv===2)penalty+=P(12);else if(cv===1)penalty+=P(8);
@@ -2476,7 +2476,7 @@ function hasChurnRisk(id){
 function hsColor(score){
   if(score===null)return{fg:'var(--muted)',bg:'var(--surface2)',bar:'#ccd3e3'};
   if(score>=90)return{fg:'var(--green)',bg:'var(--green-bg)',bar:'var(--green)'};
-  if(score>=70)return{fg:'var(--amber)',bg:'var(--amber-bg)',bar:'#f59e0b'};
+  if(score>=71)return{fg:'var(--amber)',bg:'var(--amber-bg)',bar:'#f59e0b'};
   return{fg:'var(--red)',bg:'var(--red-bg)',bar:'var(--red)'};
 }
 function calcGSHealthAvg(gs){const sc=clients.filter(c=>c.gs===gs).map(c=>calcHealthScore(c.id)).filter(s=>s!==null);if(!sc.length)return null;return Math.round(sc.reduce((a,b)=>a+b,0)/sc.length);}
@@ -2583,12 +2583,12 @@ function renderGSHealthStrip(){
 
   // Compute team average for header
   const teamAvg=scored.length>0?Math.round(scored.reduce((s,x)=>s+x.avg,0)/scored.length):null;
-  const teamAvgColor=teamAvg===null?'var(--muted)':teamAvg>=75?'var(--green)':teamAvg>=50?'var(--amber)':'var(--red)';
+  const teamAvgColor=teamAvg===null?'var(--muted)':teamAvg>=90?'var(--green)':teamAvg>=71?'var(--amber)':'var(--red)';
 
   // Update section label with team avg
   const lbl=document.getElementById('hsStripLabel');
   if(lbl){
-    lbl.innerHTML=`Health score por manager · meta ≥ 75%`
+    lbl.innerHTML=`Health score por manager · meta ≥ 90%`
       +(teamAvg!==null?` <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:${teamAvgColor};margin-left:8px;">Média do time: ${teamAvg}%</span>`:'');
   }
 
@@ -2601,8 +2601,8 @@ function renderGSHealthStrip(){
     const col=hsColor(avg);
     const gsCol=gsColors[gs]||{bg:'#eee',color:'#444'};
     const initials=gs.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const isCrit=avg!==null&&avg<50;
-    const isWarn=avg!==null&&avg>=50&&avg<75;
+    const isCrit=avg!==null&&avg<70;
+    const isWarn=avg!==null&&avg>=71&&avg<90;
     const card=document.createElement('div');
     card.className='gs-health-card'+(isCrit?' flagged':'');
     let badge='';
@@ -3048,7 +3048,7 @@ function openHSDetail(id){
   const scoreHtml=detail.score!==null
     ?`<div class="hs-detail-score">
         <div class="hs-detail-num" style="color:${hsc.fg};">${detail.score}%</div>
-        <div class="hs-detail-label">Health Score · ${detail.score>=90?'Saudável':detail.score>=70?'Atenção':'Crítico'}</div>
+        <div class="hs-detail-label">Health Score · ${detail.score>=90?'Saudável':detail.score>=71?'Atenção':'Crítico'}</div>
         <div class="hs-detail-bar-track"><div class="hs-detail-bar-fill" style="width:${detail.score}%;background:${hsc.bar};"></div></div>
       </div>`
     :'<div class="hs-detail-score"><div class="hs-detail-num" style="color:var(--muted);">–</div><div class="hs-detail-label">Conta não preenchida esta semana</div></div>';
@@ -4205,7 +4205,7 @@ function renderDashboard(){
 
   const kpis=[
     {val:total,lbl:'Total Contas',sub:`${filled.length} preenchidas`,color:'var(--brand)',bar:filledPct,delta:'',drawer:'total'},
-    {val:avgHS!==null?avgHS+'%':'–',lbl:'HS Médio Geral',sub:avgHS!==null?(avgHS>=85?'Saudável':avgHS>=70?'Atenção':'Crítico'):'sem dados',color:avgHS===null?'var(--muted)':avgHS>=85?'var(--green)':avgHS>=70?'var(--amber)':'var(--red)',bar:avgHS||0,delta:delta(avgHS,prevAvgHS,'%'),drawer:'hs'},
+    {val:avgHS!==null?avgHS+'%':'–',lbl:'HS Médio Geral',sub:avgHS!==null?(avgHS>=90?'Saudável':avgHS>=71?'Atenção':'Crítico'):'sem dados',color:avgHS===null?'var(--muted)':avgHS>=90?'var(--green)':avgHS>=71?'var(--amber)':'var(--red)',bar:avgHS||0,delta:delta(avgHS,prevAvgHS,'%'),drawer:'hs'},
     {val:atRisk,lbl:'Risco de Churn',sub:'contas em alerta',color:atRisk>0?'var(--red)':'var(--green)',bar:total?Math.round(atRisk/total*100):0,delta:delta(atRisk,prevAtRisk,'',true),drawer:'churn'},
     {val:belowHS,lbl:'HS Abaixo 75%',sub:'requerem atenção',color:belowHS>0?'var(--amber)':'var(--green)',bar:scores.length?Math.round(belowHS/scores.length*100):0,delta:'',drawer:'below'},
     {val:pendentes,lbl:'Sem Preenchimento',sub:'esta semana',color:pendentes>0?'var(--amber)':'var(--green)',bar:total?Math.round(pendentes/total*100):0,delta:'',drawer:'pending'},
@@ -4290,9 +4290,9 @@ function renderDashboard(){
     const tot=s.length||1;
     const b=[
       {lbl:'Saudável',range:'≥ 90%',count:s.filter(v=>v>=90).length,color:'var(--green)'},
-      {lbl:'Atenção',range:'75–89%',count:s.filter(v=>v>=75&&v<90).length,color:'#f59e0b'},
+      {lbl:'Atenção',range:'71–89%',count:s.filter(v=>v>=71&&v<90).length,color:'#f59e0b'},
       {lbl:'Risco',range:'50–74%',count:s.filter(v=>v>=50&&v<75).length,color:'var(--churn)'},
-      {lbl:'Crítico',range:'< 50%',count:s.filter(v=>v<50).length,color:'var(--red)'},
+      {lbl:'Crítico',range:'< 70%',count:s.filter(v=>v<70).length,color:'var(--red)'},
       {lbl:'Sem dado',range:'sem preencher',count:dc.length-scores.length,color:'var(--muted)'},
     ];
     hsBucketsEl.innerHTML=b.map(r=>`
@@ -4431,7 +4431,7 @@ function renderDashboard(){
       if(nps!==null&&nps<=6)flags.push('Detrator');
       if(consec>=2)flags.push(`${consec}ª sem. crítica`);
       if(isPending(c.id))flags.push('Sem dados');
-      return{c,hs,churn,nps,consec,flags,urgency:(churn?3:0)+(hs!==null&&hs<50?2:hs!==null&&hs<75?1:0)+(nps!==null&&nps<=6?1:0)+(consec>=2?2:0)};
+      return{c,hs,churn,nps,consec,flags,urgency:(churn?3:0)+(hs!==null&&hs<70?2:hs!==null&&hs<90?1:0)+(nps!==null&&nps<=6?1:0)+(consec>=2?2:0)};
     }).filter(x=>x.flags.length>0).sort((a,b)=>b.urgency-a.urgency).slice(0,10);
 
     if(!riskAccounts.length){
@@ -4648,7 +4648,7 @@ function openKpiDrawerDash(type){
 function openKpiDrawer(type, pool){
   const fc = pool || filteredClients();
   let title='',items=[];
-  const hsColorStr=hs=>hs>=90?'var(--green)':hs>=75?'#f59e0b':hs>=50?'var(--churn)':'var(--red)';
+  const hsColorStr=hs=>hs>=90?'var(--green)':hs>=71?'#f59e0b':hs>=50?'var(--churn)':'var(--red)';
 
   if(type==='total'){
     title='Todas as Contas';
@@ -4685,14 +4685,14 @@ function openKpiDrawer(type, pool){
     title='Sem Sinalização de Renovação';
     items=(pool||fc).filter(cl=>!cl.renovacao).map(cl=>({cl,hs:calcHealthScore(cl.id)}));
   }else if(type==='hs-critico'){
-    title='🔴 HS Crítico — abaixo de 50%';
-    items=(pool||fc).map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs<50).sort((a,b)=>a.hs-b.hs);
+    title='🔴 HS Crítico — abaixo de 70%';
+    items=(pool||fc).map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs<70).sort((a,b)=>a.hs-b.hs);
   }else if(type==='hs-atencao'){
-    title='🟡 HS Atenção — entre 50% e 74%';
-    items=(pool||fc).map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs>=50&&x.hs<75).sort((a,b)=>a.hs-b.hs);
+    title='🟡 HS Atenção — entre 71% e 89%';
+    items=(pool||fc).map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs>=71&&x.hs<90).sort((a,b)=>a.hs-b.hs);
   }else if(type==='hs-saudavel'){
-    title='🟢 HS Saudável — 75% ou mais';
-    items=(pool||fc).map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs>=75).sort((a,b)=>b.hs-a.hs);
+    title='🟢 HS Saudável — 90% ou mais';
+    items=(pool||fc).map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs>=90).sort((a,b)=>b.hs-a.hs);
   }else if(type==='criticos-ctx'){
     title='🔴 Problema Real';
     items=(pool||fc).filter(cl=>getEntryStatus(cl.id)==='V').map(cl=>({cl,hs:calcHealthScore(cl.id)}));
