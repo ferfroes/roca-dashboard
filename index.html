@@ -1269,7 +1269,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
             <div style="flex:0 0 25%;background:linear-gradient(90deg,#EF9F27,#97C459);cursor:pointer;transition:filter .15s;" onclick="openKpiDrawer('hs-atencao')" title="HS Atenção — clique para ver contas" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''"></div>
             <div style="flex:0 0 25%;background:linear-gradient(90deg,#97C459,#059669);cursor:pointer;transition:filter .15s;" onclick="openKpiDrawer('hs-saudavel')" title="HS Saudável — clique para ver contas" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''"></div>
           </div>
-          <!-- Meta line at 75% -->
+          <!-- Meta line at 90% -->
           <div style="position:absolute;top:0;bottom:0;left:90%;width:2px;background:var(--ink3);opacity:.45;pointer-events:none;border-radius:1px;"></div>
           <div style="position:absolute;top:1px;left:90%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink3);pointer-events:none;white-space:nowrap;font-weight:600;">meta</div>
           <!-- Pointer -->
@@ -4183,7 +4183,7 @@ function renderDashboard(){
   const total=dc.length;
   const avgHS=scores.length>=1?Math.round(scores.reduce((a,x)=>a+x.hs,0)/scores.length):null;
   const atRisk=dc.filter(c=>hasChurnRisk(c.id)).length;
-  const belowHS=scores.filter(x=>x.hs<75).length;
+  const belowHS=scores.filter(x=>x.hs<90).length;
   const pendentes=dc.filter(c=>isPending(c.id)).length;
   const filledPct=total>0?Math.round(filled.length/total*100):0;
 
@@ -4207,7 +4207,7 @@ function renderDashboard(){
     {val:total,lbl:'Total Contas',sub:`${filled.length} preenchidas`,color:'var(--brand)',bar:filledPct,delta:'',drawer:'total'},
     {val:avgHS!==null?avgHS+'%':'–',lbl:'HS Médio Geral',sub:avgHS!==null?(avgHS>=90?'Saudável':avgHS>=71?'Atenção':'Crítico'):'sem dados',color:avgHS===null?'var(--muted)':avgHS>=90?'var(--green)':avgHS>=71?'var(--amber)':'var(--red)',bar:avgHS||0,delta:delta(avgHS,prevAvgHS,'%'),drawer:'hs'},
     {val:atRisk,lbl:'Risco de Churn',sub:'contas em alerta',color:atRisk>0?'var(--red)':'var(--green)',bar:total?Math.round(atRisk/total*100):0,delta:delta(atRisk,prevAtRisk,'',true),drawer:'churn'},
-    {val:belowHS,lbl:'HS Abaixo 75%',sub:'requerem atenção',color:belowHS>0?'var(--amber)':'var(--green)',bar:scores.length?Math.round(belowHS/scores.length*100):0,delta:'',drawer:'below'},
+    {val:belowHS,lbl:'HS Abaixo 90%',sub:'requerem atenção',color:belowHS>0?'var(--amber)':'var(--green)',bar:scores.length?Math.round(belowHS/scores.length*100):0,delta:'',drawer:'below'},
     {val:pendentes,lbl:'Sem Preenchimento',sub:'esta semana',color:pendentes>0?'var(--amber)':'var(--green)',bar:total?Math.round(pendentes/total*100):0,delta:'',drawer:'pending'},
     {val:withNPS.length?Math.round(promotores/withNPS.length*100)+'%':'–',lbl:'Taxa Promotores',sub:`${promotores} de ${withNPS.length} c/ NPS`,color:'var(--green)',bar:withNPS.length?Math.round(promotores/withNPS.length*100):0,delta:'',drawer:'promotores'},
   ];
@@ -4291,7 +4291,7 @@ function renderDashboard(){
     const b=[
       {lbl:'Saudável',range:'≥ 90%',count:s.filter(v=>v>=90).length,color:'var(--green)'},
       {lbl:'Atenção',range:'71–89%',count:s.filter(v=>v>=71&&v<90).length,color:'#f59e0b'},
-      {lbl:'Risco',range:'50–74%',count:s.filter(v=>v>=50&&v<75).length,color:'var(--churn)'},
+      
       {lbl:'Crítico',range:'< 70%',count:s.filter(v=>v<70).length,color:'var(--red)'},
       {lbl:'Sem dado',range:'sem preencher',count:dc.length-scores.length,color:'var(--muted)'},
     ];
@@ -4355,7 +4355,7 @@ function renderDashboard(){
         const hsc=x.hs!==null?hsColor(x.hs):{fg:'var(--muted)',bar:'var(--muted)'};
         const flags=[];
         if(x.churn)flags.push('<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--red-bg);color:var(--red);font-weight:700;">⚠ Churn</span>');
-        if(x.hs!==null&&x.hs<75)flags.push(`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--amber-bg);color:var(--amber);">HS ${x.hs}%</span>`);
+        if(x.hs!==null&&x.hs<90)flags.push(`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--amber-bg);color:var(--amber);">HS ${x.hs}%</span>`);
         if(x.nps!==null&&x.nps<=6)flags.push('<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--red-bg);color:var(--red);">Detrator</span>');
         if(x.hs===null)flags.push('<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:var(--surface2);color:var(--muted);">Sem dado</span>');
         return `<div class="dash-rank-row" onclick="openHSDetail(${x.c.id})">
@@ -4427,7 +4427,7 @@ function renderDashboard(){
       const consec=consecutiveCriticalWeeks(c.id);
       const flags=[];
       if(churn)flags.push('Risco Churn');
-      if(hs!==null&&hs<75)flags.push(`HS ${hs}%`);
+      if(hs!==null&&hs<90)flags.push(`HS ${hs}%`);
       if(nps!==null&&nps<=6)flags.push('Detrator');
       if(consec>=2)flags.push(`${consec}ª sem. crítica`);
       if(isPending(c.id))flags.push('Sem dados');
@@ -4648,7 +4648,7 @@ function openKpiDrawerDash(type){
 function openKpiDrawer(type, pool){
   const fc = pool || filteredClients();
   let title='',items=[];
-  const hsColorStr=hs=>hs>=90?'var(--green)':hs>=71?'#f59e0b':hs>=50?'var(--churn)':'var(--red)';
+  const hsColorStr=hs=>hs>=90?'var(--green)':hs>=71?'#f59e0b':'var(--red)';
 
   if(type==='total'){
     title='Todas as Contas';
@@ -4673,8 +4673,8 @@ function openKpiDrawer(type, pool){
     title='Health Score';
     items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null).sort((a,b)=>b.hs-a.hs);
   }else if(type==='below'){
-    title='HS Abaixo de 75%';
-    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs<75).sort((a,b)=>a.hs-b.hs);
+    title='HS Abaixo de 90%';
+    items=fc.map(cl=>({cl,hs:calcHealthScore(cl.id)})).filter(x=>x.hs!==null&&x.hs<90).sort((a,b)=>a.hs-b.hs);
   }else if(type==='promotores'){
     title='Promotores NPS';
     items=fc.filter(cl=>{const e=entries[cl.id];return e&&e.npsScore&&parseInt(e.npsScore)>=9;}).map(cl=>({cl,hs:calcHealthScore(cl.id)}));
