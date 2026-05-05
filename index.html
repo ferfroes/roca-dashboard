@@ -986,7 +986,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 .dash-arco-pillar-name { font-size: 8.5px; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--ink2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .08em; }
 .dash-arco-bar-wrap { display: flex; flex-direction: column; gap: 4px; }
 .dash-arco-bar-row { display: flex; align-items: center; gap: 6px; font-size: 10px; }
-.dash-arco-bar-label { width: 18px; font-family: 'JetBrains Mono', monospace; font-weight: 600; flex-shrink: 0; }
+.dash-arco-bar-label { width: 62px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; flex-shrink: 0; }
 .dash-arco-bar-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 20px; overflow: hidden; }
 .dash-arco-bar-fill { height: 100%; border-radius: 20px; transition: width .5s ease; }
 .dash-arco-bar-count { width: 22px; text-align: right; color: var(--muted); font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
@@ -4240,22 +4240,23 @@ function renderDashboard(){
         <div class="dash-arco-pillar-name">${p.icon} ${p.name}</div>
         <div class="dash-arco-bar-wrap">
           <div class="dash-arco-bar-row">
-            <div class="dash-arco-bar-label" style="color:var(--green);">G</div>
+            <div class="dash-arco-bar-label" style="color:var(--green);">Verde</div>
             <div class="dash-arco-bar-track"><div class="dash-arco-bar-fill" style="width:${Math.round(g/tot*100)}%;background:var(--green);"></div></div>
             <div class="dash-arco-bar-count">${g}</div>
           </div>
           <div class="dash-arco-bar-row">
-            <div class="dash-arco-bar-label" style="color:var(--amber);">A</div>
+            <div class="dash-arco-bar-label" style="color:var(--amber);">Amarelo</div>
             <div class="dash-arco-bar-track"><div class="dash-arco-bar-fill" style="width:${Math.round(a/tot*100)}%;background:#f59e0b;"></div></div>
             <div class="dash-arco-bar-count">${a}</div>
           </div>
           <div class="dash-arco-bar-row">
-            <div class="dash-arco-bar-label" style="color:var(--red);">V</div>
+            <div class="dash-arco-bar-label" style="color:var(--red);">Vermelho</div>
             <div class="dash-arco-bar-track"><div class="dash-arco-bar-fill" style="width:${Math.round(v/tot*100)}%;background:var(--red);"></div></div>
             <div class="dash-arco-bar-count">${v}</div>
           </div>
         </div>
       </div>`;
+    }).join('');
     }).join('');
   }
 
