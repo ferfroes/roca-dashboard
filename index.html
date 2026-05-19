@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MÉTODO ARCO · Dashboard</title>
+<title>ARCO · Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════
-   MÉTODO ARCO — Executive Platform
+   ARCO — Executive Platform
    Direção: Dark-accent sidebar · Floating card system
    ═══════════════════════════════════════════════════════ */
 :root{
@@ -1099,9 +1099,9 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
   <div class="login-brand-panel">
     <div class="login-brand-arc-grid"></div>
     <div class="login-brand-content">
-      <div class="login-brand-wordmark">Método ARCO</div>
-      <div class="login-brand-headline">Health Score com <em>posicionamento</em>executivo.</div>
-      <div class="login-brand-sub">HS em tempo real e decisão baseada em dados — para equipes de CS que sabem performar.</div>
+      <div class="login-brand-wordmark">ARCO</div>
+      <div class="login-brand-headline">Health Score com <em>inteligência</em>, método e cadência.</div>
+      <div class="login-brand-sub">Health Score em tempo real e decisão baseada em dados — para equipes de CS que sabem performar.</div>
       <div class="login-brand-tag">CS · PERFORMANCE</div>
     </div>
   </div>
@@ -1109,7 +1109,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
   <div class="login-form-panel">
     <div class="login-box">
       <div class="login-arc-mark"></div>
-      <div class="login-logo">Método ARCO</div>
+      <div class="login-logo">ARCO</div>
       <div class="login-sub">CS · PERFORMANCE</div>
       <div class="login-title">Bem-vindo</div>
       <div class="login-title-sub">Acesse sua carteira de contas</div>
@@ -1151,7 +1151,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
 <div class="topbar">
   <div class="topbar-brand">
     <div style="width:18px;height:9px;border:2px solid rgba(59,130,246,.5);border-bottom:none;border-radius:18px 18px 0 0;margin-right:2px;flex-shrink:0;"></div>
-    <div class="topbar-logo">Método ARCO</div>
+    <div class="topbar-logo">ARCO</div>
     <div class="topbar-sep"></div>
     <div class="topbar-sub">CS · Performance</div>
   </div>
@@ -1355,7 +1355,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
               <thead>
                 <tr>
                   <th>Cliente</th><th>Tier</th><th>CS</th><th>HS</th>
-                  <th>R</th><th>O</th><th>C</th><th>A</th>
+                  <th>A</th><th>R</th><th>C</th><th>O</th>
                   <th>Status</th><th>Churn</th><th>NPS</th><th>Ação</th>
                 </tr>
               </thead>
@@ -2888,7 +2888,8 @@ function renderList(fc){
     const prev=getPrevEntry(c.id);const hasPrev=prev&&prev.R;
     const hs=calcHealthScore(c.id);const hsc=hsColor(hs);
     const dimDelta=dim=>{if(!hasPrev)return null;const co=dimOrder(e[dim]),po=dimOrder(prev[dim]);return co<po?'worse':co>po?'better':'same';};
-    const pillHtml=dim=>{const val=e[dim];const delta=dimDelta(dim);const cls=val||'–';const dc=delta==='worse'?' worse':delta==='better'?' better':'';const am={worse:'▼',better:'▲',same:'·'};const arr=delta?`<span style="font-size:8px;margin-left:1px;opacity:.7;">${am[delta]}</span>`:'';const lbl={G:'🟢',A:'🟡',V:'🔴'}[val]||'–';return `<span class="dim-pill ${cls}${dc}" title="${dim}:${val||'–'}${hasPrev?' (ant:'+(prev[dim]||'–')+')':''}">${dim} ${val?`<span style="font-size:9px;">${lbl}</span>`:'<span style="opacity:.4;font-size:9px;">–</span>'}${arr}</span>`;};
+    const dimName={A:'Adoção',R:'Resultado',C:'Continuidade',O:'Operação'};
+    const pillHtml=dim=>{const val=e[dim];const delta=dimDelta(dim);const cls=val||'–';const dc=delta==='worse'?' worse':delta==='better'?' better':'';const am={worse:'▼',better:'▲',same:'·'};const arr=delta?`<span style="font-size:8px;margin-left:1px;opacity:.7;">${am[delta]}</span>`:'';const lbl={G:'🟢',A:'🟡',V:'🔴'}[val]||'–';return `<span class="dim-pill ${cls}${dc}" title="${dimName[dim]}:${val||'–'}${hasPrev?' (ant:'+(prev[dim]||'–')+')':''}">${dimName[dim]} ${val?`<span style="font-size:9px;">${lbl}</span>`:'<span style="opacity:.4;font-size:9px;">–</span>'}${arr}</span>`;};
 
     let trendHtml='';
     if(hasPrev){const co=statusOrder(st),po=statusOrder(getEntryStatus_from(prev));const tc=co<po?'worse':co>po?'better':'same';const tl={worse:'↓ Piorou',better:'↑ Melhorou',same:'→ Estável'}[tc];trendHtml=`<span class="trend-pill ${tc}">${tl}</span>`;}
@@ -2944,7 +2945,7 @@ function renderList(fc){
     `;
 
     const pills=document.createElement('div');pills.style.cssText='display:flex;gap:4px;flex-wrap:wrap;align-items:center;flex-shrink:0;';
-    pills.innerHTML=pillHtml('R')+pillHtml('O')+pillHtml('C')+pillHtml('A');
+    pills.innerHTML=pillHtml('A')+pillHtml('R')+pillHtml('C')+pillHtml('O');
 
     const hsMini=document.createElement('div');hsMini.className='hs-mini';hsMini.style.cursor='pointer';hsMini.title='Ver detalhe do Health Score';
     hsMini.innerHTML=`<div class="hs-mini-track"><div class="hs-mini-fill" style="width:${hs||0}%;background:${hsc.bar};"></div></div><span class="hs-mini-val" style="color:${hsc.fg};">${hs!==null?hs+'%':'–'}</span>`;
@@ -2992,7 +2993,7 @@ function renderTable(fc){
       <td><span class="badge badge-tier-${(c.tier||'c').toLowerCase()}">Tier ${c.tier||'C'}</span></td>
       <td><span class="badge" style="background:${col.bg};color:${col.color};">${c.gs}</span></td>
       <td><div style="display:flex;align-items:center;gap:4px;cursor:pointer;" onclick="openHSDetail(${c.id})"><div style="width:36px;height:4px;background:var(--surface2);border-radius:4px;overflow:hidden;"><div style="width:${hs||0}%;height:100%;background:${hsc.bar};border-radius:4px;"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:${hsc.fg};">${hs!==null?hs+'%':'–'}</span></div></td>
-      <td>${pill(e.R)}</td><td>${pill(e.O)}</td><td>${pill(e.C)}</td><td>${pill(e.A)}</td>
+      <td>${pill(e.A)}</td><td>${pill(e.R)}</td><td>${pill(e.C)}</td><td>${pill(e.O)}</td>
       <td>${stHtml}</td>
       <td style="font-size:11px;color:var(--churn);">${cr.length?cr.map(x=>x==='billing'?'📉':'❌').join(' '):'–'}</td>
       <td style="font-size:11px;">${nps!==null?nps+'/10':'–'}</td>
@@ -3686,7 +3687,7 @@ function exportData(){
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(rows);
   ws['!cols']=rows[0].map((_,i)=>({wch:i===0?35:i===3?18:i===8||i===10||i===12||i===14||i===17||i===27||i===28?40:16}));
   XLSX.utils.book_append_sheet(wb,ws,'ARCO Dashboard');
-  XLSX.writeFile(wb,`MÉTODO ARCO_${new Date().toISOString().slice(0,10)}.xlsx`);
+  XLSX.writeFile(wb,`ARCO_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
