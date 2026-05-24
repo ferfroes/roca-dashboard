@@ -467,12 +467,12 @@ body {
 .badge-tier-a { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
 .badge-tier-b { background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; }
 .badge-tier-c { background: var(--surface2); color: var(--ink3); border: 1px solid var(--border2); }
-.dim-pill { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 500; padding: 2px 7px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; cursor: default; background: var(--surface); color: var(--muted); }
-.dim-pill.G { background: var(--green-bg); color: var(--green); border-color: transparent; }
-.dim-pill.A { background: var(--amber-bg); color: var(--amber); border-color: transparent; }
-.dim-pill.V { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); }
-.dim-pill.worse  { border-color: var(--red); }
-.dim-pill.better { border-color: var(--green); }
+.dim-pill { display:flex; align-items:center; justify-content:space-between; gap:3px; font-size:10px; font-family:'JetBrains Mono',monospace; font-weight:500; padding:3px 8px; border-radius:20px; border:1px solid var(--border); white-space:nowrap; cursor:default; background:var(--surface); color:var(--muted); }
+.dim-pill.G { background:var(--green-bg); color:var(--green); border-color:transparent; }
+.dim-pill.A { background:var(--amber-bg); color:var(--amber); border-color:transparent; }
+.dim-pill.V { background:var(--red-bg); color:var(--red); border-color:var(--red-bd); }
+.dim-pill.worse  { border-color:var(--red); }
+.dim-pill.better { border-color:var(--green); }
 .status-pill { font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
 .status-pill.G       { background: var(--green-bg); color: var(--green); }
 .status-pill.A       { background: var(--amber-bg); color: var(--amber); }
@@ -2925,61 +2925,76 @@ function renderList(fc){
     row.onmouseleave=()=>{row.style.boxShadow='';};
     row.onclick=()=>openFillModal(c.id);
 
-    // ── Col 1: status bar ────────────────────────────────────────────────────
+    // ── Barra lateral de status ──────────────────────────────────────────────
     const bar=document.createElement('div');
     const barColor=isPartial(c.id)?'var(--border2)':st==='V'?'var(--red)':st==='A'?'#f59e0b':st==='G'?'var(--green)':'var(--border2)';
     bar.style.cssText=`width:4px;border-radius:4px;flex-shrink:0;align-self:stretch;min-height:44px;background:${barColor};`;
 
-    // ── Col 2: info (name + badges + action text) ────────────────────────────
-    const info=document.createElement('div');
-    info.style.cssText='flex:1;min-width:0;overflow:hidden;';
+    // ── Corpo do card (2 linhas) ─────────────────────────────────────────────
+    const body=document.createElement('div');
+    body.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;';
+
+    // Linha 1: nome + badges + status
     let actionHtml='';
-    if(e.actionTaken) actionHtml+=`<div style="font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">✅ ${e.actionTaken.slice(0,55)+(e.actionTaken.length>55?'…':'')}</div>`;
-    else if(st==='pending') actionHtml+=`<div style="font-size:11px;color:var(--brand3);margin-top:3px;">▶ clique para preencher</div>`;
+    if(e.actionTaken) actionHtml+=`<span style="font-size:11px;color:var(--muted);">✅ ${e.actionTaken.slice(0,50)+(e.actionTaken.length>50?'…':'')}</span>`;
+    else if(st==='pending') actionHtml+=`<span style="font-size:11px;color:var(--brand3);">▶ clique para preencher</span>`;
     if(e.nextAction){
       const dateStr=e.nextActionDate?` · ${new Date(e.nextActionDate+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`:' ';
-      actionHtml+=`<div style="font-size:10px;color:var(--brand2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📌 ${e.nextAction.slice(0,40)+(e.nextAction.length>40?'…':'')+dateStr}</div>`;
+      actionHtml+=`${actionHtml?' &nbsp;·&nbsp; ':''}<span style="font-size:10px;color:var(--brand2);">📌 ${e.nextAction.slice(0,35)+(e.nextAction.length>35?'…':'')+dateStr}</span>`;
     }
-    info.innerHTML=`
-      <div style="font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}${c.vip?' ⭐':''}</div>
-      <div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;">
-        <span class="badge" style="background:${col.bg};color:${col.color};">${c.gs}</span>
-        <span class="badge badge-tier-${(c.tier||'c').toLowerCase()}">Tier ${c.tier||'C'}</span>
-        ${c.book?'<span class="badge badge-book">BOOK</span>':''}
-        ${c.renovacao?'<span class="badge" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;">🔄 RENOV.</span>':''}
-        ${hasChurnRisk(c.id)?'<span class="badge badge-churn">⚠ CHURN</span>':''}
-        ${consec>=2?consecHtml:''}
-        ${e.needFrom?'<span class="badge badge-need">⚠ Escalar</span>':''}
-        ${billingHtml}${meetHtml}${visitHtml}${npsHtml}
+
+    const sc2={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar',pending:'⏳ Pendente'};
+    const stClass=isPartial(c.id)?'pending':st;
+    const stLabel=isPartial(c.id)?'◑ Rascunho':sc2[st]||'⏳';
+    const trendBadge=trendHtml?`<span class="trend-pill ${trendHtml.includes('Melhorou')?'better':trendHtml.includes('Piorou')?'worse':'same'}" style="font-size:10px;">${trendHtml.replace(/<[^>]+>/g,'')}</span>`:'';
+
+    const line1=document.createElement('div');
+    line1.style.cssText='display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;';
+    line1.innerHTML=`
+      <div style="min-width:0;flex:1;">
+        <div style="font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}${c.vip?' ⭐':''}</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;">
+          <span class="badge" style="background:${col.bg};color:${col.color};">${c.gs}</span>
+          <span class="badge badge-tier-${(c.tier||'c').toLowerCase()}">Tier ${c.tier||'C'}</span>
+          ${c.book?'<span class="badge badge-book">BOOK</span>':''}
+          ${c.renovacao?'<span class="badge" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;">🔄 RENOV.</span>':''}
+          ${hasChurnRisk(c.id)?'<span class="badge badge-churn">⚠ CHURN</span>':''}
+          ${consec>=2?consecHtml:''}
+          ${e.needFrom?'<span class="badge badge-need">⚠ Escalar</span>':''}
+          ${billingHtml}${meetHtml}${visitHtml}${npsHtml}
+        </div>
+        ${actionHtml?`<div style="margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${actionHtml}</div>`:''}
       </div>
-      ${actionHtml}
+      <div style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding-top:1px;">
+        ${trendBadge}
+        <span class="status-pill ${stClass}">${stLabel}</span>
+      </div>
     `;
 
-    // ── Col 3: faróis ARCO ───────────────────────────────────────────────────
-    const pills=document.createElement('div');
-    pills.style.cssText='flex-shrink:0;display:flex;flex-direction:column;gap:3px;justify-content:center;';
-    pills.innerHTML=pillHtml('A')+pillHtml('R')+pillHtml('C')+pillHtml('O');
+    // Linha 2: pills ARCO + barra HS — ocupa a largura toda
+    const line2=document.createElement('div');
+    line2.style.cssText='display:flex;align-items:center;gap:6px;flex-wrap:nowrap;';
 
-    // ── Col 4: HS mini ───────────────────────────────────────────────────────
+    // Pills ocupam o espaço disponível com largura uniforme
+    const pillsWrap=document.createElement('div');
+    pillsWrap.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:4px;flex:1;min-width:0;';
+    pillsWrap.innerHTML=pillHtml('A')+pillHtml('R')+pillHtml('C')+pillHtml('O');
+
+    // HS mini à direita
     const hsMini=document.createElement('div');
-    hsMini.className='hs-mini';hsMini.style.cssText='cursor:pointer;flex-shrink:0;width:64px;';
+    hsMini.className='hs-mini';
+    hsMini.style.cssText='cursor:pointer;flex-shrink:0;width:70px;';
     hsMini.title='Ver detalhe do Health Score';
     hsMini.innerHTML=`<div class="hs-mini-track"><div class="hs-mini-fill" style="width:${hs||0}%;background:${hsc.bar};"></div></div><span class="hs-mini-val" style="color:${hsc.fg};">${hs!==null?hs+'%':'–'}</span>`;
     hsMini.onclick=ev=>{ev.stopPropagation();openHSDetail(c.id);};
 
-    // ── Col 5: status + trend ────────────────────────────────────────────────
-    const statusEl=document.createElement('div');
-    statusEl.style.cssText='flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px;';
-    const sc2={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar',pending:'⏳ Pendente'};
-    const stClass=isPartial(c.id)?'pending':st;
-    const stLabel=isPartial(c.id)?'◑ Rascunho':sc2[st]||'⏳';
-    statusEl.innerHTML=`<span class="status-pill ${stClass}">${stLabel}</span>${trendHtml?`<span class="trend-pill ${trendHtml.includes('Melhorou')?'better':trendHtml.includes('Piorou')?'worse':'same'}" style="font-size:10px;">${trendHtml.replace(/<[^>]+>/g,'')}</span>`:''}`;
+    line2.appendChild(pillsWrap);
+    line2.appendChild(hsMini);
 
+    body.appendChild(line1);
+    body.appendChild(line2);
     row.appendChild(bar);
-    row.appendChild(info);
-    row.appendChild(pills);
-    row.appendChild(hsMini);
-    row.appendChild(statusEl);
+    row.appendChild(body);
     container.appendChild(row);
   });
 }
