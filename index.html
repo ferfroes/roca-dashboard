@@ -1871,6 +1871,7 @@ tbody tr:hover { background: var(--surface); cursor: pointer; }
       <button class="btn" onclick="closeModal('fillModal')">Cancelar</button>
       <button class="btn" onclick="openHSDetail(editingClientId)" style="color:var(--brand2);">📊 Ver Health Score</button>
       <button class="btn" style="color:var(--red);border-color:var(--red-bd);" onclick="clearEntry()">🗑 Limpar</button>
+      <button class="btn" onclick="saveDraft()" style="color:var(--amber);border-color:var(--amber);" title="Salva o que já foi preenchido, mesmo sem completar todos os faróis">📋 Salvar Rascunho</button>
       <button class="btn btn-primary" onclick="saveEntry()">💾 Salvar</button>
     </div>
   </div>
@@ -2920,16 +2921,16 @@ function renderList(fc){
     const row=document.createElement('div');
     // Pulse animation border for 2+ consecutive weeks critical
     const rowBorder=consec>=2?`border:1.5px solid var(--red);`:'border:1px solid var(--border);';
-    row.style.cssText=`background:var(--card);${rowBorder}border-radius:var(--r-lg);padding:13px 16px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:14px;flex-wrap:wrap;`;
+    row.style.cssText=`background:var(--card);${rowBorder}border-radius:var(--r-lg);padding:11px 14px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:4px minmax(180px,1fr) auto auto auto auto;align-items:center;gap:10px;`;
     row.onmouseenter=()=>{row.style.boxShadow='var(--shadow)';};
     row.onmouseleave=()=>{row.style.boxShadow='';};
     row.onclick=()=>openFillModal(c.id);
 
     const bar=document.createElement('div');
     const barColor=isPartial(c.id)?'var(--border2)':st==='V'?'var(--red)':st==='A'?'#f59e0b':st==='G'?'var(--green)':'var(--border2)';
-    bar.style.cssText=`width:4px;border-radius:4px;align-self:stretch;min-height:44px;flex-shrink:0;background:${barColor};`;
+    bar.style.cssText=`width:4px;border-radius:4px;align-self:stretch;min-height:44px;background:${barColor};`;
 
-    const info=document.createElement('div');info.style.cssText='flex:1;min-width:160px;';
+    const info=document.createElement('div');info.style.cssText='min-width:0;overflow:hidden;';
     info.innerHTML=`
       <div style="font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}${c.vip?' ⭐':''}</div>
       <div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;">
@@ -2944,20 +2945,20 @@ function renderList(fc){
       </div>
     `;
 
-    const pills=document.createElement('div');pills.style.cssText='display:flex;gap:4px;flex-wrap:wrap;align-items:center;flex-shrink:0;';
+    const pills=document.createElement('div');pills.style.cssText='display:flex;gap:4px;flex-wrap:nowrap;align-items:center;justify-content:flex-end;';
     pills.innerHTML=pillHtml('A')+pillHtml('R')+pillHtml('C')+pillHtml('O');
 
-    const hsMini=document.createElement('div');hsMini.className='hs-mini';hsMini.style.cursor='pointer';hsMini.title='Ver detalhe do Health Score';
+    const hsMini=document.createElement('div');hsMini.className='hs-mini';hsMini.style.cursor='pointer';hsMini.title='Ver detalhe do Health Score';hsMini.style.minWidth='70px';
     hsMini.innerHTML=`<div class="hs-mini-track"><div class="hs-mini-fill" style="width:${hs||0}%;background:${hsc.bar};"></div></div><span class="hs-mini-val" style="color:${hsc.fg};">${hs!==null?hs+'%':'–'}</span>`;
     hsMini.onclick=ev=>{ev.stopPropagation();openHSDetail(c.id);};
 
-    const trendEl=document.createElement('div');trendEl.style.cssText='flex-shrink:0;';trendEl.innerHTML=trendHtml;
-    const statusEl=document.createElement('div');statusEl.style.cssText='flex-shrink:0;';
+    const trendEl=document.createElement('div');trendEl.style.cssText='min-width:70px;text-align:center;';trendEl.innerHTML=trendHtml;
+    const statusEl=document.createElement('div');statusEl.style.cssText='min-width:90px;text-align:right;';
     const sc2={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar',pending:'⏳ Pendente'};
     // partial pending — some filled but not all
     const stDisplay=isPartial(c.id)?'partial':st;
     const stClass=isPartial(c.id)?'pending':st;
-    const stLabel=isPartial(c.id)?'◑ Parcial':sc2[st]||'⏳';
+    const stLabel=isPartial(c.id)?'◑ Rascunho':sc2[st]||'⏳';
     statusEl.innerHTML=`<span class="status-pill ${stClass}">${stLabel}</span>`;
     const actionEl=document.createElement('div');actionEl.style.cssText='font-size:11px;color:var(--muted);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0;';
     if(e.actionTaken)actionEl.textContent='✅ '+e.actionTaken.slice(0,55)+(e.actionTaken.length>55?'…':'');
@@ -3239,6 +3240,62 @@ function saveEntry(){
   showSyncStatus('saving');
   showToast('✓ Faróis salvos com sucesso');
   auditSaveEntry(_auditName);
+  spUpsert(getWeekKey(),editingClientId,JSON.stringify(e)).then(()=>showSyncStatus('saved')).catch(()=>showSyncStatus('error'));
+}
+
+// ── SALVAR RASCUNHO ── saves partial entry (not all farois required) ─────────
+function saveDraft(){
+  if(!editingClientId)return;
+  const filledDims=['R','O','C','A'].filter(d=>currentFarol[d]);
+  if(filledDims.length===0){
+    showToast('⚠ Preencha pelo menos uma dimensão ARCO antes de salvar rascunho');
+    return;
+  }
+  const prev=entries[editingClientId]||{};
+  const needFrom=document.getElementById('needFrom').value;
+  const needFromDate=(needFrom&&!prev.needFrom)?new Date().toISOString().slice(0,10):(prev.needFromDate||'');
+  const e={
+    ...prev,
+    // Only override dims that were filled in this session
+    ...(currentFarol.R?{R:currentFarol.R,justR:document.getElementById('justR').value}:{}),
+    ...(currentFarol.O?{O:currentFarol.O,justO:document.getElementById('justO').value}:{}),
+    ...(currentFarol.C?{C:currentFarol.C,justC:document.getElementById('justC').value}:{}),
+    ...(currentFarol.A?{A:currentFarol.A,justA:document.getElementById('justA').value}:{}),
+    actionTaken:document.getElementById('actionTaken').value||prev.actionTaken||'',
+    needFrom,needFromDate,
+    churnRisk:churnSelected.size>0?[...churnSelected]:(prev.churnRisk||['none']),
+    churnNotes:document.getElementById('churnNotes').value||prev.churnNotes||'',
+    lastMeeting:document.getElementById('lastMeeting').value||prev.lastMeeting||'',
+    lastVisit:document.getElementById('lastVisit').value||prev.lastVisit||'',
+    billing:currentBilling||prev.billing||null,
+    billingObs:document.getElementById('billingObs').value||prev.billingObs||'',
+    npsScore:document.getElementById('npsScore').value||prev.npsScore||'',
+    npsDate:document.getElementById('npsDate').value||prev.npsDate||'',
+    npsObs:document.getElementById('npsObs').value||prev.npsObs||'',
+    pipelineDesc:document.getElementById('pipelineDesc').value||prev.pipelineDesc||'',
+    pipelineValue:document.getElementById('pipelineValue').value||prev.pipelineValue||'',
+    pipelineStage:document.getElementById('pipelineStage').value||prev.pipelineStage||'',
+    nextAction:document.getElementById('nextAction').value||prev.nextAction||'',
+    nextActionDate:document.getElementById('nextActionDate').value||prev.nextActionDate||'',
+    weeklyComment:document.getElementById('weeklyComment').value||prev.weeklyComment||'',
+    bookSent:clients.find(x=>x.id===editingClientId)?.book ? document.getElementById('bookSent').checked : (prev.bookSent||false),
+    bookDate:clients.find(x=>x.id===editingClientId)?.book ? document.getElementById('bookDate').value : (prev.bookDate||''),
+    chk_gatilhos:currentChk.gatilhos||prev.chk_gatilhos||null,
+    chk_licencas:currentChk.licencas||prev.chk_licencas||null,
+    chk_governanca:currentChk.governanca||prev.chk_governanca||null,
+    chk_basico:currentChk.basico||prev.chk_basico||null,
+    chk_revisaoDate:document.getElementById('chkRevisaoDate').value||prev.chk_revisaoDate||'',
+    _draft:true,
+    timestamp:new Date().toISOString(),
+    _name:clients.find(x=>x.id===editingClientId)?.name||''
+  };
+  entries[editingClientId]=e;
+  localStorage.setItem('roca_entries',JSON.stringify(entries));
+  const filled=filledDims.length;
+  const missing=4-filled;
+  closeModal('fillModal');render();
+  showSyncStatus('saving');
+  showToast(`📋 Rascunho salvo — ${filled}/4 dimensões preenchidas${missing>0?` (faltam ${missing})`:''}. Complete depois para finalizar.`);
   spUpsert(getWeekKey(),editingClientId,JSON.stringify(e)).then(()=>showSyncStatus('saved')).catch(()=>showSyncStatus('error'));
 }
 
@@ -3692,13 +3749,69 @@ function exportData(){
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+
+// Modal backdrop click — fillModal requires confirmation if has unsaved changes
+function _hasUnsavedModalChanges(){
+  // Check if any farol, field, or checklist was touched in the current session
+  const anyFarol=Object.values(currentFarol).some(v=>v!==null);
+  const anyText=['actionTaken','nextAction','weeklyComment','justA','justR','justC','justO','churnNotes']
+    .some(id=>{const el=document.getElementById(id);return el&&el.value.trim()!=='';});
+  const anyChk=Object.values(currentChk).some(v=>v!==null);
+  return anyFarol||anyText||anyChk;
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{
+    if(e.target!==o)return;
+    // fillModal: confirm before closing if there are unsaved changes
+    if(o.id==='fillModal'&&_hasUnsavedModalChanges()){
+      // Show inline confirm dialog instead of browser confirm()
+      const existing=document.getElementById('_modalExitConfirm');
+      if(existing)return; // already showing
+      const dlg=document.createElement('div');
+      dlg.id='_modalExitConfirm';
+      dlg.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px 28px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;min-width:320px;';
+      dlg.innerHTML=`
+        <div style="font-size:28px;margin-bottom:10px;">⚠️</div>
+        <div style="font-weight:700;font-size:15px;color:var(--ink);margin-bottom:6px;">Alterações não salvas</div>
+        <div style="font-size:13px;color:var(--ink2);margin-bottom:20px;line-height:1.4;">Você tem informações preenchidas que ainda não foram salvas. O que deseja fazer?</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onclick="saveDraft();document.getElementById('_modalExitConfirm').remove();" style="padding:9px 16px;border-radius:var(--r-lg);border:1px solid var(--amber);background:var(--amber-bg);color:var(--amber);font-weight:600;cursor:pointer;font-size:13px;">📋 Salvar Rascunho e fechar</button>
+          <button onclick="document.getElementById('_modalExitConfirm').remove();document.getElementById('fillModal').classList.remove('open');" style="padding:9px 16px;border-radius:var(--r-lg);border:1px solid var(--red-bd);background:var(--red-bg);color:var(--red);font-weight:600;cursor:pointer;font-size:13px;">🗑 Descartar e fechar</button>
+          <button onclick="document.getElementById('_modalExitConfirm').remove();" style="padding:9px 16px;border-radius:var(--r-lg);border:1px solid var(--border);background:transparent;color:var(--ink2);cursor:pointer;font-size:13px;">↩ Continuar editando</button>
+        </div>
+      `;
+      document.body.appendChild(dlg);
+      return;
+    }
+    o.classList.remove('open');
+  });
+});
 window.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
-  // 1. Modais
+  // Remove any exit confirm dialog first
+  const existingDlg=document.getElementById('_modalExitConfirm');
+  if(existingDlg){existingDlg.remove();return;}
+  // 1. Modais — fillModal gets confirm dialog if unsaved changes
   const openModal=document.querySelector('.modal-overlay.open');
-  if(openModal){openModal.classList.remove('open');return;}
-  // 2. KPI Drawer (painel lateral de contas)
+  if(openModal){
+    if(openModal.id==='fillModal'&&_hasUnsavedModalChanges()){
+      // Simulate backdrop click to trigger confirm flow
+      openModal.dispatchEvent(new MouseEvent('click',{target:openModal,bubbles:false}));
+      // Manually trigger since dispatchEvent won't set e.target correctly
+      const dlg=document.getElementById('_modalExitConfirm');
+      if(!dlg){
+        const d=document.createElement('div');
+        d.id='_modalExitConfirm';
+        d.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px 28px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;min-width:320px;';
+        d.innerHTML=`<div style="font-size:28px;margin-bottom:10px;">⚠️</div><div style="font-weight:700;font-size:15px;color:var(--ink);margin-bottom:6px;">Alterações não salvas</div><div style="font-size:13px;color:var(--ink2);margin-bottom:20px;line-height:1.4;">Você tem informações preenchidas que ainda não foram salvas. O que deseja fazer?</div><div style="display:flex;flex-direction:column;gap:8px;"><button onclick="saveDraft();document.getElementById('_modalExitConfirm').remove();" style="padding:9px 16px;border-radius:var(--r-lg);border:1px solid var(--amber);background:var(--amber-bg);color:var(--amber);font-weight:600;cursor:pointer;font-size:13px;">📋 Salvar Rascunho e fechar</button><button onclick="document.getElementById('_modalExitConfirm').remove();document.getElementById('fillModal').classList.remove('open');" style="padding:9px 16px;border-radius:var(--r-lg);border:1px solid var(--red-bd);background:var(--red-bg);color:var(--red);font-weight:600;cursor:pointer;font-size:13px;">🗑 Descartar e fechar</button><button onclick="document.getElementById('_modalExitConfirm').remove();" style="padding:9px 16px;border-radius:var(--r-lg);border:1px solid var(--border);background:transparent;color:var(--ink2);cursor:pointer;font-size:13px;">↩ Continuar editando</button></div>`;
+        document.body.appendChild(d);
+      }
+      return;
+    }
+    openModal.classList.remove('open');return;
+  }
+  // 2. KPI Drawer
   const kpiDrawer=document.getElementById('kpiDrawer');
   if(kpiDrawer&&kpiDrawer.style.display!=='none'&&kpiDrawer.style.transform!=='translateX(100%)'){closeKpiDrawer();return;}
   // 3. Drawer de contratos
