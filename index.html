@@ -2931,6 +2931,14 @@ function renderList(fc){
     bar.style.cssText=`width:4px;border-radius:4px;align-self:stretch;min-height:44px;background:${barColor};`;
 
     const info=document.createElement('div');info.style.cssText='min-width:0;overflow:hidden;';
+    // Build action text for inline display inside info
+    let actionHtml='';
+    if(e.actionTaken) actionHtml+=`<div style="font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">✅ ${e.actionTaken.slice(0,55)+(e.actionTaken.length>55?'…':'')}</div>`;
+    else if(st==='pending') actionHtml+=`<div style="font-size:11px;color:var(--brand3);margin-top:3px;">▶ clique para preencher</div>`;
+    if(e.nextAction){
+      const dateStr=e.nextActionDate?` · ${new Date(e.nextActionDate+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`:' ';
+      actionHtml+=`<div style="font-size:10px;color:var(--brand2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📌 ${e.nextAction.slice(0,40)+(e.nextAction.length>40?'…':'')+dateStr}</div>`;
+    }
     info.innerHTML=`
       <div style="font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}${c.vip?' ⭐':''}</div>
       <div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;">
@@ -2943,6 +2951,7 @@ function renderList(fc){
         ${e.needFrom?'<span class="badge badge-need">⚠ Escalar</span>':''}
         ${billingHtml}${meetHtml}${visitHtml}${npsHtml}
       </div>
+      ${actionHtml}
     `;
 
     const pills=document.createElement('div');pills.style.cssText='display:flex;gap:4px;flex-wrap:nowrap;align-items:center;justify-content:flex-end;';
@@ -2960,19 +2969,11 @@ function renderList(fc){
     const stClass=isPartial(c.id)?'pending':st;
     const stLabel=isPartial(c.id)?'◑ Rascunho':sc2[st]||'⏳';
     statusEl.innerHTML=`<span class="status-pill ${stClass}">${stLabel}</span>`;
-    const actionEl=document.createElement('div');actionEl.style.cssText='font-size:11px;color:var(--muted);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0;';
-    if(e.actionTaken)actionEl.textContent='✅ '+e.actionTaken.slice(0,55)+(e.actionTaken.length>55?'…':'');
-    else if(st==='pending'){actionEl.style.color='var(--brand3)';actionEl.textContent='▶ clique para preencher';}
-    if(e.nextAction){
-      const nextEl=document.createElement('div');
-      nextEl.style.cssText='font-size:10px;color:var(--brand2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0;';
-      const dateStr=e.nextActionDate?` · ${new Date(e.nextActionDate+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`:' ';
-      nextEl.textContent='📌 '+e.nextAction.slice(0,40)+(e.nextAction.length>40?'…':'')+dateStr;
-      row.appendChild(nextEl);
-    }
+    const actionEl=document.createElement('div');// kept for compat but content moved to info
 
+    // Grid: bar | info | pills | hsMini | trend | status — exactly 6 columns
     row.appendChild(bar);row.appendChild(info);row.appendChild(pills);row.appendChild(hsMini);
-    if(trendHtml)row.appendChild(trendEl);row.appendChild(statusEl);row.appendChild(actionEl);
+    if(trendHtml)row.appendChild(trendEl);row.appendChild(statusEl);
     container.appendChild(row);
   });
 }
