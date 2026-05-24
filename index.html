@@ -467,9 +467,9 @@ body {
 .badge-tier-a { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
 .badge-tier-b { background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; }
 .badge-tier-c { background: var(--surface2); color: var(--ink3); border: 1px solid var(--border2); }
-.dim-pill { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 500; padding: 2px 7px; border-radius: 20px; border: 1px solid transparent; white-space: nowrap; cursor: default; }
-.dim-pill.G { background: var(--green-bg); color: var(--green); }
-.dim-pill.A { background: var(--amber-bg); color: var(--amber); }
+.dim-pill { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 500; padding: 2px 7px; border-radius: 20px; border: 1px solid var(--border); white-space: nowrap; cursor: default; background: var(--surface); color: var(--muted); }
+.dim-pill.G { background: var(--green-bg); color: var(--green); border-color: transparent; }
+.dim-pill.A { background: var(--amber-bg); color: var(--amber); border-color: transparent; }
 .dim-pill.V { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); }
 .dim-pill.worse  { border-color: var(--red); }
 .dim-pill.better { border-color: var(--green); }
@@ -2919,19 +2919,20 @@ function renderList(fc){
     }
 
     const row=document.createElement('div');
-    // Pulse animation border for 2+ consecutive weeks critical
     const rowBorder=consec>=2?`border:1.5px solid var(--red);`:'border:1px solid var(--border);';
-    row.style.cssText=`background:var(--card);${rowBorder}border-radius:var(--r-lg);padding:11px 14px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:4px minmax(180px,1fr) auto auto auto auto;align-items:center;gap:10px;`;
+    row.style.cssText=`background:var(--card);${rowBorder}border-radius:var(--r-lg);padding:11px 14px;cursor:pointer;transition:box-shadow .15s;display:flex;flex-direction:row;align-items:stretch;gap:10px;`;
     row.onmouseenter=()=>{row.style.boxShadow='var(--shadow)';};
     row.onmouseleave=()=>{row.style.boxShadow='';};
     row.onclick=()=>openFillModal(c.id);
 
+    // ── Col 1: status bar ────────────────────────────────────────────────────
     const bar=document.createElement('div');
     const barColor=isPartial(c.id)?'var(--border2)':st==='V'?'var(--red)':st==='A'?'#f59e0b':st==='G'?'var(--green)':'var(--border2)';
-    bar.style.cssText=`width:4px;border-radius:4px;align-self:stretch;min-height:44px;background:${barColor};`;
+    bar.style.cssText=`width:4px;border-radius:4px;flex-shrink:0;align-self:stretch;min-height:44px;background:${barColor};`;
 
-    const info=document.createElement('div');info.style.cssText='min-width:0;overflow:hidden;';
-    // Build action text for inline display inside info
+    // ── Col 2: info (name + badges + action text) ────────────────────────────
+    const info=document.createElement('div');
+    info.style.cssText='flex:1;min-width:0;overflow:hidden;';
     let actionHtml='';
     if(e.actionTaken) actionHtml+=`<div style="font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">✅ ${e.actionTaken.slice(0,55)+(e.actionTaken.length>55?'…':'')}</div>`;
     else if(st==='pending') actionHtml+=`<div style="font-size:11px;color:var(--brand3);margin-top:3px;">▶ clique para preencher</div>`;
@@ -2954,26 +2955,31 @@ function renderList(fc){
       ${actionHtml}
     `;
 
-    const pills=document.createElement('div');pills.style.cssText='display:flex;gap:4px;flex-wrap:nowrap;align-items:center;justify-content:flex-end;';
+    // ── Col 3: faróis ARCO ───────────────────────────────────────────────────
+    const pills=document.createElement('div');
+    pills.style.cssText='flex-shrink:0;display:flex;flex-direction:column;gap:3px;justify-content:center;';
     pills.innerHTML=pillHtml('A')+pillHtml('R')+pillHtml('C')+pillHtml('O');
 
-    const hsMini=document.createElement('div');hsMini.className='hs-mini';hsMini.style.cursor='pointer';hsMini.title='Ver detalhe do Health Score';hsMini.style.minWidth='70px';
+    // ── Col 4: HS mini ───────────────────────────────────────────────────────
+    const hsMini=document.createElement('div');
+    hsMini.className='hs-mini';hsMini.style.cssText='cursor:pointer;flex-shrink:0;width:64px;';
+    hsMini.title='Ver detalhe do Health Score';
     hsMini.innerHTML=`<div class="hs-mini-track"><div class="hs-mini-fill" style="width:${hs||0}%;background:${hsc.bar};"></div></div><span class="hs-mini-val" style="color:${hsc.fg};">${hs!==null?hs+'%':'–'}</span>`;
     hsMini.onclick=ev=>{ev.stopPropagation();openHSDetail(c.id);};
 
-    const trendEl=document.createElement('div');trendEl.style.cssText='min-width:70px;text-align:center;';trendEl.innerHTML=trendHtml;
-    const statusEl=document.createElement('div');statusEl.style.cssText='min-width:90px;text-align:right;';
+    // ── Col 5: status + trend ────────────────────────────────────────────────
+    const statusEl=document.createElement('div');
+    statusEl.style.cssText='flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px;';
     const sc2={V:'🔴 Problema Real',A:'🟡 Tomar Ação',G:'🟢 Acompanhar',pending:'⏳ Pendente'};
-    // partial pending — some filled but not all
-    const stDisplay=isPartial(c.id)?'partial':st;
     const stClass=isPartial(c.id)?'pending':st;
     const stLabel=isPartial(c.id)?'◑ Rascunho':sc2[st]||'⏳';
-    statusEl.innerHTML=`<span class="status-pill ${stClass}">${stLabel}</span>`;
-    const actionEl=document.createElement('div');// kept for compat but content moved to info
+    statusEl.innerHTML=`<span class="status-pill ${stClass}">${stLabel}</span>${trendHtml?`<span class="trend-pill ${trendHtml.includes('Melhorou')?'better':trendHtml.includes('Piorou')?'worse':'same'}" style="font-size:10px;">${trendHtml.replace(/<[^>]+>/g,'')}</span>`:''}`;
 
-    // Grid: bar | info | pills | hsMini | trend | status — exactly 6 columns
-    row.appendChild(bar);row.appendChild(info);row.appendChild(pills);row.appendChild(hsMini);
-    if(trendHtml)row.appendChild(trendEl);row.appendChild(statusEl);
+    row.appendChild(bar);
+    row.appendChild(info);
+    row.appendChild(pills);
+    row.appendChild(hsMini);
+    row.appendChild(statusEl);
     container.appendChild(row);
   });
 }
