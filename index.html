@@ -5046,8 +5046,35 @@ checkAuthAndInit();
     if(e.billing==='down'&&!r.includes('billing')) out.push({t:'Faturamento em queda',tone:'amber'});
     return out;
   }
+  // Baseline de comparação: o app arquiva histórico por semana, mas nem sempre
+  // existe snapshot exatamente na semana anterior (depende de "Nova Semana" ter
+  // sido rodada). Pegamos o snapshot mais recente ANTES da semana atual — e
+  // informamos a data real dele, em vez de fingir uma comparação que não existe.
+  let _baseline=null;
+  function baseline(){
+    if(_baseline!==null) return _baseline;
+    const cur=getWeekKey(0);
+    let keys=[];
+    try{
+      keys=Object.keys(weekHistory||{})
+        .filter(k=>k<cur && weekHistory[k] && Object.keys(weekHistory[k]).length>0)
+        .sort();
+    }catch(e){ keys=[]; }
+    _baseline = keys.length ? {key:keys[keys.length-1], snap:weekHistory[keys[keys.length-1]]} : {key:null, snap:null};
+    return _baseline;
+  }
+  function baselineLabel(){
+    const b=baseline();
+    if(!b.key) return null;
+    const d=new Date(b.key+'T12:00:00');
+    return isNaN(d)?b.key:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  }
+  function prevEntryOf(id){
+    const b=baseline();
+    return (b.snap && b.snap[id]) ? b.snap[id] : null;
+  }
   function trend(id){
-    const p=getPrevEntry(id), hs=calcHealthScore(id);
+    const p=prevEntryOf(id), hs=calcHealthScore(id);
     if(!p||!p.R||hs===null) return {a:'',l:'',dir:'na'};
     const ph=(typeof calcHealthScore_from==='function')?calcHealthScore_from(p,id):null;
     if(ph===null) return {a:'',l:'',dir:'na'};
@@ -5060,6 +5087,7 @@ checkAuthAndInit();
 
   /* ── modelo do report ───────────────────────────────────────────────── */
   function build(){
+    _baseline=null;
     const q=quinzena();
     const enrich=c=>{ const id=c.id;
       return { c,id,e:(entries[id]||{}), hs:calcHealthScore(id), tr:trend(id), sig:signals(id),
@@ -5084,17 +5112,23 @@ checkAuthAndInit();
     const allA=clients.filter(isA);
     const pendA=allA.filter(c=>!entries[c.id]||!entries[c.id].R);
     const worsened=risk.filter(i=>i.tr.dir==='down');
-    const improved=clients.filter(c=>{ const p=getPrevEntry(c.id); if(!p||!p.R)return false;
+    const improved=clients.filter(c=>{ const p=prevEntryOf(c.id); if(!p||!p.R)return false;
       return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p)); });
-    const prevSnap=weekHistory[getWeekKey(-1)]||{};
-    let prevRisk=0; Object.keys(prevSnap).forEach(k=>{ if(atRiskFrom(prevSnap[k],parseInt(k))) prevRisk++; });
-    const delta=risk.length-prevRisk;
+    const b=baseline();
+    const hasBaseline=!!b.key;
+    let delta=null, prevRisk=null;
+    if(hasBaseline){
+      prevRisk=0;
+      Object.keys(b.snap).forEach(k=>{ if(atRiskFrom(b.snap[k],parseInt(k))) prevRisk++; });
+      delta=risk.length-prevRisk;
+    }
+    const baseLbl=baselineLabel();
     const hasMRR=clients.some(c=>mrrOf(c)>0);
     const revAtRisk=risk.reduce((s,i)=>s+i.mrr,0);
     const aScores=allA.map(c=>calcHealthScore(c.id)).filter(x=>x!==null);
-    const hsAvgA=aScores.length?Math.round(aScores.reduce((a,b)=>a+b,0)/aScores.length):null;
+    const hsAvgA=aScores.length?Math.round(aScores.reduce((a,b2)=>a+b2,0)/aScores.length):null;
 
-    return { q,risk,decisions,watch,tierA,allA,pendA,worsened,improved,delta,hasMRR,revAtRisk,hsAvgA };
+    return { q,risk,decisions,watch,tierA,allA,pendA,worsened,improved,delta,prevRisk,hasBaseline,baseLbl,hasMRR,revAtRisk,hsAvgA };
   }
   function leitura(m){
     const pctA=m.risk.length?Math.round(m.tierA.length/m.risk.length*100):0;
@@ -5102,8 +5136,12 @@ checkAuthAndInit();
     let t=`Nesta ${m.q.label} (${m.q.range}), ${nR} ${nR===1?'conta está':'contas estão'} em risco de churn`;
     if(m.tierA.length) t+=`, ${m.tierA.length===1?'sendo 1 Tier A':'sendo '+m.tierA.length+' Tier A'} (${pctA}% do risco)`;
     t+=`. ${nD===1?'1 decisão aguarda':nD+' decisões aguardam'} definição executiva`;
-    t+=`. Quadro ${m.delta>0?'piorou':m.delta<0?'melhorou':'estável'}`;
-    if(m.delta!==0) t+=` (${m.delta>0?'+':''}${m.delta} vs. quinzena anterior)`;
+    if(m.hasBaseline){
+      t+=`. Quadro ${m.delta>0?'piorou':m.delta<0?'melhorou':'estável'}`;
+      if(m.delta!==0) t+=` (${m.delta>0?'+':''}${m.delta} vs. base de ${m.baseLbl})`;
+    }else{
+      t+=`. Sem base histórica arquivada para comparação`;
+    }
     return t+'.';
   }
 
@@ -5238,7 +5276,9 @@ checkAuthAndInit();
       heroA,
       {v:`${m.risk.length}`,s:'contas em risco',c:m.risk.length?'var(--red)':'var(--green)'},
       {v:`${m.decisions.length}`,s:'decisões em aberto',c:m.decisions.length?'var(--churn)':'var(--green)'},
-      {v:`${m.delta>0?'▲ ':m.delta<0?'▼ ':''}${m.delta>0?'+':''}${m.delta}`,s:'vs. quinzena anterior',c:m.delta>0?'var(--red)':m.delta<0?'var(--green)':'var(--muted)'}
+      m.hasBaseline
+        ? {v:`${m.delta>0?'▲ ':m.delta<0?'▼ ':''}${m.delta>0?'+':''}${m.delta}`,s:`vs. base de ${m.baseLbl}`,c:m.delta>0?'var(--red)':m.delta<0?'var(--green)':'var(--muted)'}
+        : {v:'—',s:'sem base comparativa',c:'var(--muted)'}
     ];
     const decA=m.decisions.filter(i=>i.a), decO=m.decisions.filter(i=>!i.a);
     let cardCount=0; const cardHtml=[];
@@ -5255,7 +5295,9 @@ checkAuthAndInit();
     const worstBC=watchBC.slice(0,3).map(i=>`${i.c.name} (HS ${i.hs!==null?i.hs+'%':'–'})`).join(' · ');
 
     // movement
-    const movTxt=`<span style="color:var(--green);">▲ ${m.improved.length} recuperaram</span> &nbsp;·&nbsp; <span style="color:var(--red);">▼ ${m.worsened.length} pioraram</span>`;
+    const movTxt=m.hasBaseline
+      ? `<span style="color:var(--green);">▲ ${m.improved.length} recuperaram</span> &nbsp;·&nbsp; <span style="color:var(--red);">▼ ${m.worsened.length} pioraram</span>`
+      : `<span style="color:var(--muted);">Sem histórico arquivado anterior — o movimento passa a ser calculado a partir da próxima edição, após rodar “Nova Semana”.</span>`;
 
     document.getElementById('reportExecSheet').innerHTML=`
       <div style="background:var(--card);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-card);">
@@ -5290,7 +5332,7 @@ checkAuthAndInit();
 
           ${watchBC.length?sectionLabel('Demais contas em risco (B/C)')+`<div style="font-size:12px;color:var(--ink2);line-height:1.5;"><b>${watchBC.length}</b> conta(s)${worstBC?` · piores: ${worstBC}`:''}. Tratadas no nível CS/comercial — sem decisão executiva nesta quinzena.</div>`:''}
 
-          ${sectionLabel('Movimento vs. quinzena anterior')}
+          ${sectionLabel(m.hasBaseline?('Movimento vs. base de '+m.baseLbl):'Movimento')}
           <div style="font-size:12px;color:var(--ink);">${movTxt}</div>
         </div>
 
@@ -5332,7 +5374,7 @@ checkAuthAndInit();
     kids.push(P([R(`Tier A: ${m.tierA.length} em risco · cobertura ${m.allA.length-m.pendA.length}/${m.allA.length} avaliadas`+(m.hsAvgA!==null?` · HS médio A ${m.hsAvgA}%`:'')+(m.pendA.length?` · ${m.pendA.length} sem avaliação`:''),{size:16,color:MUT})],{spacing:{after:140}}));
     // números
     const heroA=m.hasMRR?[money(m.revAtRisk),'receita em risco/mês',INK]:[String(m.tierA.length),'Tier A em risco',RED];
-    const cells=[heroA,[String(m.risk.length),'contas em risco',m.risk.length?RED:GRN],[String(m.decisions.length),'decisões em aberto',m.decisions.length?AMB:GRN],[`${m.delta>0?'+':''}${m.delta}`,'vs. quinzena anterior',m.delta>0?RED:m.delta<0?GRN:MUT]];
+    const cells=[heroA,[String(m.risk.length),'contas em risco',m.risk.length?RED:GRN],[String(m.decisions.length),'decisões em aberto',m.decisions.length?AMB:GRN],(m.hasBaseline?[`${m.delta>0?'+':''}${m.delta}`,`vs. base de ${m.baseLbl}`,m.delta>0?RED:m.delta<0?GRN:MUT]:['—','sem base comparativa',MUT])];
     kids.push(new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
       rows:[new TableRow({children:cells.map(c=>new TableCell({width:{size:25,type:WidthType.PERCENTAGE},borders:NB,margins:{top:40,bottom:40,left:100,right:100},
         children:[P([new TextRun({text:c[0],font:F,size:38,bold:true,color:c[2]})],{spacing:{after:0}}),P([new TextRun({text:c[1],font:F,size:15,color:MUT})])]}))})]}));
@@ -5345,7 +5387,7 @@ checkAuthAndInit();
       const inner=[];
       const trR=it.tr.dir==='down'?R(` ▼${it.tr.l}`,{size:18,color:RED,bold:true}):it.tr.dir==='up'?R(` ▲${it.tr.l}`,{size:18,color:GRN,bold:true}):it.tr.dir==='same'?R(' → estável',{size:18,color:MUT}):R('',{});
       inner.push(P([R(c.name+(c.vip?' ⭐':''),{bold:true,size:22,color:INK}),R(`   Tier ${tierOf(c)}`,{size:17,color:it.a?GOLD:MUT}),R(`   ·   HS ${it.hs!==null?it.hs+'%':'–'}`,{bold:true,size:18,color:it.hs===null?MUT:it.hs>=90?GRN:it.hs>=71?AMB:RED}),trR,...(it.cc>=2?[R(`   ${it.cc}ª sem. crítica`,{size:16,color:RED})]:[])],{spacing:{after:20}}));
-      if(it.sig.length){ const runs=[R('CS: '+c.gs,{size:16,color:MUT})]; it.sig.forEach(s=>{runs.push(R('   ·   ',{size:16,color:MUT}));runs.push(R(s.t,{size:16,color:toneCol(s.tone),bold:true}));}); if(it.mrr>0){runs.push(R('   ·   ',{size:16,color:MUT}));runs.push(R(money(it.mrr)+'/mês',{size:16,color:RED,bold:true}));} inner.push(P(runs,{spacing:{after:40}})); }
+      { const runs=[R('CS: '+(c.gs||'—'),{size:16,color:MUT})]; it.sig.forEach(s=>{runs.push(R('   ·   ',{size:16,color:MUT}));runs.push(R(s.t,{size:16,color:toneCol(s.tone),bold:true}));}); if(it.mrr>0){runs.push(R('   ·   ',{size:16,color:MUT}));runs.push(R(money(it.mrr)+'/mês',{size:16,color:RED,bold:true}));} inner.push(P(runs,{spacing:{after:40}})); }
       inner.push(P([R('Causa: ',{size:18,color:MUT}),R(trim(causaText(it.id),300),{size:18,color:INK})],{spacing:{after:20}}));
       if((e.actionTaken||'').trim()) inner.push(P([R('Já feito: ',{size:18,color:MUT}),R(trim(e.actionTaken,220),{size:18,color:INK})],{spacing:{after:20}}));
       if((e.needFrom||'').trim()) inner.push(P([R('Escalação: ',{size:18,bold:true,color:BLUE}),R(trim(e.needFrom,260),{size:18,color:BLUE})],{spacing:{after:20}}));
@@ -5376,8 +5418,10 @@ checkAuthAndInit();
       kids.push(P([R(`${watchBC.length} conta(s)`+(worst?` · piores: ${worst}`:'')+'. Tratadas no nível CS/comercial — sem decisão executiva nesta quinzena.',{size:18,color:INK})])); }
 
     // movimento
-    kids.push(H('Movimento vs. quinzena anterior',null));
-    kids.push(P([R(`▲ ${m.improved.length} recuperaram`,{size:18,color:GRN,bold:true}),R('     ',{}),R(`▼ ${m.worsened.length} pioraram`,{size:18,color:RED,bold:true})]));
+    kids.push(H(m.hasBaseline?('Movimento vs. base de '+m.baseLbl):'Movimento',null));
+    kids.push(m.hasBaseline
+      ? P([R(`▲ ${m.improved.length} recuperaram`,{size:18,color:GRN,bold:true}),R('     ',{}),R(`▼ ${m.worsened.length} pioraram`,{size:18,color:RED,bold:true})])
+      : P([R('Sem histórico arquivado anterior — o movimento passa a ser calculado a partir da próxima edição, após rodar "Nova Semana".',{size:18,color:MUT})]));
 
     // rodapé
     kids.push(P([R('Critério de inclusão: risco de churn sinalizado pelo CS (cancelamento/queda de faturamento), 2+ semanas em crítico, ou Health Score < 70. Decisões = escalação aberta ou risco de cancelamento.',{size:14,color:MUT})],{spacing:{before:220},border:{top:{style:BorderStyle.SINGLE,size:4,color:LINE,space:6}}}));
@@ -5401,6 +5445,317 @@ checkAuthAndInit();
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
   else install();
+})();
+</script>
+
+<!-- ===== ARCO · SIMULAÇÃO DE HEALTH SCORE (add-on) ===== -->
+<script>
+(function(){
+  if(window._hsSimInstalled) return; window._hsSimInstalled=true;
+
+  /* ══ CONFIGURAÇÃO DO MODELO PROPOSTO — todos os pesos editáveis na tela ══ */
+  const DEF={
+    amarelo:72, tierMult:1.25,
+    dimV3:18, dimV2:12, dimV1:6,
+    churnAM:25, churnA:15, churnM2:20, churnM1:12,
+    npsDet:20, npsNeu:4, npsProm:3,
+    billDown:10, billUp:3,
+    aband90:30, aband60:15,
+    escal14:8, escal7:4,
+    renov:8,
+    ctVenc:10, ct15:15, ct30:8, ct60:4,
+    chkBas:6, chkGat:4, chkLic:6, chkGov:3,
+    consecSem:6, consecTeto:18
+  };
+  const LSK='arco_hs_cfg', LSP='arco_hs_pilot';
+  let CFG=Object.assign({},DEF);
+  try{ const s=localStorage.getItem(LSK); if(s) CFG=Object.assign({},DEF,JSON.parse(s)); }catch(e){}
+
+  const CAMPOS=[
+    ['Base ARCO',[['amarelo','Amarelo vale'],['tierMult','Multiplicador Tier A']]],
+    ['Dimensões vermelhas',[['dimV3','3 ou mais'],['dimV2','2 dimensões'],['dimV1','1 dimensão']]],
+    ['Churn',[['churnAM','Auto + declarado'],['churnA','Automático (R/C)'],['churnM2','Declarado 2 tipos'],['churnM1','Declarado 1 tipo']]],
+    ['NPS',[['npsDet','Detrator (≤6)'],['npsNeu','Neutro (7–8)'],['npsProm','Bônus promotor']]],
+    ['Faturamento',[['billDown','Em queda'],['billUp','Bônus alta']]],
+    ['Abandono de contato',[['aband90','Acima de 90d'],['aband60','Acima de 60d']]],
+    ['Contrato',[['ctVenc','Vencido'],['ct15','Vence ≤15d'],['ct30','Vence ≤30d'],['ct60','Vence ≤60d']]],
+    ['Checklist = Não',[['chkBas','O básico'],['chkGat','Gatilhos'],['chkLic','Licenças'],['chkGov','Governança']]],
+    ['Outros',[['escal14','Escalação >14d'],['escal7','Escalação >7d'],['renov','Renovação sinalizada'],['consecSem','Por semana crítica'],['consecTeto','Teto sem. críticas']]]
+  ];
+
+  /* ══ HELPERS ══ */
+  const origHS=window.calcHealthScore;
+  const dias=d=>d?Math.floor((new Date()-new Date(d))/86400000):null;
+  const arr=v=>v==null?[]:(Array.isArray(v)?v:[v]);
+  const tierOf=c=>(c.tier||'C').toUpperCase();
+  const ehA=c=>tierOf(c)==='A'||c.vip===true||c.vip==='true';
+  function userSafe(){ try{ if(typeof currentUser!=='undefined'&&currentUser) return currentUser; }catch(e){} return window.currentUser||null; }
+  const ehAdmin=()=>{const u=userSafe();return !!(u&&u.role==='admin');};
+
+  /* ══ MODELO PROPOSTO ══ */
+  function scoreCore(e,c,consec){
+    if(!e||!e.R) return null;
+    const A=ehA(c), P=p=>A?Math.round(p*CFG.tierMult):p;
+    const dv=v=>v==='G'?100:v==='A'?CFG.amarelo:v==='V'?0:CFG.amarelo;
+    let s=dv(e.R)*.20+dv(e.O)*.20+dv(e.C)*.20+dv(e.A)*.40, pen=0;
+
+    const dims=[e.R,e.O,e.C,e.A], cv=dims.filter(d=>d==='V').length;
+    if(cv>=3)pen+=P(CFG.dimV3); else if(cv===2)pen+=P(CFG.dimV2); else if(cv===1)pen+=P(CFG.dimV1);
+
+    const auto=e.R==='V'||e.C==='V';
+    const man=arr(e.churnRisk).filter(x=>x&&x!=='none');
+    if(auto&&man.length)pen+=P(CFG.churnAM);
+    else if(auto)pen+=P(CFG.churnA);
+    else if(man.length)pen+=P(man.length>=2?CFG.churnM2:CFG.churnM1);
+
+    const nps=e.npsScore?parseInt(e.npsScore):null;
+    if(nps!==null){ if(nps<=6)pen+=P(CFG.npsDet); else if(nps<=8)pen+=P(CFG.npsNeu); else pen-=CFG.npsProm; }
+
+    if(e.billing==='down')pen+=P(CFG.billDown); else if(e.billing==='up')pen-=CFG.billUp;
+
+    const md=dias(e.lastMeeting), vd=dias(e.lastVisit);
+    const reg=[md,vd].filter(x=>x!==null);
+    if(reg.length){ const rec=Math.min(...reg);
+      if(rec>90)pen+=P(CFG.aband90); else if(rec>60)pen+=P(CFG.aband60); }
+
+    if(e.needFrom&&e.needFromDate){ const sla=dias(e.needFromDate);
+      if(sla>14)pen+=P(CFG.escal14); else if(sla>7)pen+=P(CFG.escal7); }
+
+    if(c.renovacao===true||c.renovacao==='true')pen+=P(CFG.renov);
+
+    if(typeof getMostCriticalContract==='function'&&typeof contracts!=='undefined'&&contracts.length){
+      const mc=getMostCriticalContract(c.name);
+      if(mc){ const d=contractDaysLeft(mc.venc); if(d!==null){
+        if(d<0)pen+=P(CFG.ctVenc); else if(d<=15)pen+=P(CFG.ct15);
+        else if(d<=30)pen+=P(CFG.ct30); else if(d<=60)pen+=P(CFG.ct60); } } }
+
+    if(e.chk_basico==='N')pen+=P(CFG.chkBas);
+    if(e.chk_gatilhos==='N')pen+=P(CFG.chkGat);
+    if(e.chk_licencas==='N')pen+=P(CFG.chkLic);
+    if(e.chk_governanca==='N')pen+=P(CFG.chkGov);
+
+    if(consec>=2)pen+=Math.min(P(CFG.consecTeto),P(CFG.consecSem)*(consec-1));
+
+    return Math.max(0,Math.min(100,Math.round(s-pen)));
+  }
+
+  // Wrapper: calcula semanas críticas com o PRÓPRIO modelo proposto, sem
+  // passar por calcHealthScore (que pode estar trocado pelo piloto → recursão).
+  function hsV2(id){
+    const e=entries[id]; if(!e||!e.R) return null;
+    const c=clients.find(x=>x.id===id)||{};
+    const prelim=scoreCore(e,c,0);
+    let consec=0;
+    if(prelim!==null&&prelim<70){
+      consec=1; let off=-1;
+      while(true){
+        const wk=getWeekKey(off), snap=weekHistory[wk];
+        if(!snap||!snap[id])break;
+        const ph=scoreCore(snap[id],c,0);
+        if(ph===null||ph>=70)break;
+        consec++; off--;
+        if(Math.abs(off)>8)break;
+      }
+    }
+    return scoreCore(e,c,consec);
+  }
+
+  /* ══ CADÊNCIA (status operacional, não pontua) ══ */
+  function cadencia(id){
+    const e=entries[id]||{}, c=clients.find(x=>x.id===id)||{};
+    if(!e.R) return {st:'—',pend:['conta não avaliada']};
+    const t=tierOf(c), pend=[];
+    if(c.book===true||c.book==='true'||c.book==='S'){
+      const ref=e.timestamp?new Date(e.timestamp):new Date(); let ok=false;
+      if(e.bookDate){ const b=new Date(e.bookDate+'T12:00:00');
+        ok=b.getFullYear()===ref.getFullYear()&&b.getMonth()===ref.getMonth()&&b.getDate()<=12; }
+      if(!ok)pend.push('Book do mês');
+    }
+    const md=dias(e.lastMeeting), vd=dias(e.lastVisit), reg=[md,vd].filter(x=>x!==null);
+    if(!reg.length)pend.push('Sem contato registrado');
+    else if(Math.min(...reg)>15)pend.push('Reunião fora de D-15');
+    const vLim=t==='A'?30:60;
+    if(vd===null)pend.push('Visita não registrada');
+    else if(vd>vLim)pend.push('Visita fora de D-'+vLim);
+    if(!e.npsScore)pend.push('NPS não coletado');
+    else if(e.npsDate&&dias(e.npsDate)>90)pend.push('NPS vencido');
+    ['basico','gatilhos','licencas','governanca'].forEach(k=>{ if(!e['chk_'+k])pend.push('Checklist: '+k); });
+    if(e.chk_revisaoDate&&dias(e.chk_revisaoDate)>90)pend.push('Revisão >90d');
+    if(e.needFrom&&!e.actionTaken)pend.push('Escalou sem ação registrada');
+    return {st:pend.length===0?'Em dia':pend.length<=2?'Atrasada':'Crítica',pend};
+  }
+
+  const faixa=h=>h===null?'—':h>=90?'Saudável':h>=71?'Atenção':'Crítico';
+  const corF=f=>f==='Saudável'?'var(--green)':f==='Atenção'?'var(--amber)':f==='Crítico'?'var(--red)':'var(--muted)';
+
+  /* ══ COMPARAÇÃO DA CARTEIRA ══ */
+  function comparar(){
+    const out=clients.map(c=>{
+      const a=origHS(c.id), p=hsV2(c.id), cad=cadencia(c.id);
+      return {c,a,p,d:(a===null||p===null)?null:p-a,fa:faixa(a),fp:faixa(p),cad};
+    });
+    const av=out.filter(x=>x.a!==null);
+    const med=k=>av.length?Math.round(av.reduce((s,x)=>s+x[k],0)/av.length):null;
+    const crit=k=>av.filter(x=>x[k]!==null&&x[k]<70).length;
+    return {
+      linhas:out, avaliadas:av.length,
+      medA:med('a'), medP:med('p'),
+      critA:crit('a'), critP:crit('p'),
+      mudam:av.filter(x=>x.fa!==x.fp).length,
+      subiram:av.filter(x=>x.d>0).length, caíram:av.filter(x=>x.d<0).length,
+      cadCrit:out.filter(x=>x.cad.st==='Crítica').length
+    };
+  }
+
+  /* ══ UI ══ */
+  function instalar(){
+    const tabs=document.querySelector('.main-tabs');
+    if(tabs&&!document.getElementById('tab-btn-sim')){
+      const b=document.createElement('button');
+      b.className='main-tab'; b.id='tab-btn-sim'; b.style.display='none';
+      b.innerHTML='🧪 Simulação HS'; b.onclick=abrir; tabs.appendChild(b);
+    }
+    if(!document.getElementById('tab-sim')){
+      const d=document.createElement('div'); d.className='tab-content'; d.id='tab-sim';
+      d.innerHTML=`<div style="flex:1;padding:24px 28px;overflow-y:auto;background:var(--bg);width:100%;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+          <div class="view-title">Simulação de Health Score <span>calibrar e validar antes de adotar</span></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="window._hsSim.reset()">↺ Restaurar padrão</button>
+            <button class="btn" onclick="window._hsSim.xlsx()">↓ Exportar comparação</button>
+            <button class="btn btn-primary" id="simPilotBtn" onclick="window._hsSim.pilot()">Ativar piloto</button>
+          </div>
+        </div>
+        <div id="simPilotBanner" style="display:none;background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--r-lg);padding:9px 14px;margin-bottom:14px;font-size:12.5px;color:var(--amber);"></div>
+        <div id="simBody"></div>
+      </div>`;
+      document.body.appendChild(d);
+    }
+    vis();
+  }
+  function vis(){ const b=document.getElementById('tab-btn-sim'); if(b) b.style.display=ehAdmin()?'':'none'; }
+  function abrir(){
+    document.querySelectorAll('.main-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    const b=document.getElementById('tab-btn-sim'); if(b) b.classList.add('active');
+    document.getElementById('tab-sim').classList.add('active');
+    render();
+  }
+
+  function lbl(t){ return `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;margin:16px 0 9px;">${t}<span style="flex:1;height:1px;background:var(--border);"></span></div>`; }
+
+  function render(){
+    const m=comparar();
+    const kpi=(v,l,c,s)=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:14px 16px;">
+      <div style="font-size:23px;font-weight:700;letter-spacing:-.03em;color:${c};line-height:1;">${v}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;">${l}</div>${s?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">${s}</div>`:''}</div>`;
+
+    const cfgHtml=CAMPOS.map(([g,its])=>`<div style="border:1px solid var(--border);border-radius:var(--r-lg);padding:9px 11px;background:var(--card);">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand2);margin-bottom:7px;">${g}</div>
+      ${its.map(([k,l])=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;">
+        <span style="font-size:11px;color:var(--ink2);">${l}</span>
+        <input type="number" step="${k==='tierMult'?'0.05':'1'}" value="${CFG[k]}" data-cfg="${k}"
+          style="width:62px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:11.5px;font-family:'JetBrains Mono',monospace;text-align:right;background:var(--surface);color:var(--ink);">
+      </div>`).join('')}</div>`).join('');
+
+    const ordenadas=m.linhas.filter(x=>x.a!==null).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+    const linhasHtml=ordenadas.map(x=>{
+      const muda=x.fa!==x.fp;
+      const dcor=x.d>0?'var(--green)':x.d<0?'var(--red)':'var(--muted)';
+      const cadCor=x.cad.st==='Em dia'?'var(--green)':x.cad.st==='Atrasada'?'var(--amber)':'var(--red)';
+      return `<tr${muda?' style="background:var(--brand-light);"':''}>
+        <td style="font-weight:600;font-size:11.5px;">${x.c.name}</td>
+        <td><span class="badge badge-tier-${tierOf(x.c).toLowerCase()}">${tierOf(x.c)}</span></td>
+        <td style="font-size:11px;color:var(--muted);">${x.c.gs}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:${corF(x.fa)};">${x.a}%</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:${corF(x.fp)};font-weight:700;">${x.p}%</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${dcor};">${x.d>0?'+':''}${x.d}</td>
+        <td style="font-size:10.5px;">${muda?`<span style="color:${corF(x.fa)};">${x.fa}</span> <span style="color:var(--muted);">→</span> <span style="color:${corF(x.fp)};font-weight:600;">${x.fp}</span>`:`<span style="color:var(--muted);">${x.fa}</span>`}</td>
+        <td style="font-size:10.5px;color:${cadCor};">${x.cad.st}</td>
+      </tr>`;}).join('');
+
+    document.getElementById('simBody').innerHTML=`
+      ${lbl('Impacto na carteira · '+m.avaliadas+' contas avaliadas')}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+        ${kpi(m.medA+'% → '+m.medP+'%','HS médio','var(--ink)','atual → proposto')}
+        ${kpi(m.critA+' → '+m.critP,'contas críticas (&lt;70)',m.critP<m.critA?'var(--green)':'var(--red)','atual → proposto')}
+        ${kpi(m.mudam,'mudam de faixa','var(--brand2)','realçadas na tabela')}
+        ${kpi(m.subiram+' / '+m.caíram,'sobem / caem','var(--ink)','com o modelo novo')}
+        ${kpi(m.cadCrit,'cadência crítica','var(--churn)','pauta de 1:1')}
+      </div>
+      ${lbl('Pesos do modelo proposto · edite e veja o efeito na hora')}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">${cfgHtml}</div>
+      ${lbl('Comparação conta a conta · ordenada pela maior variação')}
+      <div class="table-wrap"><table>
+        <thead><tr><th>Cliente</th><th>Tier</th><th>CS</th><th>HS atual</th><th>HS proposto</th><th>Δ</th><th>Faixa</th><th>Cadência</th></tr></thead>
+        <tbody>${linhasHtml}</tbody></table></div>`;
+
+    document.querySelectorAll('[data-cfg]').forEach(i=>{
+      i.addEventListener('change',()=>{
+        const k=i.dataset.cfg, v=parseFloat(i.value);
+        if(!isNaN(v)){ CFG[k]=v; try{localStorage.setItem(LSK,JSON.stringify(CFG));}catch(e){} render(); }
+      });
+    });
+    banner();
+  }
+
+  function banner(){
+    const on=localStorage.getItem(LSP)==='1';
+    const bn=document.getElementById('simPilotBanner'), bt=document.getElementById('simPilotBtn');
+    if(bn){ bn.style.display=on?'block':'none';
+      bn.innerHTML='⚗ <b>Piloto ativo neste navegador.</b> Gestão, Dashboard e Report Executivo estão usando o modelo proposto. Só você vê isso — o time continua no modelo atual.'; }
+    if(bt) bt.textContent=on?'Desativar piloto':'Ativar piloto';
+  }
+
+  /* ══ PILOTO — troca o motor só neste navegador ══ */
+  function aplicarPiloto(){
+    const on=localStorage.getItem(LSP)==='1';
+    window.calcHealthScore=on?function(id){return hsV2(id);}:origHS;
+  }
+  function pilot(){
+    const on=localStorage.getItem(LSP)==='1';
+    localStorage.setItem(LSP,on?'0':'1');
+    aplicarPiloto(); banner(); render();
+    if(typeof showToast==='function') showToast(on?'Piloto desativado — voltou ao modelo atual':'✓ Piloto ativo — modelo proposto aplicado neste navegador');
+  }
+  function reset(){ CFG=Object.assign({},DEF); try{localStorage.setItem(LSK,JSON.stringify(CFG));}catch(e){} render(); }
+
+  /* ══ EXPORT XLSX ══ */
+  function xlsx(){
+    if(typeof XLSX==='undefined'){ if(typeof showToast==='function') showToast('✕ Biblioteca XLSX não carregada'); return; }
+    const m=comparar();
+    const cab=['Cliente','Tier','CS','HS atual','HS proposto','Delta','Faixa atual','Faixa proposta','Muda de faixa','Cadência','Pendências de cadência'];
+    const rows=[cab];
+    m.linhas.filter(x=>x.a!==null).sort((a,b)=>b.d-a.d).forEach(x=>{
+      rows.push([x.c.name,tierOf(x.c),x.c.gs,x.a,x.p,x.d,x.fa,x.fp,x.fa!==x.fp?'SIM':'não',x.cad.st,x.cad.pend.join(' · ')]);
+    });
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:34},{wch:6},{wch:20},{wch:10},{wch:12},{wch:8},{wch:12},{wch:14},{wch:13},{wch:11},{wch:60}];
+    XLSX.utils.book_append_sheet(wb,ws,'Comparação');
+    const cfgRows=[['Parâmetro','Valor']];
+    CAMPOS.forEach(([g,its])=>{ cfgRows.push([g,'']); its.forEach(([k,l])=>cfgRows.push(['   '+l,CFG[k]])); });
+    const ws2=XLSX.utils.aoa_to_sheet(cfgRows); ws2['!cols']=[{wch:30},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws2,'Pesos');
+    const res=[['Indicador','Atual','Proposto'],
+      ['HS médio',m.medA,m.medP],['Contas críticas (<70)',m.critA,m.critP],
+      ['Contas avaliadas',m.avaliadas,m.avaliadas],['Mudam de faixa','',m.mudam],
+      ['Sobem','',m.subiram],['Caem','',m.caíram],['Cadência crítica','',m.cadCrit]];
+    const ws3=XLSX.utils.aoa_to_sheet(res); ws3['!cols']=[{wch:26},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws3,'Resumo');
+    XLSX.writeFile(wb,'ARCO_Simulacao_HS_'+new Date().toISOString().slice(0,10)+'.xlsx');
+    if(typeof showToast==='function') showToast('✓ Comparação exportada');
+  }
+
+  window._hsSim={abrir:abrir,render:render,pilot:pilot,reset:reset,xlsx:xlsx,hsV2:hsV2,cadencia:cadencia,cfg:()=>CFG};
+
+  if(typeof window.enterDashboard==='function'){
+    const o=window.enterDashboard;
+    window.enterDashboard=function(){ const r=o.apply(this,arguments); try{vis();}catch(e){} return r; };
+  }
+  aplicarPiloto();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',instalar); else instalar();
+  let n=0; const t=setInterval(()=>{ vis(); if(++n>20||ehAdmin()) clearInterval(t); },500);
 })();
 </script>
 
