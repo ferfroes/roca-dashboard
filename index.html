@@ -5147,10 +5147,23 @@ checkAuthAndInit();
       document.head.appendChild(st);
     }
     updateVisibility();
+    // Rede de segurança: a visibilidade depende de quando o app termina de
+    // autenticar (fetch do Firebase). Reavalia por alguns segundos e para
+    // assim que resolver — não fica rodando indefinidamente.
+    let _tries=0;
+    const _t=setInterval(()=>{ updateVisibility(); if(++_tries>20||isAdminNow()) clearInterval(_t); },500);
   }
+  function currentUserSafe(){
+    // `let currentUser` no app base é binding léxico global — NÃO existe em window.
+    // Por isso lemos o identificador direto, com fallback defensivo.
+    try{ if(typeof currentUser!=='undefined' && currentUser) return currentUser; }catch(e){}
+    try{ if(window.currentUser) return window.currentUser; }catch(e){}
+    return null;
+  }
+  function isAdminNow(){ const u=currentUserSafe(); return !!(u && u.role==='admin'); }
   function updateVisibility(){
     const b=document.getElementById('tab-btn-report');
-    if(b) b.style.display=(window.currentUser&&currentUser.role==='admin')?'':'none';
+    if(b) b.style.display=isAdminNow()?'':'none';
   }
   function openReport(){
     document.querySelectorAll('.main-tab').forEach(x=>x.classList.remove('active'));
