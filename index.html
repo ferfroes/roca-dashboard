@@ -5973,5 +5973,47 @@ checkAuthAndInit();
 })();
 </script>
 
+<!-- ===== ARCO · CORREÇÃO DA LISTA DE CS (add-on) ===== -->
+<script>
+(function(){
+  if(window._fixCSInstalled) return; window._fixCSInstalled=true;
+
+  /* ═══════════════════════════════════════════════════════════════════
+     CORREÇÃO — lista de CS no Cadastro de Clientes
+
+     A versão original montava o <select> só com usuários de perfil 'cs'.
+     Quem tem carteira mas é admin (ou CS desativado que ainda responde por
+     contas) ficava de fora: nenhuma opção casava com o responsável real,
+     e o navegador exibia a primeira da lista — dando a impressão de que a
+     conta pertencia a outra pessoa. O dado nunca era alterado, mas bastava
+     alguém "corrigir" o campo para reatribuir a conta de verdade.
+
+     Agora a lista reúne: CS ativos + admins com carteira + todo
+     responsável já atribuído em alguma conta. Assim nenhum vínculo
+     existente pode desaparecer da tela.
+     ═══════════════════════════════════════════════════════════════════ */
+  function listaCS(){
+    const nomes=new Set();
+    try{
+      (authUsers||[]).forEach(function(u){
+        if(!u||u.active===false) return;
+        if(u.role==='cs') nomes.add((u.csName||u.name||'').trim());
+        else if(u.csName) nomes.add(String(u.csName).trim());   // admin com carteira
+      });
+    }catch(e){}
+    try{
+      (clients||[]).forEach(function(c){ if(c&&c.gs) nomes.add(String(c.gs).trim()); });
+    }catch(e){}
+    nomes.delete('');
+    return Array.from(nomes).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+  }
+
+  if(typeof window.getActiveCSNames==='function'){
+    window.getActiveCSNames=listaCS;
+  }
+  window._fixCS={lista:listaCS};
+})();
+</script>
+
 </body>
 </html>
