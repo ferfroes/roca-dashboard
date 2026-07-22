@@ -5465,7 +5465,8 @@ checkAuthAndInit();
     renov:8,
     ctVenc:10, ct15:15, ct30:8, ct60:4,
     chkBas:6, chkGat:4, chkLic:6, chkGov:3,
-    consecSem:6, consecTeto:18
+    consecSem:6, consecTeto:18,
+    tetoAtivo:1, tetoContatoDias:60, tetoContatoMax:89, tetoNpsDias:90, tetoNpsMax:89
   };
   const LSK='arco_hs_cfg', LSP='arco_hs_pilot';
   let CFG=Object.assign({},DEF);
@@ -5480,6 +5481,7 @@ checkAuthAndInit();
     ['Abandono de contato',[['aband90','Acima de 90d'],['aband60','Acima de 60d']]],
     ['Contrato',[['ctVenc','Vencido'],['ct15','Vence ≤15d'],['ct30','Vence ≤30d'],['ct60','Vence ≤60d']]],
     ['Checklist = Não',[['chkBas','O básico'],['chkGat','Gatilhos'],['chkLic','Licenças'],['chkGov','Governança']]],
+    ['Teto por evidência',[['tetoAtivo','Ativo (1=sim, 0=não)'],['tetoContatoDias','Contato — dias limite'],['tetoContatoMax','Teto sem contato'],['tetoNpsDias','NPS — dias de validade'],['tetoNpsMax','Teto sem NPS vigente']]],
     ['Outros',[['escal14','Escalação >14d'],['escal7','Escalação >7d'],['renov','Renovação sinalizada'],['consecSem','Por semana crítica'],['consecTeto','Teto sem. críticas']]]
   ];
 
@@ -5557,7 +5559,32 @@ checkAuthAndInit();
         if(Math.abs(off)>8)break;
       }
     }
-    return scoreCore(e,c,consec);
+    const bruto=scoreCore(e,c,consec);
+    const t=tetoDe(id);
+    return (t&&bruto!==null)?Math.min(bruto,t.teto):bruto;
+  }
+
+  /* ══ TETO POR EVIDÊNCIA ══
+     Sem evidência recente, a conta não pode ser AFIRMADA saudável.
+     Não é punição — é limite de confiança sobre o que sabemos. */
+  function tetoDe(id){
+    if(!CFG.tetoAtivo) return null;
+    const e=entries[id]||{}; if(!e.R) return null;
+    let teto=100; const motivos=[];
+    const md=dias(e.lastMeeting), vd=dias(e.lastVisit);
+    const reg=[md,vd].filter(x=>x!==null);
+    const rec=reg.length?Math.min(...reg):null;
+    if(rec===null||rec>CFG.tetoContatoDias){
+      teto=Math.min(teto,CFG.tetoContatoMax);
+      motivos.push(rec===null?'sem contato registrado':'contato há '+rec+'d');
+    }
+    const nps=e.npsScore?parseInt(e.npsScore):null;
+    const idade=e.npsDate?dias(e.npsDate):null;
+    if(nps===null||idade===null||idade>CFG.tetoNpsDias){
+      teto=Math.min(teto,CFG.tetoNpsMax);
+      motivos.push(nps===null?'sem NPS':(idade===null?'NPS sem data':'NPS de '+idade+'d'));
+    }
+    return teto<100?{teto:teto,motivos:motivos}:null;
   }
 
   /* ══ CADÊNCIA (status operacional, não pontua) ══ */
@@ -5591,8 +5618,8 @@ checkAuthAndInit();
   /* ══ COMPARAÇÃO DA CARTEIRA ══ */
   function comparar(){
     const out=clients.map(c=>{
-      const a=origHS(c.id), p=hsV2(c.id), cad=cadencia(c.id);
-      return {c,a,p,d:(a===null||p===null)?null:p-a,fa:faixa(a),fp:faixa(p),cad};
+      const a=origHS(c.id), p=hsV2(c.id), cad=cadencia(c.id), t=(entries[c.id]&&entries[c.id].R)?tetoDe(c.id):null;
+      return {c,a,p,d:(a===null||p===null)?null:p-a,fa:faixa(a),fp:faixa(p),cad,teto:t};
     });
     const av=out.filter(x=>x.a!==null);
     const med=k=>av.length?Math.round(av.reduce((s,x)=>s+x[k],0)/av.length):null;
@@ -5603,7 +5630,8 @@ checkAuthAndInit();
       critA:crit('a'), critP:crit('p'),
       mudam:av.filter(x=>x.fa!==x.fp).length,
       subiram:av.filter(x=>x.d>0).length, caíram:av.filter(x=>x.d<0).length,
-      cadCrit:out.filter(x=>x.cad.st==='Crítica').length
+      cadCrit:out.filter(x=>x.cad.st==='Crítica').length,
+      comTeto:av.filter(x=>x.teto).length
     };
   }
 
@@ -5672,6 +5700,7 @@ checkAuthAndInit();
         <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${dcor};">${x.d>0?'+':''}${x.d}</td>
         <td style="font-size:10.5px;">${muda?`<span style="color:${corF(x.fa)};">${x.fa}</span> <span style="color:var(--muted);">→</span> <span style="color:${corF(x.fp)};font-weight:600;">${x.fp}</span>`:`<span style="color:var(--muted);">${x.fa}</span>`}</td>
         <td style="font-size:10.5px;color:${cadCor};">${x.cad.st}</td>
+        <td style="font-size:10px;color:${x.teto?'var(--brand2)':'var(--muted)'};">${x.teto?('≤'+x.teto.teto+'% · '+x.teto.motivos.join(' · ')):'—'}</td>
       </tr>`;}).join('');
 
     document.getElementById('simBody').innerHTML=`
@@ -5681,13 +5710,14 @@ checkAuthAndInit();
         ${kpi(m.critA+' → '+m.critP,'contas críticas (&lt;70)',m.critP<m.critA?'var(--green)':'var(--red)','atual → proposto')}
         ${kpi(m.mudam,'mudam de faixa','var(--brand2)','realçadas na tabela')}
         ${kpi(m.subiram+' / '+m.caíram,'sobem / caem','var(--ink)','com o modelo novo')}
+        ${kpi(m.comTeto,'com teto por evidência','var(--brand2)','sem base p/ afirmar saúde')}
         ${kpi(m.cadCrit,'cadência crítica','var(--churn)','pauta de 1:1')}
       </div>
       ${lbl('Pesos do modelo proposto · edite e veja o efeito na hora')}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">${cfgHtml}</div>
       ${lbl('Comparação conta a conta · ordenada pela maior variação')}
       <div class="table-wrap"><table>
-        <thead><tr><th>Cliente</th><th>Tier</th><th>CS</th><th>HS atual</th><th>HS proposto</th><th>Δ</th><th>Faixa</th><th>Cadência</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>Tier</th><th>CS</th><th>HS atual</th><th>HS proposto</th><th>Δ</th><th>Faixa</th><th>Cadência</th><th>Teto por evidência</th></tr></thead>
         <tbody>${linhasHtml}</tbody></table></div>`;
 
     document.querySelectorAll('[data-cfg]').forEach(i=>{
@@ -5724,14 +5754,14 @@ checkAuthAndInit();
   function xlsx(){
     if(typeof XLSX==='undefined'){ if(typeof showToast==='function') showToast('✕ Biblioteca XLSX não carregada'); return; }
     const m=comparar();
-    const cab=['Cliente','Tier','CS','HS atual','HS proposto','Delta','Faixa atual','Faixa proposta','Muda de faixa','Cadência','Pendências de cadência'];
+    const cab=['Cliente','Tier','CS','HS atual','HS proposto','Delta','Faixa atual','Faixa proposta','Muda de faixa','Cadência','Pendências de cadência','Teto aplicado','Motivo do teto'];
     const rows=[cab];
     m.linhas.filter(x=>x.a!==null).sort((a,b)=>b.d-a.d).forEach(x=>{
-      rows.push([x.c.name,tierOf(x.c),x.c.gs,x.a,x.p,x.d,x.fa,x.fp,x.fa!==x.fp?'SIM':'não',x.cad.st,x.cad.pend.join(' · ')]);
+      rows.push([x.c.name,tierOf(x.c),x.c.gs,x.a,x.p,x.d,x.fa,x.fp,x.fa!==x.fp?'SIM':'não',x.cad.st,x.cad.pend.join(' · '),x.teto?x.teto.teto:'',x.teto?x.teto.motivos.join(' · '):'']);
     });
     const wb=XLSX.utils.book_new();
     const ws=XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols']=[{wch:34},{wch:6},{wch:20},{wch:10},{wch:12},{wch:8},{wch:12},{wch:14},{wch:13},{wch:11},{wch:60}];
+    ws['!cols']=[{wch:34},{wch:6},{wch:20},{wch:10},{wch:12},{wch:8},{wch:12},{wch:14},{wch:13},{wch:11},{wch:60},{wch:12},{wch:34}];
     XLSX.utils.book_append_sheet(wb,ws,'Comparação');
     const cfgRows=[['Parâmetro','Valor']];
     CAMPOS.forEach(([g,its])=>{ cfgRows.push([g,'']); its.forEach(([k,l])=>cfgRows.push(['   '+l,CFG[k]])); });
@@ -5740,14 +5770,14 @@ checkAuthAndInit();
     const res=[['Indicador','Atual','Proposto'],
       ['HS médio',m.medA,m.medP],['Contas críticas (<70)',m.critA,m.critP],
       ['Contas avaliadas',m.avaliadas,m.avaliadas],['Mudam de faixa','',m.mudam],
-      ['Sobem','',m.subiram],['Caem','',m.caíram],['Cadência crítica','',m.cadCrit]];
+      ['Sobem','',m.subiram],['Caem','',m.caíram],['Cadência crítica','',m.cadCrit],['Com teto por evidência','',m.comTeto]];
     const ws3=XLSX.utils.aoa_to_sheet(res); ws3['!cols']=[{wch:26},{wch:10},{wch:10}];
     XLSX.utils.book_append_sheet(wb,ws3,'Resumo');
     XLSX.writeFile(wb,'ARCO_Simulacao_HS_'+new Date().toISOString().slice(0,10)+'.xlsx');
     if(typeof showToast==='function') showToast('✓ Comparação exportada');
   }
 
-  window._hsSim={abrir:abrir,render:render,pilot:pilot,reset:reset,xlsx:xlsx,hsV2:hsV2,cadencia:cadencia,cfg:()=>CFG};
+  window._hsSim={abrir:abrir,render:render,pilot:pilot,reset:reset,xlsx:xlsx,hsV2:hsV2,cadencia:cadencia,teto:tetoDe,cfg:()=>CFG};
 
   if(typeof window.enterDashboard==='function'){
     const o=window.enterDashboard;
