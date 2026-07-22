@@ -5006,6 +5006,10 @@ checkAuthAndInit();
 
   function atRisk(id){
     if(typeof hasChurnRisk==='function'&&hasChurnRisk(id)) return true;
+    // Escalação aberta = pedido explícito de apoio executivo. Entra no radar
+    // mesmo com HS saudável — senão o pedido do CS fica invisível.
+    const e=entries[id]||{};
+    if((e.needFrom||'').trim()) return true;
     const hs=calcHealthScore(id); return hs!==null&&hs<70;
   }
   function atRiskFrom(e,id){
@@ -5133,7 +5137,7 @@ checkAuthAndInit();
   function leitura(m){
     const pctA=m.risk.length?Math.round(m.tierA.length/m.risk.length*100):0;
     const nR=m.risk.length, nD=m.decisions.length;
-    let t=`Nesta ${m.q.label} (${m.q.range}), ${nR} ${nR===1?'conta está':'contas estão'} em risco de churn`;
+    let t=`Nesta ${m.q.label} (${m.q.range}), ${nR} ${nR===1?'conta exige':'contas exigem'} atenção executiva — risco de churn ou escalação aberta`;
     if(m.tierA.length) t+=`, ${m.tierA.length===1?'sendo 1 Tier A':'sendo '+m.tierA.length+' Tier A'} (${pctA}% do risco)`;
     t+=`. ${nD===1?'1 decisão aguarda':nD+' decisões aguardam'} definição executiva`;
     if(m.hasBaseline){
@@ -5274,7 +5278,7 @@ checkAuthAndInit();
       : {v:`${m.tierA.length}`,s:`Tier A em risco (${m.allA.length-m.pendA.length}/${m.allA.length} aval.)`,c:'var(--red)'};
     const hero=[
       heroA,
-      {v:`${m.risk.length}`,s:'contas em risco',c:m.risk.length?'var(--red)':'var(--green)'},
+      {v:`${m.risk.length}`,s:'contas no radar',c:m.risk.length?'var(--red)':'var(--green)'},
       {v:`${m.decisions.length}`,s:'decisões em aberto',c:m.decisions.length?'var(--churn)':'var(--green)'},
       m.hasBaseline
         ? {v:`${m.delta>0?'▲ ':m.delta<0?'▼ ':''}${m.delta>0?'+':''}${m.delta}`,s:`vs. base de ${m.baseLbl}`,c:m.delta>0?'var(--red)':m.delta<0?'var(--green)':'var(--muted)'}
@@ -5292,7 +5296,8 @@ checkAuthAndInit();
     // watchlist
     const watchA=m.watch.filter(i=>i.a).slice(0,MAX_WATCH_A);
     const watchBC=m.watch.filter(i=>!i.a);
-    const worstBC=watchBC.slice(0,3).map(i=>`${i.c.name} (HS ${i.hs!==null?i.hs+'%':'–'})`).join(' · ');
+    const descBC=i=>{const s0=i.sig[0];return `${i.c.name} (${s0?s0.t.toLowerCase():'HS '+(i.hs!==null?i.hs+'%':'–')})`;};
+    const worstBC=watchBC.slice(0,3).map(descBC).join(' · ');
 
     // movement
     const movTxt=m.hasBaseline
@@ -5330,14 +5335,14 @@ checkAuthAndInit();
 
           ${watchA.length?sectionLabel('Acompanhamento · Tier A',`<span style="font-family:'Outfit';letter-spacing:0;text-transform:none;color:var(--muted);">${m.watch.filter(i=>i.a).length}</span>`)+`<div style="display:flex;flex-direction:column;gap:5px;">${watchA.map(watchRow).join('')}</div>`:''}
 
-          ${watchBC.length?sectionLabel('Demais contas em risco (B/C)')+`<div style="font-size:12px;color:var(--ink2);line-height:1.5;"><b>${watchBC.length}</b> conta(s)${worstBC?` · piores: ${worstBC}`:''}. Tratadas no nível CS/comercial — sem decisão executiva nesta quinzena.</div>`:''}
+          ${watchBC.length?sectionLabel('Demais contas em risco (B/C)')+`<div style="font-size:12px;color:var(--ink2);line-height:1.5;"><b>${watchBC.length}</b> conta(s)${worstBC?` · maior severidade: ${worstBC}`:''}. Tratadas no nível CS/comercial — sem decisão executiva nesta quinzena.</div>`:''}
 
           ${sectionLabel(m.hasBaseline?('Movimento vs. base de '+m.baseLbl):'Movimento')}
           <div style="font-size:12px;color:var(--ink);">${movTxt}</div>
         </div>
 
         <div style="padding:9px 20px 14px;border-top:0.5px solid var(--border);font-size:10px;color:var(--muted);line-height:1.5;">
-          Critério de inclusão: contas com risco de churn sinalizado pelo CS (cancelamento/queda de faturamento), 2+ semanas em crítico, ou Health Score &lt; 70. Decisões = escalação aberta ou risco de cancelamento. As demais seguem na aba Gestão.${m.hasMRR?'':'<br>Para exibir a receita em risco em R$, cadastre o MRR por conta (campo <b>mrr</b>) na Administração.'}
+          Critério de inclusão: risco de churn sinalizado pelo CS (cancelamento/queda de faturamento), 2+ semanas em crítico, Health Score &lt; 70, ou escalação aberta. Decisões = escalação aberta ou risco de cancelamento. As demais seguem na aba Gestão.${m.hasMRR?'':'<br>Para exibir a receita em risco em R$, cadastre o MRR por conta (campo <b>mrr</b>) na Administração.'}
         </div>
       </div>`;
   }
@@ -5374,7 +5379,7 @@ checkAuthAndInit();
     kids.push(P([R(`Tier A: ${m.tierA.length} em risco · cobertura ${m.allA.length-m.pendA.length}/${m.allA.length} avaliadas`+(m.hsAvgA!==null?` · HS médio A ${m.hsAvgA}%`:'')+(m.pendA.length?` · ${m.pendA.length} sem avaliação`:''),{size:16,color:MUT})],{spacing:{after:140}}));
     // números
     const heroA=m.hasMRR?[money(m.revAtRisk),'receita em risco/mês',INK]:[String(m.tierA.length),'Tier A em risco',RED];
-    const cells=[heroA,[String(m.risk.length),'contas em risco',m.risk.length?RED:GRN],[String(m.decisions.length),'decisões em aberto',m.decisions.length?AMB:GRN],(m.hasBaseline?[`${m.delta>0?'+':''}${m.delta}`,`vs. base de ${m.baseLbl}`,m.delta>0?RED:m.delta<0?GRN:MUT]:['—','sem base comparativa',MUT])];
+    const cells=[heroA,[String(m.risk.length),'contas no radar',m.risk.length?RED:GRN],[String(m.decisions.length),'decisões em aberto',m.decisions.length?AMB:GRN],(m.hasBaseline?[`${m.delta>0?'+':''}${m.delta}`,`vs. base de ${m.baseLbl}`,m.delta>0?RED:m.delta<0?GRN:MUT]:['—','sem base comparativa',MUT])];
     kids.push(new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
       rows:[new TableRow({children:cells.map(c=>new TableCell({width:{size:25,type:WidthType.PERCENTAGE},borders:NB,margins:{top:40,bottom:40,left:100,right:100},
         children:[P([new TextRun({text:c[0],font:F,size:38,bold:true,color:c[2]})],{spacing:{after:0}}),P([new TextRun({text:c[1],font:F,size:15,color:MUT})])]}))})]}));
@@ -5414,8 +5419,8 @@ checkAuthAndInit();
     // demais b/c
     const watchBC=m.watch.filter(i=>!i.a);
     if(watchBC.length){ kids.push(H('Demais contas em risco (B/C)',null));
-      const worst=watchBC.slice(0,3).map(i=>`${i.c.name} (HS ${i.hs!==null?i.hs+'%':'–'})`).join(' · ');
-      kids.push(P([R(`${watchBC.length} conta(s)`+(worst?` · piores: ${worst}`:'')+'. Tratadas no nível CS/comercial — sem decisão executiva nesta quinzena.',{size:18,color:INK})])); }
+      const worst=watchBC.slice(0,3).map(i=>{const s0=i.sig[0];return `${i.c.name} (${s0?s0.t.toLowerCase():'HS '+(i.hs!==null?i.hs+'%':'–')})`;}).join(' · ');
+      kids.push(P([R(`${watchBC.length} conta(s)`+(worst?` · maior severidade: ${worst}`:'')+'. Tratadas no nível CS/comercial — sem decisão executiva nesta quinzena.',{size:18,color:INK})])); }
 
     // movimento
     kids.push(H(m.hasBaseline?('Movimento vs. base de '+m.baseLbl):'Movimento',null));
@@ -5424,7 +5429,7 @@ checkAuthAndInit();
       : P([R('Sem histórico arquivado anterior — o movimento passa a ser calculado a partir da próxima edição, após rodar "Nova Semana".',{size:18,color:MUT})]));
 
     // rodapé
-    kids.push(P([R('Critério de inclusão: risco de churn sinalizado pelo CS (cancelamento/queda de faturamento), 2+ semanas em crítico, ou Health Score < 70. Decisões = escalação aberta ou risco de cancelamento.',{size:14,color:MUT})],{spacing:{before:220},border:{top:{style:BorderStyle.SINGLE,size:4,color:LINE,space:6}}}));
+    kids.push(P([R('Critério de inclusão: risco de churn sinalizado pelo CS (cancelamento/queda de faturamento), 2+ semanas em crítico, Health Score < 70, ou escalação aberta. Decisões = escalação aberta ou risco de cancelamento.',{size:14,color:MUT})],{spacing:{before:220},border:{top:{style:BorderStyle.SINGLE,size:4,color:LINE,space:6}}}));
 
     const doc=new Document({styles:{default:{document:{run:{font:F}}}},sections:[{properties:{page:{margin:{top:640,bottom:640,left:760,right:760}}},children:kids}]});
     Packer.toBlob(doc).then(blob=>{
