@@ -5813,5 +5813,79 @@ checkAuthAndInit();
 })();
 </script>
 
+<!-- ===== ARCO · CADÊNCIA VISÍVEL PARA O TIME (add-on) ===== -->
+<script>
+(function(){
+  if(window._cadVisInstalled) return; window._cadVisInstalled=true;
+
+  /* Reaproveita a lógica de Cadência do módulo de simulação (fonte única). */
+  function cad(id){
+    try{ if(window._hsSim&&typeof window._hsSim.cadencia==='function') return window._hsSim.cadencia(id); }catch(e){}
+    return null;
+  }
+  const COR={'Em dia':['var(--green-bg)','var(--green)'],'Atrasada':['var(--amber-bg)','var(--amber)'],'Crítica':['var(--red-bg)','var(--red)']};
+
+  /* ── 1. BADGE NO CARD DA CONTA ─────────────────────────────────────── */
+  function decorarCards(fc){
+    const lista=document.getElementById('client-list'); if(!lista||!fc) return;
+    const linhas=lista.children;
+    for(let i=0;i<linhas.length&&i<fc.length;i++){
+      const row=linhas[i], c=fc[i]; if(!c) continue;
+      if(row.querySelector('.cad-badge')) continue;
+      const tb=row.querySelector('[class*="badge-tier-"]'); if(!tb) continue;
+      const info=cad(c.id); if(!info||info.st==='—') continue;
+      const cor=COR[info.st]||['var(--surface2)','var(--muted)'];
+      const b=document.createElement('span');
+      b.className='badge cad-badge';
+      b.style.cssText=`background:${cor[0]};color:${cor[1]};cursor:help;`;
+      b.textContent='⏱ '+info.st+(info.pend.length?' ('+info.pend.length+')':'');
+      b.title=info.pend.length?('Pendências de cadência:\n• '+info.pend.join('\n• ')):'Cadência em dia';
+      tb.parentNode.insertBefore(b,tb.nextSibling);
+    }
+  }
+
+  /* ── 2. BLOCO NO MODAL DE PREENCHIMENTO ────────────────────────────── */
+  function blocoModal(id){
+    const anchor=document.getElementById('modalHistoryStrip'); if(!anchor) return;
+    let box=document.getElementById('cadBlockVis');
+    if(!box){
+      box=document.createElement('div'); box.id='cadBlockVis';
+      anchor.parentNode.insertBefore(box,anchor.nextSibling);
+    }
+    const info=cad(id);
+    if(!info||info.st==='—'){
+      box.innerHTML=`<div style="border:1px dashed var(--border);border-radius:var(--r-xl);padding:10px 13px;margin-bottom:14px;font-size:11.5px;color:var(--muted);">⏱ <b>Cadência</b> — calculada após o preenchimento das dimensões ARCO.</div>`;
+      return;
+    }
+    const cor=COR[info.st]||['var(--surface2)','var(--muted)'];
+    const itens=info.pend.length
+      ? `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;">${info.pend.map(x=>`<span style="font-size:10.5px;padding:3px 9px;border-radius:20px;background:var(--card);border:1px solid ${cor[1]};color:${cor[1]};">${x}</span>`).join('')}</div>`
+      : `<div style="font-size:11.5px;color:var(--green);margin-top:6px;">Nenhuma pendência — cadência em dia.</div>`;
+    box.innerHTML=`
+      <div style="border:1.5px solid ${cor[1]};background:${cor[0]};border-radius:var(--r-xl);padding:11px 13px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${cor[1]};">⏱ Cadência de execução</div>
+          <div style="font-size:12.5px;font-weight:700;color:${cor[1]};">${info.st}</div>
+        </div>
+        <div style="font-size:11px;color:var(--ink2);margin-top:5px;line-height:1.45;">
+          Estes itens <b>não afetam o Health Score do cliente</b> — medem a nossa execução na conta.
+        </div>
+        ${itens}
+      </div>`;
+  }
+
+  /* ── 3. ENGANCHA NAS FUNÇÕES DO APP (sem editar o base) ────────────── */
+  if(typeof window.renderList==='function'){
+    const o=window.renderList;
+    window.renderList=function(fc){ const r=o.apply(this,arguments); try{decorarCards(fc);}catch(e){} return r; };
+  }
+  if(typeof window.openFillModal==='function'){
+    const o=window.openFillModal;
+    window.openFillModal=function(id){ const r=o.apply(this,arguments); try{blocoModal(id);}catch(e){} return r; };
+  }
+  window._cadVis={decorar:decorarCards,bloco:blocoModal,cad:cad};
+})();
+</script>
+
 </body>
 </html>
