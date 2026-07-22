@@ -4968,5 +4968,428 @@ checkAuthAndInit();
 <div id="kpiDrawerOverlay" onclick="closeKpiDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:899;"></div>
 <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
+
+<!-- ===== ARCO · REPORT EXECUTIVO (add-on) ===== -->
+<script>
+(function(){
+  if(window._reportExecInstalled) return;
+  window._reportExecInstalled = true;
+
+  const DOCX_CDN='https://cdn.jsdelivr.net/npm/docx@9.7.1/dist/index.iife.js';
+  const DOCX_ALT='https://unpkg.com/docx@9.7.1/dist/index.iife.js';
+  const MAX_CARDS=8;      // nº máximo de decisões com card completo (mantém 1 página)
+  const MAX_WATCH_A=12;   // nº máximo de contas Tier A na lista de acompanhamento
+
+  /* ── período / quinzena ─────────────────────────────────────────────── */
+  function quinzena(d){
+    d=d||new Date();
+    const day=d.getDate(), first=day<=15, y=d.getFullYear(), m=d.getMonth();
+    const lastDay=new Date(y,m+1,0).getDate();
+    const ms=d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+    const ml=d.toLocaleDateString('pt-BR',{month:'long'});
+    return {
+      label:first?'1ª quinzena':'2ª quinzena', num:first?1:2,
+      range:`${String(first?1:16).padStart(2,'0')}–${String(first?15:lastDay).padStart(2,'0')} ${ms}`,
+      monthYear:`${ml.charAt(0).toUpperCase()+ml.slice(1)} ${y}`,
+      gen:new Date().toLocaleDateString('pt-BR'),
+      file:`ARCO_Report_${first?'1':'2'}quinz_${d.toISOString().slice(0,7)}`
+    };
+  }
+
+  /* ── helpers ────────────────────────────────────────────────────────── */
+  const tierOf=c=>(c.tier||'C').toUpperCase();
+  const isA=c=>tierOf(c)==='A'||c.vip===true||c.vip==='true';
+  const arr=v=>v==null?[]:(Array.isArray(v)?v:[v]);
+  const trim=(s,n)=>{ s=(s||'').replace(/\s+/g,' ').trim(); return s.length>n?s.slice(0,n-1)+'…':s; };
+  const money=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
+  const mrrOf=c=>{ const v=parseFloat(c.mrr||c.receita||c.valor||0); return isNaN(v)?0:v; };
+
+  function atRisk(id){
+    if(typeof hasChurnRisk==='function'&&hasChurnRisk(id)) return true;
+    const hs=calcHealthScore(id); return hs!==null&&hs<70;
+  }
+  function atRiskFrom(e,id){
+    if(!e||!e.R) return false;
+    if(e.R==='V'||e.C==='V') return true;
+    const hs=(typeof calcHealthScore_from==='function')?calcHealthScore_from(e,id):null;
+    if(hs!==null&&hs<70) return true;
+    return arr(e.churnRisk).some(x=>x&&x!=='none');
+  }
+  function needsDecision(id){
+    const e=entries[id]||{};
+    if(e.needFrom&&e.needFrom.trim()) return true;
+    return arr(e.churnRisk).includes('cancel');
+  }
+  function causaText(id){
+    const e=entries[id]||{}, nm={A:'Adoção',R:'Resultado',C:'Continuidade',O:'Operação'}, parts=[];
+    ['R','C','O','A'].forEach(d=>{ if(e[d]==='V'){ const j=(e['just'+d]||'').trim(); parts.push(j?`${nm[d]}: ${j}`:`${nm[d]} crítico`); }});
+    let t=parts.join(' · '); const cn=(e.churnNotes||'').trim();
+    if(cn) t=t?`${t} — ${cn}`:cn;
+    if(!t){ ['R','C','O','A'].forEach(d=>{ if(!t&&e[d]==='A'){ const j=(e['just'+d]||'').trim(); if(j) t=`${nm[d]} (atenção): ${j}`; }}); }
+    return t||'Sem justificativa registrada pelo CS.';
+  }
+  function signals(id){
+    const c=clients.find(x=>x.id===id)||{}, e=entries[id]||{}, out=[], r=arr(e.churnRisk);
+    if(r.includes('cancel')) out.push({t:'Risco de cancelamento',tone:'red'});
+    if(r.includes('billing')) out.push({t:'Queda de faturamento',tone:'amber'});
+    const cc=(typeof consecutiveCriticalWeeks==='function')?consecutiveCriticalWeeks(id):0;
+    if(cc>=2) out.push({t:`${cc}ª sem. crítica`,tone:'red'});
+    const nps=e.npsScore?parseInt(e.npsScore):null;
+    if(nps!==null&&nps<=6) out.push({t:`NPS ${nps} · detrator`,tone:'red'});
+    if(typeof getMostCriticalContract==='function'){
+      const mc=getMostCriticalContract(c.name);
+      if(mc){ const d=contractDaysLeft(mc.venc);
+        if(d!==null){ if(d<0) out.push({t:`Contrato vencido há ${Math.abs(d)}d`,tone:'red'});
+          else if(d<=30) out.push({t:`Contrato vence em ${d}d`,tone:'red'});
+          else if(d<=60) out.push({t:`Contrato vence em ${d}d`,tone:'amber'}); } }
+    }
+    if(e.billing==='down'&&!r.includes('billing')) out.push({t:'Faturamento em queda',tone:'amber'});
+    return out;
+  }
+  function trend(id){
+    const p=getPrevEntry(id), hs=calcHealthScore(id);
+    if(!p||!p.R||hs===null) return {a:'',l:'',dir:'na'};
+    const ph=(typeof calcHealthScore_from==='function')?calcHealthScore_from(p,id):null;
+    if(ph===null) return {a:'',l:'',dir:'na'};
+    const d=hs-ph;
+    if(d<=-3) return {a:'▼',l:`−${Math.abs(d)}`,dir:'down'};
+    if(d>=3) return {a:'▲',l:`+${d}`,dir:'up'};
+    return {a:'→',l:'estável',dir:'same'};
+  }
+  const hsCol=hs=>hs===null?'var(--muted)':hs>=90?'var(--green)':hs>=71?'var(--amber)':'var(--red)';
+
+  /* ── modelo do report ───────────────────────────────────────────────── */
+  function build(){
+    const q=quinzena();
+    const enrich=c=>{ const id=c.id;
+      return { c,id,e:(entries[id]||{}), hs:calcHealthScore(id), tr:trend(id), sig:signals(id),
+        dec:needsDecision(id), a:isA(c), mrr:mrrOf(c),
+        cc:(typeof consecutiveCriticalWeeks==='function')?consecutiveCriticalWeeks(id):0 }; };
+    const risk=clients.filter(c=>atRisk(c.id)).map(enrich);
+    risk.forEach(it=>{ let s=0;
+      if(it.a) s+=1000; else if(tierOf(it.c)==='B') s+=300;
+      const r=arr(it.e.churnRisk);
+      if(r.includes('cancel')) s+=120; if(r.includes('billing')) s+=60;
+      s+=(it.hs!==null?(100-it.hs):55); s+=it.cc*15;
+      if(it.tr.dir==='down') s+=25;
+      const nps=it.e.npsScore?parseInt(it.e.npsScore):null; if(nps!==null&&nps<=6) s+=20;
+      if(typeof getMostCriticalContract==='function'){ const mc=getMostCriticalContract(it.c.name);
+        if(mc){ const d=contractDaysLeft(mc.venc); if(d!==null){ if(d<0)s+=40; else if(d<=30)s+=30; else if(d<=60)s+=12; } } }
+      it.sev=s; });
+    risk.sort((a,b)=>b.sev-a.sev);
+
+    const decisions=risk.filter(i=>i.dec);
+    const watch=risk.filter(i=>!i.dec);
+    const tierA=risk.filter(i=>i.a);
+    const allA=clients.filter(isA);
+    const pendA=allA.filter(c=>!entries[c.id]||!entries[c.id].R);
+    const worsened=risk.filter(i=>i.tr.dir==='down');
+    const improved=clients.filter(c=>{ const p=getPrevEntry(c.id); if(!p||!p.R)return false;
+      return statusOrder(getEntryStatus(c.id))>statusOrder(getEntryStatus_from(p)); });
+    const prevSnap=weekHistory[getWeekKey(-1)]||{};
+    let prevRisk=0; Object.keys(prevSnap).forEach(k=>{ if(atRiskFrom(prevSnap[k],parseInt(k))) prevRisk++; });
+    const delta=risk.length-prevRisk;
+    const hasMRR=clients.some(c=>mrrOf(c)>0);
+    const revAtRisk=risk.reduce((s,i)=>s+i.mrr,0);
+    const aScores=allA.map(c=>calcHealthScore(c.id)).filter(x=>x!==null);
+    const hsAvgA=aScores.length?Math.round(aScores.reduce((a,b)=>a+b,0)/aScores.length):null;
+
+    return { q,risk,decisions,watch,tierA,allA,pendA,worsened,improved,delta,hasMRR,revAtRisk,hsAvgA };
+  }
+  function leitura(m){
+    const pctA=m.risk.length?Math.round(m.tierA.length/m.risk.length*100):0;
+    const nR=m.risk.length, nD=m.decisions.length;
+    let t=`Nesta ${m.q.label} (${m.q.range}), ${nR} ${nR===1?'conta está':'contas estão'} em risco de churn`;
+    if(m.tierA.length) t+=`, ${m.tierA.length===1?'sendo 1 Tier A':'sendo '+m.tierA.length+' Tier A'} (${pctA}% do risco)`;
+    t+=`. ${nD===1?'1 decisão aguarda':nD+' decisões aguardam'} definição executiva`;
+    t+=`. Quadro ${m.delta>0?'piorou':m.delta<0?'melhorou':'estável'}`;
+    if(m.delta!==0) t+=` (${m.delta>0?'+':''}${m.delta} vs. quinzena anterior)`;
+    return t+'.';
+  }
+
+  /* ── UI: aba + botões ───────────────────────────────────────────────── */
+  function install(){
+    const tabs=document.querySelector('.main-tabs');
+    if(tabs&&!document.getElementById('tab-btn-report')){
+      const b=document.createElement('button');
+      b.className='main-tab'; b.id='tab-btn-report'; b.style.display='none';
+      b.innerHTML='📄 Report Executivo';
+      b.onclick=openReport;
+      tabs.appendChild(b);
+    }
+    if(!document.getElementById('tab-report')){
+      const d=document.createElement('div');
+      d.className='tab-content'; d.id='tab-report';
+      d.innerHTML=`
+        <div style="flex:1;padding:24px 28px;overflow-y:auto;background:var(--bg);width:100%;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+            <div class="view-title">Report Executivo <span>Retenção estratégica · decisão quinzenal</span></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" onclick="window._arcoReport.print()">🖨 Imprimir</button>
+              <button class="btn btn-primary" onclick="window._arcoReport.docx()">↓ Exportar DOCX</button>
+            </div>
+          </div>
+          <div id="reportExecSheet" style="max-width:860px;margin:0 auto;"></div>
+        </div>`;
+      document.body.appendChild(d);
+    }
+    if(!document.getElementById('reportExecPrintCSS')){
+      const st=document.createElement('style'); st.id='reportExecPrintCSS';
+      st.textContent=`@media print{
+        body>.topbar,body>div:has(.main-tabs),#sidebarOverlay,#kpiDrawer,#kpiDrawerOverlay{display:none!important;}
+        .tab-content{display:none!important;}
+        #tab-report.active{display:block!important;}
+        #tab-report .view-title span,#tab-report .btn{display:none!important;}
+        #tab-report>div{padding:0!important;overflow:visible!important;}
+        #reportExecSheet{max-width:100%!important;}
+        @page{margin:12mm;}
+      }`;
+      document.head.appendChild(st);
+    }
+    updateVisibility();
+  }
+  function updateVisibility(){
+    const b=document.getElementById('tab-btn-report');
+    if(b) b.style.display=(window.currentUser&&currentUser.role==='admin')?'':'none';
+  }
+  function openReport(){
+    document.querySelectorAll('.main-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    const b=document.getElementById('tab-btn-report'); if(b) b.classList.add('active');
+    document.getElementById('tab-report').classList.add('active');
+    renderReport();
+  }
+
+  /* ── render HTML (uma página) ───────────────────────────────────────── */
+  function chip(s){
+    const c=s.tone==='red'?['var(--red-bg)','var(--red)']:['var(--amber-bg)','var(--amber)'];
+    return `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:${c[0]};color:${c[1]};white-space:nowrap;">${s.t}</span>`;
+  }
+  function tierBadge(c){
+    const t=tierOf(c);
+    const map={A:['#FEF3C7','#92400E'],B:['#EEF2FF','#3730A3'],C:['var(--surface2)','var(--muted)']};
+    const col=map[t]||map.C;
+    return `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:${col[0]};color:${col[1]};">Tier ${t}</span>`;
+  }
+  function decisionCard(it){
+    const c=it.c,e=it.e,hs=it.hs;
+    const trTxt=it.tr.dir==='down'?`<span style="color:var(--red);">▼ ${it.tr.l}</span>`
+      :it.tr.dir==='up'?`<span style="color:var(--green);">▲ ${it.tr.l}</span>`
+      :it.tr.dir==='same'?`<span style="color:var(--muted);">→ estável</span>`:'';
+    const consec=it.cc>=2?` · <span style="color:var(--red);">${it.cc}ª sem. crítica</span>`:'';
+    const parts=[];
+    parts.push(`<div style="font-size:12px;line-height:1.5;color:var(--ink);"><span style="color:var(--muted);">Causa:</span> ${trim(causaText(it.id),240)}</div>`);
+    if((e.actionTaken||'').trim()) parts.push(`<div style="font-size:12px;line-height:1.5;color:var(--ink);margin-top:3px;"><span style="color:var(--muted);">Já feito:</span> ${trim(e.actionTaken,160)}</div>`);
+    if((e.needFrom||'').trim()) parts.push(`<div style="font-size:12px;line-height:1.45;margin-top:7px;padding:7px 10px;background:var(--brand-light);border-radius:8px;color:var(--brand2);"><b>Escalação:</b> ${trim(e.needFrom,200)}</div>`);
+    if((e.nextAction||'').trim()){ const dt=e.nextActionDate?` · até ${new Date(e.nextActionDate+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`:''; parts.push(`<div style="font-size:11px;color:var(--muted);margin-top:6px;">▶ Próximo passo: ${trim(e.nextAction,120)}${dt}</div>`); }
+    parts.push(`<div style="display:flex;align-items:center;gap:8px;margin-top:7px;padding:6px 10px;border:0.5px dashed var(--border2);border-radius:8px;"><span style="font-size:11px;font-weight:600;color:var(--ink);">Decisão:</span><span style="flex:1;border-bottom:1px solid var(--border2);height:1px;"></span></div>`);
+    const stripe=it.a?'#EF9F27':'var(--red)';
+    return `<div style="display:flex;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:9px;background:var(--card);">
+      <div style="width:4px;background:${stripe};flex-shrink:0;"></div>
+      <div style="flex:1;padding:11px 14px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);">${c.name}${c.vip?' ⭐':''}</div>
+          <div style="font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:600;color:${hsCol(hs)};white-space:nowrap;">HS ${hs!==null?hs+'%':'–'} ${trTxt}${consec}</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 8px;align-items:center;">
+          ${tierBadge(c)}
+          <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:var(--surface);color:var(--muted);">CS: ${c.gs}</span>
+          ${it.sig.map(chip).join('')}
+          ${it.mrr>0?`<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:var(--red-bg);color:var(--red);">${money(it.mrr)}/mês</span>`:''}
+        </div>
+        ${parts.join('')}
+      </div>
+    </div>`;
+  }
+  function watchRow(it){
+    const s=it.sig[0];
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:0.5px solid var(--border);border-radius:9px;background:var(--card);">
+      <span style="font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;">${it.c.name}${it.c.vip?' ⭐':''}</span>
+      ${tierBadge(it.c)}
+      <span style="font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600;color:${hsCol(it.hs)};white-space:nowrap;">HS ${it.hs!==null?it.hs+'%':'–'}</span>
+      ${s?chip(s):''}
+    </div>`;
+  }
+  function sectionLabel(t,extra){
+    return `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;margin:16px 0 9px;">${t}<span style="flex:1;height:1px;background:var(--border);"></span>${extra||''}</div>`;
+  }
+
+  function renderReport(){
+    const m=build(); window._arcoReportModel=m;
+    const q=m.q;
+    // hero
+    const heroA = m.hasMRR
+      ? {v:money(m.revAtRisk),s:'receita em risco/mês',c:'var(--ink)'}
+      : {v:`${m.tierA.length}`,s:`Tier A em risco (${m.allA.length-m.pendA.length}/${m.allA.length} aval.)`,c:'var(--red)'};
+    const hero=[
+      heroA,
+      {v:`${m.risk.length}`,s:'contas em risco',c:m.risk.length?'var(--red)':'var(--green)'},
+      {v:`${m.decisions.length}`,s:'decisões em aberto',c:m.decisions.length?'var(--churn)':'var(--green)'},
+      {v:`${m.delta>0?'▲ ':m.delta<0?'▼ ':''}${m.delta>0?'+':''}${m.delta}`,s:'vs. quinzena anterior',c:m.delta>0?'var(--red)':m.delta<0?'var(--green)':'var(--muted)'}
+    ];
+    const decA=m.decisions.filter(i=>i.a), decO=m.decisions.filter(i=>!i.a);
+    let cardCount=0; const cardHtml=[];
+    if(decA.length){ cardHtml.push(sectionLabel('Prioridade · Tier A',`<span style="font-family:'Outfit';letter-spacing:0;text-transform:none;color:var(--muted);">${decA.length}</span>`));
+      decA.forEach(it=>{ if(cardCount++<MAX_CARDS) cardHtml.push(decisionCard(it)); }); }
+    if(decO.length){ cardHtml.push(sectionLabel('Demais decisões'));
+      decO.forEach(it=>{ if(cardCount++<MAX_CARDS) cardHtml.push(decisionCard(it)); }); }
+    if(m.decisions.length>MAX_CARDS) cardHtml.push(`<div style="font-size:11px;color:var(--muted);padding:4px 2px;">+ ${m.decisions.length-MAX_CARDS} decisão(ões) adicional(is) — ver aba Gestão.</div>`);
+    if(!m.decisions.length) cardHtml.push(`<div style="font-size:12px;color:var(--green);padding:10px 2px;">✓ Nenhuma decisão executiva pendente nesta quinzena.</div>`);
+
+    // watchlist
+    const watchA=m.watch.filter(i=>i.a).slice(0,MAX_WATCH_A);
+    const watchBC=m.watch.filter(i=>!i.a);
+    const worstBC=watchBC.slice(0,3).map(i=>`${i.c.name} (HS ${i.hs!==null?i.hs+'%':'–'})`).join(' · ');
+
+    // movement
+    const movTxt=`<span style="color:var(--green);">▲ ${m.improved.length} recuperaram</span> &nbsp;·&nbsp; <span style="color:var(--red);">▼ ${m.worsened.length} pioraram</span>`;
+
+    document.getElementById('reportExecSheet').innerHTML=`
+      <div style="background:var(--card);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-card);">
+        <div style="background:var(--brand);padding:15px 20px;color:#fff;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+            <div>
+              <div style="font-size:11px;letter-spacing:.16em;font-weight:600;color:#8FB4F0;">SAFIRA · ARCO</div>
+              <div style="font-size:17px;font-weight:600;margin-top:3px;">Retenção estratégica</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:13px;font-weight:600;">${q.label} · ${q.monthYear}</div>
+              <div style="font-size:10.5px;color:#8496B8;margin-top:2px;font-family:'JetBrains Mono',monospace;">${q.range} · gerado ${q.gen}</div>
+            </div>
+          </div>
+          <div style="font-size:10.5px;color:#8496B8;margin-top:9px;border-top:1px solid rgba(255,255,255,.1);padding-top:7px;">Decisão executiva · quinzenal　·　Confidencial</div>
+        </div>
+
+        <div style="padding:12px 20px 4px;background:var(--surface);border-bottom:0.5px solid var(--border);">
+          <div style="font-size:12.5px;line-height:1.55;color:var(--ink);">${leitura(m)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:5px;">Tier A: <b style="color:var(--ink2);">${m.tierA.length}</b> em risco · cobertura <b style="color:var(--ink2);">${m.allA.length-m.pendA.length}/${m.allA.length}</b> avaliadas${m.hsAvgA!==null?` · HS médio A <b style="color:${hsCol(m.hsAvgA)};">${m.hsAvgA}%</b>`:''}${m.pendA.length?` · <span style="color:var(--amber);">${m.pendA.length} sem avaliação</span>`:''}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);">
+          ${hero.map(h=>`<div style="background:var(--card);padding:12px 14px;"><div style="font-size:23px;font-weight:700;letter-spacing:-.03em;color:${h.c};line-height:1;">${h.v}</div><div style="font-size:10px;color:var(--muted);margin-top:3px;">${h.s}</div></div>`).join('')}
+        </div>
+
+        <div style="padding:6px 20px 14px;">
+          ${sectionLabel('Decisões em aberto · ordenadas por severidade')}
+          ${cardHtml.join('')}
+
+          ${watchA.length?sectionLabel('Acompanhamento · Tier A',`<span style="font-family:'Outfit';letter-spacing:0;text-transform:none;color:var(--muted);">${m.watch.filter(i=>i.a).length}</span>`)+`<div style="display:flex;flex-direction:column;gap:5px;">${watchA.map(watchRow).join('')}</div>`:''}
+
+          ${watchBC.length?sectionLabel('Demais contas em risco (B/C)')+`<div style="font-size:12px;color:var(--ink2);line-height:1.5;"><b>${watchBC.length}</b> conta(s)${worstBC?` · piores: ${worstBC}`:''}. Tratadas no nível CS/comercial — sem decisão executiva nesta quinzena.</div>`:''}
+
+          ${sectionLabel('Movimento vs. quinzena anterior')}
+          <div style="font-size:12px;color:var(--ink);">${movTxt}</div>
+        </div>
+
+        <div style="padding:9px 20px 14px;border-top:0.5px solid var(--border);font-size:10px;color:var(--muted);line-height:1.5;">
+          Critério de inclusão: contas com risco de churn sinalizado pelo CS (cancelamento/queda de faturamento), 2+ semanas em crítico, ou Health Score &lt; 70. Decisões = escalação aberta ou risco de cancelamento. As demais seguem na aba Gestão.${m.hasMRR?'':'<br>Para exibir a receita em risco em R$, cadastre o MRR por conta (campo <b>mrr</b>) na Administração.'}
+        </div>
+      </div>`;
+  }
+
+  /* ── impressão ──────────────────────────────────────────────────────── */
+  function doPrint(){ if(!document.getElementById('tab-report').classList.contains('active')) openReport(); setTimeout(()=>window.print(),120); }
+
+  /* ── export DOCX (docx v9 via CDN, carregado sob demanda) ───────────── */
+  function ensureDocx(cb){
+    if(window.docx){cb();return;}
+    if(typeof showToast==='function') showToast('⏳ Carregando gerador de DOCX…');
+    const load=(url,onerr)=>{ const s=document.createElement('script'); s.src=url; s.onload=()=>cb(); s.onerror=onerr; document.head.appendChild(s); };
+    load(DOCX_CDN,()=>load(DOCX_ALT,()=>{ if(typeof showToast==='function') showToast('✕ Falha ao carregar o gerador de DOCX (verifique a internet).'); }));
+  }
+  function doDocx(){ ensureDocx(()=>{ try{ buildDocx(build()); }catch(err){ console.error('DOCX',err); if(typeof showToast==='function') showToast('✕ Erro ao gerar DOCX: '+err.message); } }); }
+
+  function buildDocx(m){
+    const D=window.docx;
+    const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,BorderStyle,AlignmentType}=D;
+    const INK='0D1526',MUT='6B7A99',RED='A32D2D',AMB='854F0B',GRN='2E6B10',BRAND='0A1B38',BLUE='0C447C',GOLD='8A6D1B',LINE='DDE3F0';
+    const F='Calibri';
+    const R=(t,o={})=>new TextRun(Object.assign({text:t,font:F,size:19,color:INK},o));
+    const P=(ch,o={})=>new Paragraph(Object.assign({children:Array.isArray(ch)?ch:[ch]},o));
+    const NB={top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}};
+    const toneCol=t=>t==='red'?RED:AMB;
+
+    const kids=[];
+    // título
+    kids.push(P([R('SAFIRA · ARCO',{bold:true,size:16,color:BRAND})],{spacing:{after:20}}));
+    kids.push(P([R('Retenção estratégica',{bold:true,size:30,color:BRAND})],{spacing:{after:10}}));
+    kids.push(P([R(`${m.q.label} · ${m.q.monthYear}`,{size:19,color:INK}),R(`   ·   ${m.q.range} · gerado ${m.q.gen} · Confidencial`,{size:16,color:MUT})],{spacing:{after:120},border:{bottom:{style:BorderStyle.SINGLE,size:6,color:LINE,space:6}}}));
+    // leitura
+    kids.push(P([R(leitura(m),{size:20,color:INK})],{spacing:{after:60}}));
+    kids.push(P([R(`Tier A: ${m.tierA.length} em risco · cobertura ${m.allA.length-m.pendA.length}/${m.allA.length} avaliadas`+(m.hsAvgA!==null?` · HS médio A ${m.hsAvgA}%`:'')+(m.pendA.length?` · ${m.pendA.length} sem avaliação`:''),{size:16,color:MUT})],{spacing:{after:140}}));
+    // números
+    const heroA=m.hasMRR?[money(m.revAtRisk),'receita em risco/mês',INK]:[String(m.tierA.length),'Tier A em risco',RED];
+    const cells=[heroA,[String(m.risk.length),'contas em risco',m.risk.length?RED:GRN],[String(m.decisions.length),'decisões em aberto',m.decisions.length?AMB:GRN],[`${m.delta>0?'+':''}${m.delta}`,'vs. quinzena anterior',m.delta>0?RED:m.delta<0?GRN:MUT]];
+    kids.push(new Table({width:{size:100,type:WidthType.PERCENTAGE},borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
+      rows:[new TableRow({children:cells.map(c=>new TableCell({width:{size:25,type:WidthType.PERCENTAGE},borders:NB,margins:{top:40,bottom:40,left:100,right:100},
+        children:[P([new TextRun({text:c[0],font:F,size:38,bold:true,color:c[2]})],{spacing:{after:0}}),P([new TextRun({text:c[1],font:F,size:15,color:MUT})])]}))})]}));
+    kids.push(P([R('',{size:8})],{spacing:{after:60}}));
+
+    const H=(t,n)=>P([R(t.toUpperCase(),{bold:true,size:15,color:MUT,characterSpacing:20}),...(n!=null?[R('   '+n,{size:15,color:MUT})]:[])],{spacing:{before:160,after:70},border:{bottom:{style:BorderStyle.SINGLE,size:4,color:LINE,space:4}}});
+
+    function card(it){
+      const c=it.c,e=it.e,accent=it.a?'#EF9F27'.replace('#',''):RED;
+      const inner=[];
+      const trR=it.tr.dir==='down'?R(` ▼${it.tr.l}`,{size:18,color:RED,bold:true}):it.tr.dir==='up'?R(` ▲${it.tr.l}`,{size:18,color:GRN,bold:true}):it.tr.dir==='same'?R(' → estável',{size:18,color:MUT}):R('',{});
+      inner.push(P([R(c.name+(c.vip?' ⭐':''),{bold:true,size:22,color:INK}),R(`   Tier ${tierOf(c)}`,{size:17,color:it.a?GOLD:MUT}),R(`   ·   HS ${it.hs!==null?it.hs+'%':'–'}`,{bold:true,size:18,color:it.hs===null?MUT:it.hs>=90?GRN:it.hs>=71?AMB:RED}),trR,...(it.cc>=2?[R(`   ${it.cc}ª sem. crítica`,{size:16,color:RED})]:[])],{spacing:{after:20}}));
+      if(it.sig.length){ const runs=[R('CS: '+c.gs,{size:16,color:MUT})]; it.sig.forEach(s=>{runs.push(R('   ·   ',{size:16,color:MUT}));runs.push(R(s.t,{size:16,color:toneCol(s.tone),bold:true}));}); if(it.mrr>0){runs.push(R('   ·   ',{size:16,color:MUT}));runs.push(R(money(it.mrr)+'/mês',{size:16,color:RED,bold:true}));} inner.push(P(runs,{spacing:{after:40}})); }
+      inner.push(P([R('Causa: ',{size:18,color:MUT}),R(trim(causaText(it.id),300),{size:18,color:INK})],{spacing:{after:20}}));
+      if((e.actionTaken||'').trim()) inner.push(P([R('Já feito: ',{size:18,color:MUT}),R(trim(e.actionTaken,220),{size:18,color:INK})],{spacing:{after:20}}));
+      if((e.needFrom||'').trim()) inner.push(P([R('Escalação: ',{size:18,bold:true,color:BLUE}),R(trim(e.needFrom,260),{size:18,color:BLUE})],{spacing:{after:20}}));
+      if((e.nextAction||'').trim()){ const dt=e.nextActionDate?' · até '+new Date(e.nextActionDate+'T12:00:00').toLocaleDateString('pt-BR'):''; inner.push(P([R('Próximo passo: ',{size:16,color:MUT}),R(trim(e.nextAction,180)+dt,{size:16,color:INK})],{spacing:{after:20}})); }
+      inner.push(P([R('Decisão: ',{size:18,bold:true,color:INK}),R('______________________________________________',{size:18,color:'B9C2D6'})],{spacing:{after:0}}));
+      return new Table({width:{size:100,type:WidthType.PERCENTAGE},
+        borders:{top:{style:BorderStyle.SINGLE,size:2,color:LINE},bottom:{style:BorderStyle.SINGLE,size:2,color:LINE},left:{style:BorderStyle.SINGLE,size:24,color:accent},right:{style:BorderStyle.SINGLE,size:2,color:LINE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
+        rows:[new TableRow({children:[new TableCell({shading:{fill:'F8FAFD'},margins:{top:90,bottom:90,left:150,right:150},borders:NB,children:inner})]})]});
+    }
+
+    // decisões
+    kids.push(H('Decisões em aberto · ordenadas por severidade',null));
+    const decA=m.decisions.filter(i=>i.a), decO=m.decisions.filter(i=>!i.a); let cc=0;
+    if(decA.length){ kids.push(P([R('Prioridade · Tier A',{bold:true,size:16,color:GOLD})],{spacing:{before:40,after:50}})); decA.forEach(it=>{ if(cc++<MAX_CARDS){kids.push(card(it));kids.push(P([R('',{size:6})],{spacing:{after:60}}));} }); }
+    if(decO.length){ kids.push(P([R('Demais decisões',{bold:true,size:16,color:MUT})],{spacing:{before:60,after:50}})); decO.forEach(it=>{ if(cc++<MAX_CARDS){kids.push(card(it));kids.push(P([R('',{size:6})],{spacing:{after:60}}));} }); }
+    if(m.decisions.length>MAX_CARDS) kids.push(P([R(`+ ${m.decisions.length-MAX_CARDS} decisão(ões) adicional(is) — ver aba Gestão.`,{size:16,color:MUT})]));
+    if(!m.decisions.length) kids.push(P([R('✓ Nenhuma decisão executiva pendente nesta quinzena.',{size:18,color:GRN})]));
+
+    // acompanhamento tier A
+    const watchA=m.watch.filter(i=>i.a).slice(0,MAX_WATCH_A);
+    if(watchA.length){ kids.push(H('Acompanhamento · Tier A',m.watch.filter(i=>i.a).length));
+      watchA.forEach(it=>{ const s=it.sig[0]; kids.push(P([R('• ',{size:18,color:MUT}),R(it.c.name+(it.c.vip?' ⭐':''),{size:18,bold:true,color:INK}),R(`  Tier ${tierOf(it.c)}`,{size:15,color:GOLD}),R(`  HS ${it.hs!==null?it.hs+'%':'–'}`,{size:16,bold:true,color:it.hs===null?MUT:it.hs>=90?GRN:it.hs>=71?AMB:RED}),...(s?[R('  ·  ',{size:16,color:MUT}),R(s.t,{size:16,color:toneCol(s.tone)})]:[])],{spacing:{after:20}})); }); }
+
+    // demais b/c
+    const watchBC=m.watch.filter(i=>!i.a);
+    if(watchBC.length){ kids.push(H('Demais contas em risco (B/C)',null));
+      const worst=watchBC.slice(0,3).map(i=>`${i.c.name} (HS ${i.hs!==null?i.hs+'%':'–'})`).join(' · ');
+      kids.push(P([R(`${watchBC.length} conta(s)`+(worst?` · piores: ${worst}`:'')+'. Tratadas no nível CS/comercial — sem decisão executiva nesta quinzena.',{size:18,color:INK})])); }
+
+    // movimento
+    kids.push(H('Movimento vs. quinzena anterior',null));
+    kids.push(P([R(`▲ ${m.improved.length} recuperaram`,{size:18,color:GRN,bold:true}),R('     ',{}),R(`▼ ${m.worsened.length} pioraram`,{size:18,color:RED,bold:true})]));
+
+    // rodapé
+    kids.push(P([R('Critério de inclusão: risco de churn sinalizado pelo CS (cancelamento/queda de faturamento), 2+ semanas em crítico, ou Health Score < 70. Decisões = escalação aberta ou risco de cancelamento.',{size:14,color:MUT})],{spacing:{before:220},border:{top:{style:BorderStyle.SINGLE,size:4,color:LINE,space:6}}}));
+
+    const doc=new Document({styles:{default:{document:{run:{font:F}}}},sections:[{properties:{page:{margin:{top:640,bottom:640,left:760,right:760}}},children:kids}]});
+    Packer.toBlob(doc).then(blob=>{
+      const url=URL.createObjectURL(blob), a=document.createElement('a');
+      a.href=url; a.download=m.q.file+'.docx'; document.body.appendChild(a); a.click();
+      setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+      if(typeof showToast==='function') showToast('✓ Report exportado em DOCX');
+    });
+  }
+
+  /* ── API pública + hooks ────────────────────────────────────────────── */
+  window._arcoReport={ open:openReport, render:renderReport, print:doPrint, docx:doDocx };
+
+  if(typeof window.enterDashboard==='function'){
+    const _orig=window.enterDashboard;
+    window.enterDashboard=function(){ const r=_orig.apply(this,arguments); try{updateVisibility();}catch(e){} return r; };
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install);
+  else install();
+})();
+</script>
+
 </body>
 </html>
