@@ -5500,7 +5500,8 @@ checkAuthAndInit();
     ctVenc:10, ct15:15, ct30:8, ct60:4,
     chkBas:6, chkGat:4, chkLic:6, chkGov:3,
     consecSem:6, consecTeto:18,
-    tetoAtivo:1, tetoContatoDias:60, tetoContatoMax:89, tetoNpsDias:90, tetoNpsMax:89
+    tetoAtivo:1, tetoContatoDias:60, tetoContatoMax:89, tetoNpsDias:90, tetoNpsMax:89,
+    bookDias:45
   };
   const CHAVES=Object.keys(DEF);
   const FBPATH='roca/hsConfig';
@@ -5524,6 +5525,7 @@ checkAuthAndInit();
     ['Contrato',[['ctVenc','Vencido'],['ct15','Vence ≤15d'],['ct30','Vence ≤30d'],['ct60','Vence ≤60d']]],
     ['Checklist = Não',[['chkBas','O básico'],['chkGat','Gatilhos'],['chkLic','Licenças'],['chkGov','Governança']]],
     ['Teto por evidência',[['tetoAtivo','Ativo (1=sim, 0=não)'],['tetoContatoDias','Contato — dias limite'],['tetoContatoMax','Teto sem contato'],['tetoNpsDias','NPS — dias de validade'],['tetoNpsMax','Teto sem NPS vigente']]],
+    ['Alerta de gestão (não pontua)',[['bookDias','Book atrasado — dias']]],
     ['Outros',[['escal14','Escalação >14d'],['escal7','Escalação >7d'],['renov','Renovação sinalizada'],['consecSem','Por semana crítica'],['consecTeto','Teto sem. críticas']]]
   ];
 
@@ -6012,6 +6014,152 @@ checkAuthAndInit();
     window.getActiveCSNames=listaCS;
   }
   window._fixCS={lista:listaCS};
+})();
+</script>
+
+<!-- ===== ARCO · CARD BOOK ATRASADO (add-on) ===== -->
+<script>
+(function(){
+  if(window._bookCardInstalled) return; window._bookCardInstalled=true;
+
+  /* ═══════════════════════════════════════════════════════════════════
+     CARD "BOOK ATRASADO" — alerta de gestão, NÃO pontua no Health Score.
+
+     Conta os clientes com book contratado sem entrega registrada há mais
+     de N dias (padrão 45 — um ciclo mensal perdido, não atraso de rotina).
+
+     A data do último book é buscada no preenchimento atual E no histórico
+     arquivado: o campo bookDate vive dentro da semana, e "Nova Semana"
+     zera as entries. Sem varrer o histórico, todo book entregue voltaria
+     a aparecer como pendente no primeiro arquivamento.
+     ═══════════════════════════════════════════════════════════════════ */
+  const PADRAO=45;
+  function limiar(){
+    try{ const p=window._hsSim&&window._hsSim.pesos&&window._hsSim.pesos();
+      if(p&&p.bookDias) return p.bookDias; }catch(e){}
+    return PADRAO;
+  }
+  const temBook=c=>c.book===true||c.book==='true'||c.book==='S';
+  const fmt=d=>d?d.toLocaleDateString('pt-BR'):'—';
+
+  function ultimoBook(id){
+    let melhor=null;
+    const ver=e=>{ if(e&&e.bookDate){ const d=new Date(e.bookDate+'T12:00:00');
+      if(!isNaN(d)&&(melhor===null||d>melhor)) melhor=d; } };
+    try{ ver(entries[id]); }catch(e){}
+    try{ Object.keys(weekHistory||{}).forEach(function(wk){
+      const s=weekHistory[wk]; if(s&&s[id]) ver(s[id]); }); }catch(e){}
+    return melhor;
+  }
+
+  function base(){
+    try{
+      if(currentUser&&currentUser.role==='cs'){
+        const u=(authUsers||[]).find(function(x){return x.email===currentUser.email;});
+        const n=((u&&(u.csName||u.name))||currentUser.name||'').toLowerCase().trim();
+        return clients.filter(function(c){return String(c.gs||'').toLowerCase().trim()===n;});
+      }
+      const g=(typeof currentFilter!=='undefined'&&currentFilter.gs)||'all';
+      return g==='all'?clients.slice()
+        :clients.filter(function(c){return String(c.gs||'').toLowerCase().trim()===String(g).toLowerCase().trim();});
+    }catch(e){ return []; }
+  }
+
+  function calc(){
+    const lim=limiar();
+    const pool=base().filter(temBook);
+    const atras=[];
+    pool.forEach(function(c){
+      const u=ultimoBook(c.id);
+      const d=u?Math.floor((new Date()-u)/86400000):null;
+      if(d===null||d>lim) atras.push({c:c,ultimo:u,d:d});
+    });
+    atras.sort(function(a,b){
+      if(a.d===null&&b.d===null) return a.c.name.localeCompare(b.c.name,'pt-BR');
+      if(a.d===null) return -1; if(b.d===null) return 1; return b.d-a.d; });
+    return {total:pool.length,atras:atras,lim:lim};
+  }
+
+  /* ── card na barra de contexto ─────────────────────────────────── */
+  function garantir(){
+    const bar=document.getElementById('ctxBar'); if(!bar) return null;
+    let cel=document.getElementById('ctx-book'); if(cel) return cel;
+    const linha=bar.firstElementChild; if(!linha) return null;
+    cel=document.createElement('div');
+    cel.className='ctx-cell ctx-cell-alert'; cel.id='ctx-book';
+    cel.style.cursor='pointer';
+    cel.innerHTML='<div class="ctx-val" id="ctx-book-val">–</div><div class="ctx-lbl">Book atrasado</div>';
+    cel.onclick=abrir;
+    const ref=document.getElementById('ctx-hs-avg-cell');
+    if(ref&&ref.parentNode===linha) linha.insertBefore(cel,ref.nextSibling); else linha.appendChild(cel);
+    return cel;
+  }
+  function atualizar(){
+    const cel=garantir(); if(!cel) return;
+    const r=calc();
+    const val=document.getElementById('ctx-book-val');
+    if(r.total===0){
+      cel.style.display='none'; return;
+    }
+    cel.style.display='';
+    val.textContent=r.atras.length;
+    val.className='ctx-val'+(r.atras.length>0?' ctx-val-warn':' ctx-val-ok');
+    const lbl=cel.querySelector('.ctx-lbl');
+    if(lbl) lbl.textContent='Book atrasado · de '+r.total;
+    cel.title=r.atras.length
+      ? r.atras.length+' de '+r.total+' clientes de book sem entrega registrada há mais de '+r.lim+' dias'
+      : 'Todos os '+r.total+' clientes de book com entrega registrada dentro de '+r.lim+' dias';
+    cel.classList.toggle('has-value',r.atras.length>0);
+  }
+
+  /* ── drawer agrupado por CS ────────────────────────────────────── */
+  function abrir(){
+    const r=calc();
+    const dr=document.getElementById('kpiDrawer'), ov=document.getElementById('kpiDrawerOverlay');
+    const t=document.getElementById('kpiDrawerTitle'), sb=document.getElementById('kpiDrawerSub'),
+          bd=document.getElementById('kpiDrawerBody');
+    if(!dr||!bd) return;
+    t.textContent='Book atrasado';
+    sb.textContent=r.atras.length+' de '+r.total+' clientes de book · sem registro há mais de '+r.lim+' dias';
+
+    if(!r.atras.length){
+      bd.innerHTML='<div style="padding:20px;text-align:center;color:var(--green);font-size:13px;">'
+        +'\u2713 Todos os '+r.total+' clientes de book têm entrega registrada dentro do prazo.</div>';
+    }else{
+      const gr={};
+      r.atras.forEach(function(x){ const g=x.c.gs||'—'; (gr[g]=gr[g]||[]).push(x); });
+      const nomes=Object.keys(gr).sort(function(a,b){
+        return gr[b].length-gr[a].length || a.localeCompare(b,'pt-BR'); });
+      bd.innerHTML=nomes.map(function(g){
+        const col=(typeof gsColors!=='undefined'&&gsColors[g])||{bg:'#eee',color:'#444'};
+        const itens=gr[g].map(function(x){
+          const quanto=x.d===null?'sem registro':'há '+x.d+' dias';
+          const cor=x.d===null?'var(--muted)':(x.d>75?'var(--red)':'var(--churn)');
+          return '<div style="display:flex;align-items:baseline;gap:8px;padding:5px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);margin-bottom:4px;">'
+            +'<span style="flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+x.c.name+'</span>'
+            +'<span style="font-size:9px;padding:1px 6px;border-radius:6px;background:var(--surface2);color:var(--muted);flex-shrink:0;">Tier '+((x.c.tier||'C').toUpperCase())+'</span>'
+            +'<span style="font-size:10.5px;font-family:\'JetBrains Mono\',monospace;color:'+cor+';flex-shrink:0;">'+quanto+'</span>'
+            +'</div>';
+        }).join('');
+        return '<div style="margin-bottom:12px;">'
+          +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">'
+          +'<span style="font-size:9px;padding:2px 8px;border-radius:20px;background:'+col.bg+';color:'+col.color+';font-weight:700;">'+g+'</span>'
+          +'<span style="font-size:11px;color:var(--muted);">'+gr[g].length+' conta'+(gr[g].length>1?'s':'')+'</span>'
+          +'</div>'+itens+'</div>';
+      }).join('')
+      +'<div style="font-size:10px;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:8px;">'
+      +'Mede o <b>registro</b> do book no ARCO. Book apresentado sem data preenchida aparece aqui. '
+      +'Não afeta o Health Score.</div>';
+    }
+    dr.style.display='flex'; setTimeout(function(){dr.style.transform='translateX(0)';},10);
+    if(ov) ov.style.display='block';
+  }
+
+  if(typeof window.updateContextBar==='function'){
+    const o=window.updateContextBar;
+    window.updateContextBar=function(){ const r=o.apply(this,arguments); try{atualizar();}catch(e){} return r; };
+  }
+  window._bookCard={calc:calc,abrir:abrir,atualizar:atualizar,ultimoBook:ultimoBook};
 })();
 </script>
 
