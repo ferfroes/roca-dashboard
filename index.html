@@ -6164,5 +6164,80 @@ checkAuthAndInit();
 })();
 </script>
 
+<!-- ===== ARCO · EXPORTAR CADASTRO DE CLIENTES (add-on) ===== -->
+<script>
+(function(){
+  if(window._expCadInstalled) return; window._expCadInstalled=true;
+
+  /* ═══════════════════════════════════════════════════════════════════
+     EXPORTAR CADASTRO DE CLIENTES
+
+     A planilha sai no MESMO layout que o "Importar" espera
+     (Cliente · CS Responsável · Book · Tier · Renovação, com cabeçalho
+     na linha 1). Assim o ciclo exportar → editar em massa no Excel →
+     reimportar funciona sem retrabalho.
+
+     Book e Renovação saem como S/N e Tier em maiúscula, que são
+     exatamente os valores que o importador reconhece.
+     ═══════════════════════════════════════════════════════════════════ */
+  const SN=v=>(v===true||v==='true'||v==='S'||v==='s')?'S':'N';
+  const TIER=v=>{const t=String(v||'C').trim().toUpperCase();return ['A','B','C'].includes(t)?t:'C';};
+
+  function exportar(){
+    if(typeof XLSX==='undefined'){
+      if(typeof showToast==='function') showToast('\u2715 Biblioteca XLSX não carregada'); return; }
+    let lista=[];
+    try{ lista=(clients||[]).slice(); }catch(e){}
+    if(!lista.length){
+      if(typeof showToast==='function') showToast('\u26A0 Nenhum cliente cadastrado para exportar'); return; }
+
+    lista.sort(function(a,b){ return String(a.name||'').localeCompare(String(b.name||''),'pt-BR'); });
+
+    // Cabeçalho: "Cliente", "Book" e "Tier" são reconhecidos pelo importador,
+    // que ignora a linha 1 automaticamente.
+    const rows=[['Cliente','CS Responsável','Book','Tier','Renovação']];
+    lista.forEach(function(c){
+      rows.push([ String(c.name||'').trim(), String(c.gs||'').trim(),
+                  SN(c.book), TIER(c.tier), SN(c.renovacao) ]);
+    });
+
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:42},{wch:24},{wch:8},{wch:8},{wch:12}];
+    ws['!autofilter']={ref:'A1:E'+rows.length};
+    ws['!freeze']={xSplit:0,ySplit:1};
+    XLSX.utils.book_append_sheet(wb,ws,'Clientes');
+    XLSX.writeFile(wb,'ARCO_Cadastro_Clientes_'+new Date().toISOString().slice(0,10)+'.xlsx');
+
+    if(typeof showToast==='function') showToast('\u2713 '+lista.length+' clientes exportados');
+    if(typeof addAudit==='function'){ try{ addAudit('edit','Cadastro de clientes exportado ('+lista.length+' clientes)'); }catch(e){} }
+  }
+
+  function instalar(){
+    const hdr=document.getElementById('clientListHeader');
+    if(!hdr||document.getElementById('btnExportCad')) return;
+    const barra=hdr.lastElementChild; if(!barra) return;
+    // logo após o "Importar", formando o par importar/exportar
+    const imp=barra.querySelector('.upload-zone');
+    const b=document.createElement('div');
+    b.className='upload-zone'; b.id='btnExportCad';
+    b.style.cssText='padding:6px 12px;border-style:dashed;border-width:1px;border-radius:7px;cursor:pointer;'
+      +'display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--brand2);font-weight:500;';
+    b.textContent='\u{1F4E4} Exportar';
+    b.title='Baixar o cadastro em Excel — mesmo formato do Importar';
+    // stopPropagation: o cabeçalho inteiro colapsa a lista ao ser clicado
+    b.onclick=function(ev){ ev.stopPropagation(); exportar(); };
+    if(imp&&imp.parentNode===barra) barra.insertBefore(b,imp.nextSibling); else barra.insertBefore(b,barra.firstChild);
+  }
+
+  if(typeof window.renderAdminList==='function'){
+    const o=window.renderAdminList;
+    window.renderAdminList=function(){ const r=o.apply(this,arguments); try{instalar();}catch(e){} return r; };
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',instalar); else instalar();
+  window._expCad={exportar:exportar,instalar:instalar};
+})();
+</script>
+
 </body>
 </html>
