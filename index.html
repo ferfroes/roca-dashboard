@@ -6239,5 +6239,115 @@ checkAuthAndInit();
 })();
 </script>
 
+<!-- ===== ARCO · NOVA SEMANA SEM ESVAZIAR (add-on) ===== -->
+<script>
+(function(){
+  if(window._novaSemanaInstalled) return; window._novaSemanaInstalled=true;
+
+  /* ═══════════════════════════════════════════════════════════════════
+     NOVA SEMANA — arquivar SEM esvaziar
+
+     A versão original arquivava a semana e zerava entries (semana em
+     branco). Agora: arquiva no histórico E mantém tudo preenchido — a
+     nova semana nasce como continuação editável da anterior. Nada do que
+     foi escrito ou selecionado some.
+
+     Segurança (função destrutiva):
+     - Arquiva ANTES de qualquer escrita, com verificação de que o
+       snapshot foi de fato gravado.
+     - NUNCA sobrescreve uma semana já existente no histórico (merge por
+       chave — só grava a chave da semana corrente).
+     - Se o arquivamento falhar, aborta sem tocar nos dados.
+     ═══════════════════════════════════════════════════════════════════ */
+  function snap(){ return JSON.parse(JSON.stringify(entries||{})); }
+  function temDados(o){ return o && Object.keys(o).some(function(k){ return o[k] && o[k].R; }); }
+
+  async function novaSemana(){
+    const preenchidas=Object.keys(entries||{}).filter(function(k){return entries[k]&&entries[k].R;}).length;
+    if(!confirm('Arquivar a semana atual no histórico e continuar a próxima semana com os mesmos dados?\n\n'
+      +preenchidas+' conta(s) preenchida(s) serão mantidas — nada será apagado. Você ajusta o que mudou.')) return;
+
+    if(typeof showSyncStatus==='function') showSyncStatus('saving');
+    try{
+      const k=getWeekKey();
+      const s=snap();
+
+      // 1) arquiva a semana corrente no histórico (memória + Firebase), sem apagar nada
+      weekHistory[k]=s;
+      try{ localStorage.setItem('roca_history',JSON.stringify(weekHistory)); }catch(e){}
+      await fbArchiveWeek(k,s);
+
+      // 2) reconfirma o arquivo relendo o histórico inteiro (mais robusto que
+      //    ler uma sub-chave logo após um PATCH). Se a releitura falhar por
+      //    rede, cai no cache de memória que acabamos de gravar.
+      let arquivado=false;
+      try{ const h=await fbGet('roca/history'); arquivado=!!(h&&h[k]); }catch(e){ arquivado=false; }
+      if(!arquivado) arquivado=!!(weekHistory[k]);
+      if(!arquivado || (temDados(s) && !temDados(weekHistory[k])))
+        throw new Error('não foi possível confirmar o arquivamento');
+
+      // 3) entries permanece intacto — apenas reafirma no Firebase e no cache local.
+      //    (nenhuma escrita de {} — este é o ponto que antes esvaziava tudo)
+      await fbSet('roca/entries',s);
+      entries=s;
+      try{ localStorage.setItem('roca_entries',JSON.stringify(entries)); }catch(e){}
+
+      if(typeof showSyncStatus==='function') showSyncStatus('saved');
+      if(typeof showToast==='function') showToast('\u2713 Semana arquivada. '+preenchidas+' conta(s) mantidas para a nova semana.');
+      if(typeof addAudit==='function'){ try{ addAudit('edit','Nova semana: '+k+' arquivada, dados mantidos ('+preenchidas+' contas)'); }catch(e){} }
+    }catch(e){
+      console.error('novaSemana:',e);
+      if(typeof showSyncStatus==='function') showSyncStatus('error');
+      if(typeof showToast==='function') showToast('\u2715 Erro ao arquivar — nada foi alterado. Tente de novo.');
+      return;
+    }
+    try{ render(); }catch(e){}
+  }
+
+  /* ── RECUPERAÇÃO — traz a última semana arquivada de volta aos cards ──
+     Usado uma vez, para restaurar o que a versão antiga esvaziou.
+     Só preenche contas que estão VAZIAS agora — nunca sobrescreve o que
+     já foi digitado nesta semana. */
+  async function recuperarUltima(){
+    const chaves=Object.keys(weekHistory||{}).filter(function(k){ return temDados(weekHistory[k]); }).sort();
+    if(!chaves.length){ if(typeof showToast==='function') showToast('\u26A0 Não há semana arquivada com dados.'); return; }
+    const ultima=chaves[chaves.length-1];
+    const arq=weekHistory[ultima];
+    const nContas=Object.keys(arq).filter(function(k){return arq[k]&&arq[k].R;}).length;
+
+    if(!confirm('Recuperar os dados da semana arquivada '+ultima+' para a tela atual?\n\n'
+      +nContas+' conta(s) preenchida(s) serão restauradas nos cards que estão em branco agora.\n'
+      +'O que você já digitou nesta semana não será tocado.')) return;
+
+    if(typeof showSyncStatus==='function') showSyncStatus('saving');
+    try{
+      let restauradas=0;
+      Object.keys(arq).forEach(function(id){
+        const atual=entries[id];
+        if((!atual||!atual.R) && arq[id] && arq[id].R){
+          entries[id]=JSON.parse(JSON.stringify(arq[id])); restauradas++;
+        }
+      });
+      await fbSet('roca/entries',entries);
+      try{ localStorage.setItem('roca_entries',JSON.stringify(entries)); }catch(e){}
+      if(typeof showSyncStatus==='function') showSyncStatus('saved');
+      if(typeof showToast==='function') showToast('\u2713 '+restauradas+' conta(s) recuperadas da semana '+ultima+'.');
+      if(typeof addAudit==='function'){ try{ addAudit('edit','Recuperação: '+restauradas+' contas restauradas de '+ultima); }catch(e){} }
+    }catch(e){
+      console.error('recuperarUltima:',e);
+      if(typeof showSyncStatus==='function') showSyncStatus('error');
+      if(typeof showToast==='function') showToast('\u2715 Erro ao recuperar — tente de novo.');
+      return;
+    }
+    try{ render(); }catch(e){}
+  }
+
+  /* substitui a função global, redireciona o botão e expõe a recuperação */
+  window.advanceWeek=novaSemana;
+  window.recuperarUltimaSemana=recuperarUltima;
+  window._novaSemana={novaSemana:novaSemana,recuperar:recuperarUltima};
+})();
+</script>
+
 </body>
 </html>
