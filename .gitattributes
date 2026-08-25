@@ -1,0 +1,13 @@
+# Fixa a quebra de linha em LF para todo mundo.
+#
+# Sem isto, o Windows salva as linhas de um jeito e o repositório guarda de
+# outro — e o Git passa a mostrar o arquivo inteiro como alterado a cada
+# commit. Foi exatamente o que aconteceu no primeiro clone: 6.353 linhas
+# "modificadas" sem ninguém ter tocado em nada.
+#
+# Diff que mostra tudo alterado esconde a alteração de verdade.
+
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
