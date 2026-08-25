@@ -2099,430 +2099,23 @@ async function arquivarSemanaSeVirou(){
 }
 
 // ── HEALTH SCORE ─────────────────────────────────────────────────────────────
-function calcHealthScore(id){
-  const e=entries[id];if(!e||!e.R)return null;
-  const cl=clients.find(x=>x.id===id)||{};
-  const tier=cl.tier||'C';
-  const isVIP=cl.vip||false;
-  const isTierA=tier==='A'||isVIP;
+/* ═══════════════════════════════════════════════════════════════════════════
+   O CÁLCULO DO HEALTH SCORE NÃO FICA MAIS AQUI
 
-  // ── MULTIPLICADOR TIER A — penalidades +30% para contas estratégicas ──────
-  // Tier A não tem regras diferentes — tem tolerância reduzida em tudo
-  const P=p=>isTierA?Math.round(p*1.3):p;
+   Até 25/08/2026 existiam neste ponto três funções completas de cálculo —
+   calcHealthScore, calcHSDetail e calcHealthScore_from — que NÃO eram as que
+   rodavam. Um bloco no fim do arquivo as substituía em tempo de execução por
+   uma implementação mais nova, com pesos configuráveis.
 
-  // ── BASE ARCO (R=30%, O=20%, C=30%, A=20%) ───────────────────────────────
-  // G=100 | A=40 (amarelo É problema) | V=0
-  const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
-  let score=dv(e.R)*.20+dv(e.O)*.20+dv(e.C)*.20+dv(e.A)*.40;
+   Quem lesse o arquivo de cima para baixo entendia o modelo errado, e não
+   tinha como desconfiar. Foram apagadas.
 
-  let penalty=0;
-  const dims=[e.R,e.O,e.C,e.A];
-  const cv=dims.filter(d=>d==='V').length;
-  const ca=dims.filter(d=>d==='A').length;
-
-  // ── COMBINAÇÃO DE DIMENSÕES ───────────────────────────────────────────────
-  if(cv>=3)penalty+=P(20);
-  else if(cv===2)penalty+=P(12);
-  else if(cv===1)penalty+=P(8);
-  if(ca>=3)penalty+=P(10);
-  else if(ca===2)penalty+=P(5);
-
-  // ── CHURN RISK ────────────────────────────────────────────────────────────
-  const autoChurn=e.R==='V'||e.C==='V';
-  const manualChurn=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
-  if(autoChurn&&manualChurn)penalty+=P(30);
-  else if(autoChurn)penalty+=P(20);
-  else if(manualChurn){
-    const ar=(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!=='');
-    penalty+=P(ar.length>=2?25:15);
-  }
-
-  // ── FATURAMENTO ───────────────────────────────────────────────────────────
-  if(e.billing==='down')penalty+=P(12);
-  else if(e.billing==='up')penalty-=3; // bônus não amplificado — crescimento é crescimento
-
-  // ── ENGAJAMENTO — Cadência de contato ─────────────────────────────────────
-  const md=daysSince(e.lastMeeting);
-  const vd=daysSince(e.lastVisit);
-  const visitCompensMeeting=vd!==null&&vd<=15;
-
-  if(!visitCompensMeeting){
-    if(md===null)penalty+=P(20);
-    else if(md>45)penalty+=P(25);
-    else if(md>30)penalty+=P(18);
-    else if(md>15)penalty+=P(10);
-  }else{
-    if(md!==null&&md>45)penalty+=P(10);
-  }
-
-  const vLimit=tier==='A'?30:60;
-  const vCritical=tier==='A'?60:120;
-  if(vd===null)penalty+=P(tier==='A'?15:8);
-  else if(vd>vCritical)penalty+=P(tier==='A'?20:12);
-  else if(vd>vLimit)penalty+=P(tier==='A'?12:8);
-
-  // ── BOOK — entrega mensal obrigatória (dias 1–12 de cada mês) ─────────────
-  if(cl.book===true||cl.book==='true'||cl.book==='S'){
-    // Reference month = month of entry timestamp (when CS filled the form)
-    // Falls back to current month if no timestamp
-    const ref=e.timestamp?new Date(e.timestamp):new Date();
-    const refYear=ref.getFullYear();const refMonth=ref.getMonth();
-    let bookOk=false;
-    if(e.bookDate){
-      const bd=new Date(e.bookDate+'T12:00:00');
-      // Book válido se enviado no mesmo mês do preenchimento, entre dias 1 e 12
-      bookOk=bd.getFullYear()===refYear&&bd.getMonth()===refMonth&&bd.getDate()<=12;
-    }
-    if(!bookOk)penalty+=P(20);
-  }
-
-  // ── NPS ───────────────────────────────────────────────────────────────────
-  const nps=e.npsScore?parseInt(e.npsScore):null;
-  const npsAge=e.npsDate?daysSince(e.npsDate):null;
-  if(nps===null)penalty+=P(8);
-  else if(nps<=6)penalty+=P(20);
-  else if(nps<=8)penalty+=P(6);
-  else if(nps>=9)penalty-=3; // bônus promotor não amplificado
-  if(npsAge!==null&&npsAge>90)penalty+=P(8);
-
-  // ── ESCALADA SEM RESOLUÇÃO ────────────────────────────────────────────────
-  if(e.needFrom&&!e.actionTaken)penalty+=P(8);
-  if(e.needFrom&&e.needFromDate){
-    const sla=daysSince(e.needFromDate);
-    if(sla>14)penalty+=P(10);
-    else if(sla>7)penalty+=P(5);
-  }
+   A implementação viva é a única que existe agora: procure por
+   "MODELO DE HEALTH SCORE" no fim do arquivo. Os pesos ficam em
+   roca/hsConfig, calibráveis pela tela de Simulação.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 
-  // ── CHECKLIST OPERACIONAL SAFIRA ─────────────────────────────────────────
-  // NA = não penaliza. Sem resposta = não penaliza (campo novo, não obriga retroativo).
-  // Pesos: basico=10, gatilhos=8, revisao=8, licencas=6, governanca=6
-  if(e.chk_basico==='N')    penalty+=P(10);
-  if(e.chk_gatilhos==='N')  penalty+=P(8);
-  if(e.chk_licencas==='N')  penalty+=P(6);
-  if(e.chk_governanca==='N')penalty+=P(6);
-  // Revisão com cliente: penaliza se data preenchida e > 90 dias OU se data não informada e conta tem dados
-  if(e.chk_revisaoDate){
-    const rd=daysSince(e.chk_revisaoDate);
-    if(rd!==null&&rd>90)penalty+=P(8);
-  }
-
-  // ── RENOVAÇÃO PRÓXIMA ─────────────────────────────────────────────────────
-  if(cl.renovacao===true||cl.renovacao==='true')penalty+=P(15);
-
-  // ── CONTRATOS — vencimento do mais crítico ────────────────────────────────
-  if(typeof getMostCriticalContract==='function'&&typeof contracts!=='undefined'&&contracts.length){
-    const mc=getMostCriticalContract(cl.name);
-    if(mc){const d=contractDaysLeft(mc.venc);if(d!==null){
-      if(d<0)penalty+=P(10);
-      else if(d<=15)penalty+=P(20);
-      else if(d<=30)penalty+=P(12);
-      else if(d<=60)penalty+=P(6);
-    }}
-  }
-
-  const final=Math.max(0,Math.min(100,Math.round(score-penalty)));
-  return final;
-}
-
-function calcHSDetail(id, overrideEntry){
-  // overrideEntry: optional entry snapshot (e.g. unsaved modal state)
-  const e=overrideEntry||entries[id]||{};const c=clients.find(x=>x.id===id)||{};
-  const tier=c.tier||'C';const isVIP=c.vip||false;const isTierA=tier==='A'||isVIP;
-  const factors=[];const checklist=[];
-
-  if(!e.R){return{score:null,factors:[{type:'neutral',icon:'ℹ️',label:'Conta não preenchida esta semana',val:'–'}],checklist:[{done:false,text:'Preencher as 4 dimensões ARCO'}]};}
-
-  const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40; // mesma lógica de calcHealthScore
-  const base=dv(e.R)*.20+dv(e.O)*.20+dv(e.C)*.20+dv(e.A)*.40;
-  const dimLabel=v=>v==='G'?'🟢':v==='A'?'🟡':v==='V'?'🔴':'?';
-  factors.push({type:base>=90?'positive':base>=70?'warning':'negative',icon:'📊',label:`Base ARCO — A:${dimLabel(e.A)} R:${dimLabel(e.R)} C:${dimLabel(e.C)} O:${dimLabel(e.O)}`,val:`${Math.round(base)}/100`});
-
-  let penalty=0;
-  const P=p=>isTierA?Math.round(p*1.3):p;
-  const dims=[e.R,e.O,e.C,e.A];const cv=dims.filter(d=>d==='V').length;const ca=dims.filter(d=>d==='A').length;
-
-  // Dims vermelhas — espelha exatamente calcHealthScore
-  if(cv>=3){const p=P(20);penalty+=p;factors.push({type:'negative',icon:'🔴',label:'3 ou mais dimensões em vermelho',val:`-${p}`});}
-  else if(cv===2){const p=P(12);penalty+=p;factors.push({type:'negative',icon:'🔴',label:'2 dimensões em vermelho',val:`-${p}`});}
-  else if(cv===1){const p=P(8);penalty+=p;factors.push({type:'negative',icon:'🔴',label:'1 dimensão em vermelho',val:`-${p}`});}
-  else{checklist.push({done:true,text:'Nenhuma dimensão em vermelho'});}
-
-  // Dims amarelas
-  if(ca>=3){const p=P(10);penalty+=p;factors.push({type:'warning',icon:'🟡',label:'3 ou mais dimensões em amarelo',val:`-${p}`});}
-  else if(ca===2){const p=P(5);penalty+=p;factors.push({type:'warning',icon:'🟡',label:'2 dimensões em amarelo',val:`-${p}`});}
-
-  const autoChurnD=e.R==='V'||e.C==='V';
-  const manualChurnD=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
-  if(autoChurnD||manualChurnD){
-    let cp=0;
-    if(autoChurnD&&manualChurnD){cp=P(30);factors.push({type:'negative',icon:'⚠️',label:'R ou C vermelho + churn sinalizado pelo CS',val:`-${cp}`});}
-    else if(autoChurnD){cp=P(20);const dims=[];if(e.R==='V')dims.push('R');if(e.C==='V')dims.push('C');factors.push({type:'negative',icon:'⚠️',label:`Risco de churn automático (${dims.join(' e ')} vermelhos)`,val:`-${cp}`});checklist.push({done:false,text:`Recuperar dimensão ${dims.join('/')} — risco real de perda`});}
-    else{const r=Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk];const ar=r.filter(x=>x!=='none'&&x!=='');cp=P(ar.length>=2?25:15);factors.push({type:'negative',icon:'⚠️',label:`Churn sinalizado pelo CS (${ar.map(x=>x==='billing'?'faturamento':'cancelamento').join(', ')})`,val:`-${cp}`});}
-    penalty+=cp;
-  }else{checklist.push({done:true,text:'Sem risco de churn'});}
-
-  if(e.billing==='down'){const p=P(12);penalty+=p;factors.push({type:'negative',icon:'📉',label:'Faturamento em queda',val:`-${p}`});}
-  else if(e.billing==='up'){factors.push({type:'positive',icon:'📈',label:'Faturamento subindo',val:'✓'});}
-  else if(!e.billing){checklist.push({done:false,text:'Registrar variação de faturamento'});}
-
-  const md=daysSince(e.lastMeeting);
-  const vd=daysSince(e.lastVisit);
-  const vLimit=tier==='A'?30:60;
-  const vCrit=tier==='A'?60:120;
-  const visitCompensMeeting=vd!==null&&vd<=15;
-
-  // Visita presencial — usa P() igual ao calcHealthScore
-  if(vd===null){
-    const vp=P(tier==='A'?15:8);penalty+=vp;
-    factors.push({type:'negative',icon:'🤝',label:'Sem visita presencial registrada',val:`-${vp}`});
-    checklist.push({done:false,text:'Registrar data da última visita presencial'});
-  }else if(vd>vCrit){
-    const vp=P(tier==='A'?20:12);penalty+=vp;
-    factors.push({type:'negative',icon:'🤝',label:`Última visita há ${vd} dias — crítico para Tier ${tier}`,val:`-${vp}`});
-    checklist.push({done:false,text:`Realizar visita presencial urgente (${vd} dias sem visita)`});
-  }else if(vd>vLimit){
-    const vp=P(tier==='A'?12:8);penalty+=vp;
-    factors.push({type:'warning',icon:'🤝',label:`Última visita há ${vd} dias (limite: D-${vLimit})`,val:`-${vp}`});
-    checklist.push({done:false,text:`Agendar visita presencial (fora da cadência D-${vLimit})`});
-  }else{
-    const msg=vd<=15?`Visita recente (${vd}d) — compensa reunião online`:`Visita dentro da cadência (${vd}d)`;
-    factors.push({type:'positive',icon:'🤝',label:msg,val:'✓'});
-  }
-
-  // Reunião online — usa P() igual ao calcHealthScore
-  if(!visitCompensMeeting){
-    if(md===null){
-      const mp=P(20);penalty+=mp;
-      factors.push({type:'negative',icon:'📹',label:'Sem reunião online registrada',val:`-${mp}`});
-      checklist.push({done:false,text:'Registrar data da última reunião online'});
-    }else if(md>45){
-      const mp=P(25);penalty+=mp;
-      factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias — abandono de cadência`,val:`-${mp}`});
-      checklist.push({done:false,text:'Retomar contato online imediatamente'});
-    }else if(md>30){
-      const mp=P(18);penalty+=mp;
-      factors.push({type:'negative',icon:'📹',label:`Última reunião há ${md} dias (>30)`,val:`-${mp}`});
-      checklist.push({done:false,text:'Agendar reunião online urgente'});
-    }else if(md>15){
-      const mp=P(10);penalty+=mp;
-      factors.push({type:'warning',icon:'📹',label:`Última reunião há ${md} dias (limite: D-15)`,val:`-${mp}`});
-      checklist.push({done:false,text:'Agendar reunião online — fora da cadência D-15'});
-    }else{
-      factors.push({type:'positive',icon:'📹',label:`Reunião recente (${md} dias atrás — dentro de D-15)`,val:'✓'});
-    }
-  }else{
-    if(md===null){
-      factors.push({type:'warning',icon:'📹',label:'Reunião online não registrada (visita recente compensa)',val:'–'});
-    }else if(md>45){
-      const mp=P(10);penalty+=mp;
-      factors.push({type:'warning',icon:'📹',label:`Reunião há ${md} dias (visita recente mitiga parcialmente)`,val:`-${mp}`});
-    }else{
-      factors.push({type:'positive',icon:'📹',label:`Reunião registrada (${md}d) — visita presencial recente compensa`,val:'✓'});
-    }
-  }
-
-  const nps=e.npsScore?parseInt(e.npsScore):null;const npsAge=e.npsDate?daysSince(e.npsDate):null;
-  if(nps===null){
-    const np=P(8);penalty+=np;factors.push({type:'warning',icon:'⭐',label:'NPS não registrado',val:`-${np}`});
-    checklist.push({done:false,text:'Registrar NPS do trimestre'});
-  }else if(nps<=6){
-    const np=P(20);penalty+=np;factors.push({type:'negative',icon:'⭐',label:`NPS ${nps}/10 — Detrator`,val:`-${np}`});
-    checklist.push({done:false,text:'Plano de ação imediato — cliente detrator'});
-  }else if(nps<=8){
-    const np=P(6);penalty+=np;factors.push({type:'warning',icon:'⭐',label:`NPS ${nps}/10 — Neutro (zona de risco silencioso)`,val:`-${np}`});
-    checklist.push({done:false,text:'Aprofundar relacionamento — neutro pode virar detrator'});
-  }else{
-    penalty-=3;factors.push({type:'positive',icon:'⭐',label:`NPS ${nps}/10 — Promotor`,val:'+3'});
-  }
-  if(npsAge!==null&&npsAge>90){
-    const np=P(8);penalty+=np;factors.push({type:'warning',icon:'📅',label:`NPS desatualizado (${npsAge} dias — mais de 1 trimestre)`,val:`-${np}`});
-    checklist.push({done:false,text:'Aplicar NPS — última medição há mais de 90 dias'});
-  }
-
-  if(e.needFrom&&!e.actionTaken){
-    const ep=P(8);penalty+=ep;factors.push({type:'warning',icon:'🙋',label:'Escalou sem registrar ação própria',val:`-${ep}`});
-    checklist.push({done:false,text:'Registrar ação tomada antes de escalar'});
-  }
-  if(e.needFrom&&e.needFromDate){
-    const sla=daysSince(e.needFromDate);
-    if(sla>14){const ep=P(10);penalty+=ep;factors.push({type:'negative',icon:'⏱',label:`Escalada aberta há ${sla} dias — sem resolução`,val:`-${ep}`});checklist.push({done:false,text:`Resolver escalada urgente (${sla} dias em aberto)`});}
-    else if(sla>7){const ep=P(5);penalty+=ep;factors.push({type:'warning',icon:'⏱',label:`Escalada aberta há ${sla} dias`,val:`-${ep}`});}
-  }
-
-  if(e.pipelineStage&&e.pipelineStage!==''){factors.push({type:'positive',icon:'💼',label:`Pipeline: ${{identified:'Identificado',negotiating:'Em negociação',proposal:'Proposta enviada',closed:'Fechado'}[e.pipelineStage]}${e.pipelineValue?` (R$ ${parseInt(e.pipelineValue).toLocaleString('pt-BR')}/mês)`:''}`,val:'✓'});}
-  else{checklist.push({done:false,text:'Identificar oportunidade de expansão / pipeline'});}
-
-  // ── RENOVAÇÃO PRÓXIMA (flag manual) ──────────────────────────────────────
-  if(c.renovacao===true||c.renovacao==='true'){
-    const renovPenalty=isTierA?Math.round(15*1.3):15;
-    factors.push({type:'negative',icon:'🔄',label:'Renovação sinalizada pelo gestor',val:`-${renovPenalty}`});
-    checklist.push({done:false,text:'Tratar renovação de contrato com o cliente'});
-  }
-
-  // ── CONTRATOS — vencimento ────────────────────────────────────────────────
-  if(typeof getMostCriticalContract==='function'&&typeof contracts!=='undefined'&&contracts.length){
-    const mc=getMostCriticalContract(c.name);
-    if(mc){
-      const d=contractDaysLeft(mc.venc);
-      const vencStr=mc.venc?new Date(mc.venc+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-      const allCts=getClientContracts(c.name);
-      const label=`${mc.project||'Contrato'} — vence ${vencStr}${allCts.length>1?` (+${allCts.length-1} outros)`:''}`;
-      if(d===null){
-        factors.push({type:'warning',icon:'📄',label:'Contrato sem data de vencimento',val:'–'});
-      }else if(d<0){
-        const p=isTierA?Math.round(10*1.3):10;penalty+=p;
-        factors.push({type:'negative',icon:'📄',label:`${label} — VENCIDO há ${Math.abs(d)} dias`,val:`-${p}`});
-        checklist.push({done:false,text:`Verificar situação do contrato vencido: ${mc.project||mc.clientName}`});
-      }else if(d<=15){
-        const p=isTierA?Math.round(20*1.3):20;penalty+=p;
-        factors.push({type:'negative',icon:'📄',label:`${label} — ${d} dias restantes`,val:`-${p}`});
-        checklist.push({done:false,text:`Urgente: renovar contrato em ${d} dias`});
-      }else if(d<=30){
-        const p=isTierA?Math.round(12*1.3):12;penalty+=p;
-        factors.push({type:'warning',icon:'📄',label:`${label} — ${d} dias restantes`,val:`-${p}`});
-        checklist.push({done:false,text:`Iniciar processo de renovação (${d} dias)`});
-      }else if(d<=60){
-        const p=isTierA?Math.round(6*1.3):6;penalty+=p;
-        factors.push({type:'warning',icon:'📄',label:`${label} — ${d} dias restantes`,val:`-${p}`});
-      }else{
-        factors.push({type:'positive',icon:'📄',label:`${label} — ${d} dias restantes`,val:'✓'});
-      }
-    }
-  }
-
-  // ── BOOK ─────────────────────────────────────────────────────────────────
-  if(c.book===true||c.book==='true'||c.book==='S'){
-    const ref=e.timestamp?new Date(e.timestamp):new Date();
-    const refYear=ref.getFullYear();const refMonth=ref.getMonth();
-    const refMonthName=ref.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-    let bookOk=false;
-    if(e.bookDate){
-      const bd=new Date(e.bookDate+'T12:00:00');
-      bookOk=bd.getFullYear()===refYear&&bd.getMonth()===refMonth&&bd.getDate()<=12;
-    }
-    const bookPenalty=isTierA?Math.round(20*1.3):20;
-    if(bookOk){
-      factors.push({type:'positive',icon:'📋',label:`Book enviado no prazo (${new Date(e.bookDate+'T12:00:00').toLocaleDateString('pt-BR')})`,val:'✓'});
-    }else if(e.bookDate){
-      const bd=new Date(e.bookDate+'T12:00:00');
-      const late=bd.getMonth()===refMonth&&bd.getDate()>12;
-      factors.push({type:'negative',icon:'📋',label:late?`Book enviado fora do prazo (dia ${bd.getDate()}/${refMonth+1}) — deve ser até dia 12`:`Book não enviado em ${refMonthName}`,val:`-${bookPenalty}`});
-      checklist.push({done:false,text:`Enviar book entre dias 1–12 de ${refMonthName}`});
-    }else{
-      factors.push({type:'negative',icon:'📋',label:`Book não enviado em ${refMonthName} (prazo: dia 1–12)`,val:`-${bookPenalty}`});
-      checklist.push({done:false,text:`Enviar book entre dias 1–12 de ${refMonthName}`});
-    }
-  }
-
-  // ── CHECKLIST OPERACIONAL SAFIRA ─────────────────────────────────────────
-  const chkItems=[
-    {key:'basico',    label:'O básico está sendo bem feito e funciona',    weight:10, icon:'✅'},
-    {key:'gatilhos',  label:'Gatilhos implementados e funcionais',          weight:8,  icon:'⚡'},
-    {key:'licencas',  label:'Todas as licenças contratadas em uso',         weight:6,  icon:'🔑'},
-    {key:'governanca',label:'Processos e governança de ativos documentados',weight:6,  icon:'📋'},
-  ];
-  chkItems.forEach(({key,label,weight,icon})=>{
-    const val=e[`chk_${key}`];
-    if(val==='N'){
-      const p=P(weight);penalty+=p;
-      factors.push({type:'negative',icon,label:`${label}: Não`,val:`-${p}`});
-      checklist.push({done:false,text:`Corrigir: ${label}`});
-    }else if(val==='S'){
-      factors.push({type:'positive',icon,label:`${label}: Sim`,val:'✓'});
-    }else if(val==='NA'){
-      factors.push({type:'neutral',icon,label:`${label}: N/A`,val:'–'});
-    }
-    // null = não preenchido, não penaliza (campo novo)
-  });
-  if(e.chk_revisaoDate){
-    const rd=daysSince(e.chk_revisaoDate);
-    if(rd!==null&&rd>90){
-      const p=P(8);penalty+=p;
-      factors.push({type:'negative',icon:'📅',label:`Última revisão com cliente há ${rd} dias (limite: 90d)`,val:`-${p}`});
-      checklist.push({done:false,text:'Agendar revisão com o cliente (última há mais de 90 dias)'});
-    }else if(rd!==null){
-      factors.push({type:'positive',icon:'📅',label:`Revisão com cliente há ${rd} dias`,val:'✓'});
-    }
-  }
-
-  // ── TIER A — nota sobre multiplicador ────────────────────────────────────
-  if(isTierA){
-    factors.push({type:'neutral',icon:'⭐',label:'Tier A — todas as penalidades com +30% de severidade',val:'×1.3'});
-  }
-
-  // Use calcHealthScore as single source of truth — avoids divergence between card and modal
-  const final = calcHealthScore(id);
-  return{score:final,factors,checklist};
-}
-
-
-// Calculate HS from a historical entry snapshot (same logic, no side effects)
-function calcHealthScore_from(e, id){
-  if(!e||!e.R)return null;
-  const c=clients.find(x=>x.id===id)||{};
-  const tier=c.tier||'C';const isVIP=c.vip||false;const isTierA=tier==='A'||isVIP;
-  const P=p=>isTierA?Math.round(p*1.3):p;
-  const dv=v=>v==='G'?100:v==='A'?40:v==='V'?0:40;
-  let score=dv(e.R)*.20+dv(e.O)*.20+dv(e.C)*.20+dv(e.A)*.40;
-  let penalty=0;
-  const dims=[e.R,e.O,e.C,e.A];const cv=dims.filter(d=>d==='V').length;const ca=dims.filter(d=>d==='A').length;
-  if(cv>=3)penalty+=P(20);else if(cv===2)penalty+=P(12);else if(cv===1)penalty+=P(8);
-  if(ca>=3)penalty+=P(10);else if(ca===2)penalty+=P(5);
-  const autoChurn=e.R==='V'||e.C==='V';
-  const manualChurn=e.churnRisk&&(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).some(x=>x!=='none'&&x!=='');
-  if(autoChurn&&manualChurn)penalty+=P(30);
-  else if(autoChurn)penalty+=P(20);
-  else if(manualChurn){const ar=(Array.isArray(e.churnRisk)?e.churnRisk:[e.churnRisk]).filter(x=>x!=='none'&&x!=='');penalty+=P(ar.length>=2?25:15);}
-  if(e.billing==='down')penalty+=P(12);
-  else if(e.billing==='up')penalty-=3;
-  const daysSince=d=>d?Math.floor((new Date()-new Date(d))/86400000):null;
-  // ── Engajamento — espelha lógica do calcHealthScore ───────────────────────
-  const md=daysSince(e.lastMeeting);
-  const vd=daysSince(e.lastVisit);
-  const vLimit=tier==='A'?30:60;
-  const vCrit=tier==='A'?60:120;
-  const visitComps=vd!==null&&vd<=15;
-  if(!visitComps){
-    if(md===null)penalty+=P(20);
-    else if(md>45)penalty+=P(25);
-    else if(md>30)penalty+=P(18);
-    else if(md>15)penalty+=P(10);
-  }else{if(md!==null&&md>45)penalty+=P(10);}
-  if(vd===null)penalty+=P(tier==='A'?15:8);
-  else if(vd>vCrit)penalty+=P(tier==='A'?20:12);
-  else if(vd>vLimit)penalty+=P(tier==='A'?12:8);
-  // ── NPS ───────────────────────────────────────────────────────────────────
-  const nps=e.npsScore?parseInt(e.npsScore):null;
-  if(nps===null)penalty+=P(8);else if(nps<=6)penalty+=P(20);else if(nps<=8)penalty+=P(6);else if(nps>=9)penalty-=3;
-  if(e.npsDate&&daysSince(e.npsDate)>90)penalty+=P(8);
-  if(e.needFrom&&!e.actionTaken)penalty+=P(8);
-  if(e.needFrom&&e.needFromDate&&daysSince(e.needFromDate)>14)penalty+=P(10);
-  else if(e.needFrom&&e.needFromDate&&daysSince(e.needFromDate)>7)penalty+=P(5);
-  if(c.renovacao===true||c.renovacao==='true')penalty+=P(15);
-
-  // ── CHECKLIST OPERACIONAL SAFIRA — mirrors calcHealthScore ────────────────
-  if(e.chk_basico==='N')    penalty+=P(10);
-  if(e.chk_gatilhos==='N')  penalty+=P(8);
-  if(e.chk_licencas==='N')  penalty+=P(6);
-  if(e.chk_governanca==='N')penalty+=P(6);
-  if(e.chk_revisaoDate){const rd=daysSince(e.chk_revisaoDate);if(rd!==null&&rd>90)penalty+=P(8);}
-
-  // ── CONTRATOS — espelha lógica do calcHealthScore ─────────────────────────
-  if(typeof getMostCriticalContract==='function'&&typeof contracts!=='undefined'&&contracts.length){
-    const mc=getMostCriticalContract(c.name);
-    if(mc){const dv=contractDaysLeft(mc.venc);if(dv!==null){
-      if(dv<0)penalty+=P(10);
-      else if(dv<=15)penalty+=P(20);
-      else if(dv<=30)penalty+=P(12);
-      else if(dv<=60)penalty+=P(6);
-    }}
-  }
-
-  return Math.max(0,Math.min(100,Math.round(score-penalty)));
-}
-
-// Returns how many consecutive weeks this account has been critical (HS < 70)
 function consecutiveCriticalWeeks(id){
   const currentHS=calcHealthScore(id);
   if(currentHS===null||currentHS>=70)return 0; // not critical now
@@ -5632,7 +5225,6 @@ checkAuthAndInit();
     ['Outros',[['escal14','Escalação >14d'],['escal7','Escalação >7d'],['renov','Renovação sinalizada'],['consecSem','Por semana crítica'],['consecTeto','Teto sem. críticas']]]
   ];
 
-  const origHS=window.calcHealthScore;
   const dias=d=>d?Math.floor((new Date()-new Date(d))/86400000):null;
   const arr=v=>v==null?[]:(Array.isArray(v)?v:[v]);
   const tierOf=c=>(c.tier||'C').toUpperCase();
@@ -5801,6 +5393,18 @@ checkAuthAndInit();
     return {score:score,factors:factors,checklist:checklist};
   }
 
+  /* ═════════════════════════════════════════════════════════════════════
+     MODELO DE HEALTH SCORE — a única implementação do sistema
+
+     Até 25/08/2026 estas três linhas SOBRESCREVIAM funções de mesmo nome
+     definidas no começo do arquivo. Agora elas apenas definem: as versões
+     antigas foram apagadas. Se algum dia voltar a existir uma função com
+     estes nomes lá em cima, é bug — não deve haver duas.
+
+     Os pesos vêm de roca/hsConfig e são calibráveis pela tela de Simulação.
+     Os padrões (DEF, acima) são idênticos ao que está publicado no banco,
+     então uma falha de rede não muda o score de ninguém.
+     ═════════════════════════════════════════════════════════════════════ */
   window.calcHealthScore=function(id){ return hsAtivo(id); };
   window.calcHealthScore_from=function(e,id){
     const c=cli(id), b=scoreCore(e,c,0,W), t=tetoDeEntry(e,W);
@@ -5853,15 +5457,13 @@ checkAuthAndInit();
 
   function comparar(){
     const out=clients.map(c=>{
-      const antigo=(typeof origHS==='function')?origHS(c.id):null;
       const at=hsAtivo(c.id), sim=hsSim(c.id), cd=cadencia(c.id);
       const t=(entries[c.id]&&entries[c.id].R)?tetoDeEntry(entries[c.id],W):null;
-      return {c:c,antigo:antigo,at:at,sim:sim,d:(at===null||sim===null)?null:sim-at,fa:faixa(at),fs:faixa(sim),cad:cd,teto:t};
+      return {c:c,at:at,sim:sim,d:(at===null||sim===null)?null:sim-at,fa:faixa(at),fs:faixa(sim),cad:cd,teto:t};
     });
     const av=out.filter(x=>x.at!==null);
     const med=k=>av.length?Math.round(av.reduce((s,x)=>s+x[k],0)/av.length):null;
     return {linhas:out,avaliadas:av.length,medAt:med('at'),medSim:med('sim'),
-      medAntigo:av.length?Math.round(av.reduce((s,x)=>s+(x.antigo||0),0)/av.length):null,
       critAt:av.filter(x=>x.at<70).length, critSim:av.filter(x=>x.sim<70).length,
       mudam:av.filter(x=>x.fa!==x.fs).length, comTeto:av.filter(x=>x.teto).length,
       cadCrit:out.filter(x=>x.cad.st==='Crítica').length};
@@ -5930,7 +5532,6 @@ checkAuthAndInit();
       +'<td style="font-weight:600;font-size:11.5px;">'+x.c.name+'</td>'
       +'<td><span class="badge badge-tier-'+tierOf(x.c).toLowerCase()+'">'+tierOf(x.c)+'</span></td>'
       +'<td style="font-size:11px;color:var(--muted);">'+x.c.gs+'</td>'
-      +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--muted);">'+(x.antigo!==null?x.antigo+'%':'\u2013')+'</td>'
       +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:11.5px;font-weight:700;color:'+corF(x.fa)+';">'+x.at+'%</td>'
       +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:11.5px;color:'+corF(x.fs)+';">'+x.sim+'%</td>'
       +'<td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:'+dc+';">'+(x.d>0?'+':'')+x.d+'</td>'
@@ -5942,7 +5543,7 @@ checkAuthAndInit();
     document.getElementById('simBody').innerHTML=
       lbl('Carteira \u00B7 '+m.avaliadas+' contas avaliadas')
       +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">'
-      +kpi(m.medAt+'%','HS m\u00E9dio vigente','var(--ink)','modelo antigo: '+m.medAntigo+'%')
+      +kpi(m.medAt+'%','HS m\u00E9dio vigente','var(--ink)','pesos publicados no banco')
       +kpi(m.critAt,'contas cr\u00EDticas (&lt;70)',m.critAt?'var(--red)':'var(--green)','no modelo vigente')
       +kpi(m.comTeto,'com teto por evid\u00EAncia','var(--brand2)','sem base p/ afirmar sa\u00FAde')
       +kpi(m.cadCrit,'cad\u00EAncia cr\u00EDtica','var(--churn)','pauta de 1:1')
@@ -5952,7 +5553,7 @@ checkAuthAndInit();
       +lbl('Pesos \u00B7 editar simula; publicar aplica para o time')
       +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">'+cfgHtml+'</div>'
       +lbl('Conta a conta')
-      +'<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Tier</th><th>CS</th><th>HS antigo</th><th>HS vigente</th><th>HS simulado</th><th>\u0394</th><th>Faixa</th><th>Cad\u00EAncia</th><th>Teto por evid\u00EAncia</th></tr></thead><tbody>'+linhas+'</tbody></table></div>';
+      +'<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Tier</th><th>CS</th><th>HS vigente</th><th>HS simulado</th><th>\u0394</th><th>Faixa</th><th>Cad\u00EAncia</th><th>Teto por evid\u00EAncia</th></tr></thead><tbody>'+linhas+'</tbody></table></div>';
 
     const bp=document.getElementById('btnPublicar');
     if(bp){ const trava=!mudou&&!!META.em; bp.disabled=trava; bp.style.opacity=trava?'.45':'1'; bp.style.cursor=trava?'default':'pointer'; }
@@ -5970,9 +5571,9 @@ checkAuthAndInit();
   function xlsx(){
     if(typeof XLSX==='undefined'){ if(typeof showToast==='function') showToast('\u2715 Biblioteca XLSX nao carregada'); return; }
     const m=comparar();
-    const rows=[['Cliente','Tier','CS','HS modelo antigo','HS vigente','HS simulado','Delta','Faixa','Cadência','Pendências de cadência','Teto','Motivo do teto']];
+    const rows=[['Cliente','Tier','CS','HS vigente','HS simulado','Delta','Faixa','Cadência','Pendências de cadência','Teto','Motivo do teto']];
     m.linhas.filter(x=>x.at!==null).sort((a,b)=>a.at-b.at).forEach(function(x){
-      rows.push([x.c.name,tierOf(x.c),x.c.gs,x.antigo,x.at,x.sim,x.d,x.fa,x.cad.st,x.cad.pend.join(' \u00B7 '),x.teto?x.teto.teto:'',x.teto?x.teto.motivos.join(' \u00B7 '):'']);
+      rows.push([x.c.name,tierOf(x.c),x.c.gs,x.at,x.sim,x.d,x.fa,x.cad.st,x.cad.pend.join(' \u00B7 '),x.teto?x.teto.teto:'',x.teto?x.teto.motivos.join(' \u00B7 '):'']);
     });
     const wb=XLSX.utils.book_new();
     const ws=XLSX.utils.aoa_to_sheet(rows);
