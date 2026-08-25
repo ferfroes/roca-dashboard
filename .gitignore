@@ -1,0 +1,49 @@
+# ══════════════════════════════════════════════════════════════════════
+# ATENÇÃO: este repositório é PÚBLICO.
+# Tudo que entrar num commit fica público para sempre — mesmo apagado
+# depois, continua no histórico do Git. Este arquivo é a rede de proteção.
+# ══════════════════════════════════════════════════════════════════════
+
+# ── Nunca versionar: dados do banco ───────────────────────────────────
+# Um backup do Firebase contém a carteira inteira, notas de churn,
+# faturamento e (hoje) hashes de senha.
+backup/
+backups/
+*backup*.json
+roca*.json
+dump*.json
+
+# ── Nunca versionar: credenciais ──────────────────────────────────────
+# O client secret do Entra ID vive no console do Firebase, nunca aqui.
+.env
+.env.*
+*.key
+*.pem
+serviceAccount*.json
+firebase-adminsdk*.json
+credentials*.json
+secrets*.json
+
+# ── Nunca versionar: planilhas internas ───────────────────────────────
+# Import de clientes e contratos traz nome de cliente e valor de contrato.
+*.xlsx
+*.xlsb
+*.xlsm
+*.csv
+
+# ── Ruído de ambiente ─────────────────────────────────────────────────
+.vscode/
+.idea/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ── Windows / OneDrive / macOS ────────────────────────────────────────
+Thumbs.db
+desktop.ini
+ehthumbs.db
+.DS_Store
+*.tmp
+~$*

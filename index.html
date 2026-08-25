@@ -1997,6 +1997,107 @@ function getWeekKey(off=0){
 }
 function getPrevEntry(id){const p=weekHistory[getWeekKey(-1)];return p?(p[id]||null):null;}
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ARQUIVAMENTO SEMANAL AUTOMÁTICO
+   ───────────────────────────────────────────────────────────────────────────
+   O PROBLEMA QUE ISTO RESOLVE
+
+   Guardar a semana no histórico dependia de alguém lembrar de clicar em
+   "↻ Nova Semana". Em 16 semanas de uso o botão foi clicado 2 vezes — e as
+   outras 14 semanas foram sobrescritas pelos lançamentos da semana seguinte,
+   em silêncio, sem erro na tela. Tendência que não foi salva na hora não se
+   reconstrói depois: o dado simplesmente não existe mais.
+
+   COMO FUNCIONA AGORA
+
+   O banco passa a guardar, em roca/entriesSemana, a qual semana os
+   lançamentos atuais pertencem. Quando alguém abre o painel numa semana
+   diferente daquela, o painel arquiva sozinho — e arquiva com a chave da
+   semana a que os dados REALMENTE pertencem, não com a data em que alguém
+   clicou num botão.
+
+   Nada é apagado: os lançamentos continuam na tela para o time ajustar o que
+   mudou, exatamente como o botão já fazia. O botão continua existindo, para
+   quem quiser fechar a semana antes da virada.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+// Segunda-feira da semana de uma data qualquer, no mesmo formato do getWeekKey.
+function chaveDaSemana(data){
+  const d=new Date(data);
+  const dia=d.getDay();
+  d.setDate(d.getDate()+(dia===0?-6:1-dia));
+  d.setHours(0,0,0,0);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function temAlgumFarol(obj){
+  return !!obj && Object.keys(obj).some(k=>obj[k]&&obj[k].R);
+}
+
+// Deduz a semana pelos carimbos de data dos lançamentos. Só serve para a
+// PRIMEIRA execução, enquanto roca/entriesSemana ainda não existe. Depois
+// disso a marca gravada no banco é a fonte da verdade — dedução é chute
+// educado, e chute não deve durar mais que o necessário.
+function semanaDeduzidaDosLancamentos(){
+  const datas=Object.values(entries||{})
+    .filter(e=>e&&e.timestamp)
+    .map(e=>new Date(e.timestamp))
+    .filter(d=>!isNaN(d));
+  if(!datas.length) return null;
+  return chaveDaSemana(new Date(Math.max.apply(null,datas)));
+}
+
+async function arquivarSemanaSeVirou(){
+  const semanaAtual=getWeekKey();
+
+  let marcaNoBanco=null;
+  try{ marcaNoBanco=await fbGet('roca/entriesSemana'); }
+  catch(e){ console.warn('arquivamento: não consegui ler a semana corrente',e); return; }
+
+  // Sem marca gravada (primeira execução) a gente deduz pelos carimbos.
+  const semanaDosDados=marcaNoBanco||semanaDeduzidaDosLancamentos()||semanaAtual;
+
+  // Ainda é a mesma semana: não há nada a fechar.
+  if(semanaDosDados===semanaAtual){
+    // Mas a marca PRECISA passar a existir, mesmo sem nada a arquivar.
+    // Sem gravá-la aqui, a próxima execução voltaria a deduzir — e a dedução
+    // aponta para a semana em que alguém mexeu por último. Se a primeira
+    // pessoa a abrir o painel na segunda-feira já tiver salvo um farol, a
+    // dedução daria a semana nova, a anterior nunca seria arquivada, e a
+    // perda aconteceria de novo exatamente pelo mesmo motivo.
+    if(marcaNoBanco!==semanaAtual){
+      try{ await fbSet('roca/entriesSemana',semanaAtual); }catch(e){}
+    }
+    return;
+  }
+
+  // A semana virou, mas não havia nada preenchido: só atualiza a marca.
+  if(!temAlgumFarol(entries)){
+    try{ await fbSet('roca/entriesSemana',semanaAtual); }catch(e){}
+    return;
+  }
+
+  try{
+    const foto=JSON.parse(JSON.stringify(entries));
+    await fbArchiveWeek(semanaDosDados,foto);
+    weekHistory[semanaDosDados]=foto;
+    try{ localStorage.setItem('roca_history',JSON.stringify(weekHistory)); }catch(e){}
+
+    // A marca só avança DEPOIS que o arquivo foi gravado. Se a linha de cima
+    // falhar, a marca continua na semana antiga e a próxima pessoa que abrir
+    // o painel tenta de novo — em vez de o dado sumir calado.
+    await fbSet('roca/entriesSemana',semanaAtual);
+
+    // Arquivamento automático não pode ser invisível: quem abriu o painel
+    // precisa saber que uma semana foi fechada.
+    if(typeof showToast==='function') showToast('✓ Semana de '+semanaDosDados+' arquivada no histórico.');
+    if(typeof addAudit==='function'){ try{ addAudit('edit','Arquivamento automático da semana '+semanaDosDados); }catch(e){} }
+  }catch(e){
+    console.error('arquivamento automático falhou:',e);
+    if(typeof showToast==='function') showToast('⚠ Não consegui arquivar a semana anterior. Avise a Governança antes de preencher.');
+  }
+}
+
 // ── HEALTH SCORE ─────────────────────────────────────────────────────────────
 function calcHealthScore(id){
   const e=entries[id];if(!e||!e.R)return null;
@@ -2514,6 +2615,12 @@ async function init(){
     if(sh)try{weekHistory=JSON.parse(sh);}catch(e){console.warn('roca_history parse error',e);}
     if(sct)try{contracts=JSON.parse(sct);}catch(e){console.warn('roca_contracts parse error',e);}
   }
+
+  // Fecha a semana anterior antes que os lançamentos novos passem por cima
+  // dela. Só roda quando os dados vieram do banco — arquivar a partir do
+  // cache local poderia gravar uma versão desatualizada por cima da boa.
+  if(ok) await arquivarSemanaSeVirou();
+
   // Reload authUsers to get fresh csName (may have been updated by admin after login)
   await loadAuthUsers();
   // Re-apply CS filter after data load with fresh authUsers
@@ -3223,14 +3330,9 @@ function saveEntry(){
     showToast(`⚠ Preencha todos os 4 dimensões ARCO antes de salvar (faltam: ${missingDims.join(', ')})`);
     return;
   }
-  const wk=getWeekKey();
-  // Só salva snapshot no weekHistory se não existe ainda para esta semana
-  // (previne sobrescrever histórico correto com versões intermediárias)
-  if(entries[editingClientId]&&!weekHistory[wk]?.[editingClientId]){
-    if(!weekHistory[wk])weekHistory[wk]={};
-    weekHistory[wk][editingClientId]=JSON.parse(JSON.stringify(entries[editingClientId]));
-    localStorage.setItem('roca_history',JSON.stringify(weekHistory));
-  }
+  // O histórico não é mais montado aqui. Quem fecha a semana é
+  // arquivarSemanaSeVirou(), no carregamento do painel — com a chave da
+  // semana certa e gravando no banco, não só no navegador de quem salvou.
   const prev=entries[editingClientId]||{};
   const needFrom=document.getElementById('needFrom').value;
   const needFromDate=(needFrom&&!prev.needFrom)?new Date().toISOString().slice(0,10):(prev.needFromDate||'');
@@ -6291,6 +6393,10 @@ checkAuthAndInit();
       await fbSet('roca/entries',s);
       entries=s;
       try{ localStorage.setItem('roca_entries',JSON.stringify(entries)); }catch(e){}
+
+      // Mantém a marca do arquivamento automático em dia, para os dois
+      // caminhos — manual e automático — contarem a mesma história.
+      try{ await fbSet('roca/entriesSemana',k); }catch(e){}
 
       if(typeof showSyncStatus==='function') showSyncStatus('saved');
       if(typeof showToast==='function') showToast('\u2713 Semana arquivada. '+preenchidas+' conta(s) mantidas para a nova semana.');
